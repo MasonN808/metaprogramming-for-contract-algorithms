@@ -29,7 +29,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Lint with flake8
-        run: flake8 --count --show-source --statistics
+        run: flake8 . --count --show-source --statistics
 
       - name: Format with black
-        run: black --check
+        run: black . --check
