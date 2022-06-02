@@ -1,4 +1,7 @@
+__pycache__
+*.pyc
+*.ipynb
 .DS_Store
 .vscode
-*.pyc
+.idea
 *.log
