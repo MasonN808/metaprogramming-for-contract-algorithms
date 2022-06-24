@@ -1,1 +1,1 @@
-# partially-observable-ecas
+# metaprogramming-for-contract-algorithms
