@@ -9,6 +9,7 @@ class Program:
     dag : DAG, required
         The DAG that the contract program inherits
     """
+
     def __init__(self, dag, budget):
         self.budget = budget
         self.dag = dag
