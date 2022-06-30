@@ -13,9 +13,11 @@ class Dag:
 
     def __init__(self, root, node_list):
         if root is None:  # Check if root is unknown
-            self.root = self.find_root()
+            self.root = self.__find_root()
         else:
             self.root = root
+            if self.__find_root() != self.root:
+                raise ValueError("Inputted root is not a root")
         self.node_list = node_list
         self.check_structure(self.root, self.node_list)
 
@@ -29,23 +31,46 @@ class Dag:
         :return: Error; else, continue
         """
         # Check for a unique root
-        possible_roots = []
-        for node in self.node_list:
-            if len(node.children) == 0:  # Check if node has no children, a property of the root
-                possible_roots.append(node)
-        if len(possible_roots) > 1:
-            # More than one possible root found; DAG must be restructured with one root
-            raise ValueError("More than one possible root found: restructure the DAG")
-        if len(possible_roots) == 0:  # This catches only some cycles
-            raise ValueError("No possible roots found: a cycle is likely present, restructure the DAG")
+        # Done in constructor
         # Check for connectedness
-        # TODO: Finish this
+        if self.__is_disconnected(self.root):
+            raise ValueError("Provided DAG is disconnected, must be connected")
+        self.__reset_traversed()  # Reset the traversed pointers for the nodes in node_list to False
         # Check for self-loops
         # TODO: Finish this
         # Check for directed cycles
         # TODO: Finish this
 
-    def is_cyclic_util(self, v, visited, rec_stack):
+    def __is_disconnected(self, node):
+        """
+        Checks for disconnectedness in the provided DAG by doing a DFS from the root and check if all nodes have been
+        traversed in the node_list
+
+        :assumption: The unique root has been found and pointed to self.root
+        :param: node: a Node object
+        :return: True, if the DAG is disconnected; else False
+        """
+        node.traversed = True
+        if len(node.parents) == 0:  # Hit a leaf node or trivial DAG with one root node
+            if node == self.root:
+                return False  # Return False since trivially connected
+            return  # Pop the call stack
+        else:
+            for parent in node.parents:  # Do a recursive call on all the parents
+                self.__is_disconnected(parent)
+        for temp_node in self.node_list:
+            if not temp_node.traversed:
+                return True  # Found a node that wasn't traversed, so the DAG is disconnected
+        return False
+
+    def __reset_traversed(self):
+        """
+        Reset the traversed attribute/pointer in all the nodes to False for future traversals
+        """
+        for node in self.node_list:
+            node.traversed = False
+
+    def __is_cyclic_util(self, v, visited, rec_stack):
         """
         An adaptation from https://www.geeksforgeeks.org/detect-cycle-in-a-graph/#:~:text=To%20detect%20cycle%2C
         %20check%20for,a%20cycle%20in%20the%20tree to detect a cycle in the given DAG
@@ -62,7 +87,7 @@ class Dag:
         # Recur for all children if any child is visited and in recStack then graph is cyclic
         for child in v.children:
             if not visited[child.index]:
-                if self.is_cyclic_util(child, visited, rec_stack):
+                if self.__is_cyclic_util(child, visited, rec_stack):
                     return True
             elif rec_stack[child.index]:
                 return True
@@ -71,7 +96,6 @@ class Dag:
         rec_stack[v.index] = False
         return False
 
-    # Returns true if graph is cyclic; else, false
     def is_cyclic(self):
         """
         An adaptation from https://www.geeksforgeeks.org/detect-cycle-in-a-graph/#:~:text=To%20detect%20cycle%2C
@@ -84,11 +108,11 @@ class Dag:
         rec_stack = [False] * (len(self.node_list) + 1)
         for node in self.node_list:
             if not visited[node.index]:
-                if self.is_cyclic_util(node, visited, rec_stack):
+                if self.__is_cyclic_util(node, visited, rec_stack):
                     return True
         return False
 
-    def find_root(self):
+    def __find_root(self):
         """
         If the root isn't provided, an exhaustive search over the nodes is used
         :return: Node (root) or Error
@@ -99,6 +123,8 @@ class Dag:
                 possible_roots.append(node)
         if len(possible_roots) == 1:
             return possible_roots[0]  # Return the only possible root
-        else:
-            raise ValueError("More than one possible root found, restructure the DAG")  # More than one possible root
-            # found; DAG must be restructured with one root
+        if len(possible_roots) > 1:
+            # More than one possible root found; DAG must be restructured with one root
+            raise ValueError("More than one possible root found: restructure the DAG")
+        if len(possible_roots) == 0:  # This catches only some cycles
+            raise ValueError("No possible roots found: a cycle is likely present, restructure the DAG")

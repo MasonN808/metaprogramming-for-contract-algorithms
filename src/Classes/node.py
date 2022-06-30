@@ -5,6 +5,8 @@ class Node:
     Parameters
     ----------
     index : non-negative int, required
+        A unique index appended to the node
+
     expr_type : string, required
         The type of the expression (e.g., functional, contract, or conditional)
 
@@ -23,6 +25,7 @@ class Node:
 
     def __init__(self, index, expr_type, time, parents, children, pp):
         self.index = index  # Index of the node in the tree in no particular order
+        self.traversed = False  # Used in checking for connectedness in the DAG
         self.expr_type = expr_type
         self.time = time
         self.parents = parents
