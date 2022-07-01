@@ -1,3 +1,5 @@
+# TODO: Make this a Class
+
 """
 Synthetic performance profiles for all contract algorithms in the DAG formulated in an embedded embedded dictionary
 """

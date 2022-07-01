@@ -4,7 +4,7 @@ class Node:
 
     Parameters
     ----------
-    index : non-negative int, required
+    id : non-negative int, required
         A unique index appended to the node
 
     expr_type : string, optional
@@ -23,15 +23,15 @@ class Node:
         the performance profile of a node in the DAG
     """
 
-    def __init__(self, index, parents, children, pp, expr_type=None, time=None):
-        self.index = index  # Index of the node in the tree in no particular order
+    def __init__(self, id, parents, children, performance_profile, expr_type=None, time=None):
+        self.id = id  # id of the node in the tree
         self.traversed = False  # Used in checking for connectedness in the DAG
         self.expr_type = expr_type
         self.time = time
         self.parents = parents
         self.children = children
-        self.pp = pp  # This will be a an dictionary in the embedded dictionary of performance profiles for the
-        # contract program
+        self.performance_profile = performance_profile  # This will be a an dictionary in the embedded dictionary of
+        # performance profiles for the contract program
 
     def query_pp(self, time, current_quality, previous_qualities):
         """
@@ -42,7 +42,8 @@ class Node:
         :param previous_qualities: the qualities outputted from the parent nodes
         :return: [0,1], the probability of getting the current_quality, given the previous qualities and time allocation
         """
-        return self.pp[time]
+
+        return self.performance_profile[time]
 
     def adjust_time(self, time):
         self.time = time

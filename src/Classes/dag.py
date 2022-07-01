@@ -21,7 +21,7 @@ class Dag:
                 raise ValueError("Inputted root is not a root")
         self.node_list = node_list
         self.order = len(self.node_list)
-        self.__unique_index("list")  # Checks that all nodes have a unique index
+        self.__unique_id("list")  # Checks that all nodes have a unique id
         self.check_structure()  # Checks that the structure of the DAG is valid
 
     def check_structure(self):
@@ -100,19 +100,19 @@ class Dag:
         :return: True, if v has been visited; else False
         """
         # Mark current node as visited and add to recursion stack
-        visited[v.index] = True
-        rec_stack[v.index] = True
+        visited[v.id] = True
+        rec_stack[v.id] = True
 
         # Recur for all children if any child is visited and in recStack then graph is cyclic
         for child in v.children:
-            if not visited[child.index]:
+            if not visited[child.id]:
                 if self.__is_cyclic_util(child, visited, rec_stack):
                     return True
-            elif rec_stack[child.index]:
+            elif rec_stack[child.id]:
                 return True
 
         # The node needs to be popped from recursion stack before function ends
-        rec_stack[v.index] = False
+        rec_stack[v.id] = False
         return False
 
     def __is_cyclic(self):
@@ -126,7 +126,7 @@ class Dag:
         visited = [False] * (len(self.node_list) + 1)
         rec_stack = [False] * (len(self.node_list) + 1)
         for node in self.node_list:
-            if not visited[node.index]:
+            if not visited[node.id]:
                 if self.__is_cyclic_util(node, visited, rec_stack):
                     return True
         return False
@@ -155,11 +155,11 @@ class Dag:
         :param node: a Node object to be appended to the self.node_list
         :return: None
         """
-        self.__unique_index("node", node)  # Checks that the node has a unique index relative to node_list
+        self.__unique_id("node", node)  # Checks that the node has a unique id relative to node_list
         self.node_list.append(node)
         self.check_structure()  # Checks that adding the node doesn't ruin the DAG's structure
 
-    def __unique_index(self, data_type, data=None):
+    def __unique_id(self, data_type, data=None):
         """
         Checks to see if the given list or element either has all unique elements or if the element appended
         to the node_list is unique, where, if not unique, will infringe on other functions
@@ -168,16 +168,16 @@ class Dag:
         :param data: Node object or None
         :return: True if valid; else, error
         """
-        if data_type == "list":  # Check that all nodes in the list have unique indexes
+        if data_type == "list":  # Check that all nodes in the list have unique ides
             for node in self.node_list:
                 for inner_node in self.node_list:
-                    if node.index == inner_node.index:
-                        raise ValueError("The same index is applied to more than one node")
+                    if node.id == inner_node.id:
+                        raise ValueError("The same id is applied to more than one node")
             return True
         elif data_type == "node":
             for node in self.node_list:
-                if node.index == data.index:
-                    raise ValueError("The same index is applied to more than one node")
+                if node.id == data.id:
+                    raise ValueError("The same id is applied to more than one node")
             return True
         else:
             raise ValueError("Invalid data_type given")
