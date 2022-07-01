@@ -7,8 +7,8 @@ class PerformanceProfile:
     """
 
     def __init__(self, id):
-        self.performance_profile = None
         self.id = id
+        self.performance_profile = None
 
     def populate(self, instances):
         """
@@ -20,7 +20,7 @@ class PerformanceProfile:
         # TODO: Finish this
         return self.performance_profile
 
-    def query_pp(self, time, current_quality, previous_qualities):
+    def query(self, time, current_quality, previous_qualities):
         """
         Queries the performance profile at a specific time given the previous qualities of the contract algorithm's
         parents

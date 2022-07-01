@@ -1,3 +1,6 @@
+import json
+
+
 class Dag:
     """
     Creates a DAG from a list of Node objects and a root node
@@ -23,6 +26,18 @@ class Dag:
                 raise ValueError("Inputted root is not a root")
         self.__unique_id("list")  # Checks that all nodes have a unique id
         self.check_structure()  # Checks that the structure of the DAG is valid
+        self.performance_profiles = self.__import_performance_profiles()  # import the performance profiles
+
+    @staticmethod
+    def __import_performance_profiles():
+        """
+        Imports the performance profiles via an external JSON file
+        :return: an embedded dictionary of instances and conditional performance profiles
+        """
+        # JSON file
+        f = open('PerformanceProfiles/data.json', "r")
+        # Reading from file
+        return json.loads(f.read())
 
     def check_structure(self):
         """
