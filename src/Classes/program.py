@@ -5,7 +5,7 @@ class Program:
 
     Parameters
     ----------
-    budget : int, required
+    budget : non-negative int, required
         The budget of the contract program represented as seconds
 
     dag : DAG, required
@@ -14,6 +14,22 @@ class Program:
 
     def __init__(self, dag, budget):
         self.budget = budget
+        self.allocations = self.__discretize_budget()
         self.dag = dag
 
-# if __name__ == "__main__":
+    def naive_hill_climbing(self):
+        """
+        Does naive hill climbing search by randomly replacing a set amount of time s between two different contract
+        algorithms. If the expected value of the root node of the contract algorithm increases, we commit to the
+        replacement; else, we divide s by 2 and repeat the above until s reaches some threshold epsilon by which we
+        terminate
+
+        :return: A stream of optimized time allocations associated with each contract algorithm
+        """
+        # TODO: Finish this
+        return
+
+    def __discretize_budget(self):
+        allocation = self.budget / self.dag.order  # Divide the budget into equal allocations for every contract algo
+        # TODO: Take into account for no nice division (i.e. Floats)
+        return [allocation] * self.dag.order

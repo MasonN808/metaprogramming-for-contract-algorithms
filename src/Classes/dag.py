@@ -9,19 +9,22 @@ class Dag:
 
     node_list : Nodes[], required
         The list of nodes in the DAG, including the root
+
     """
 
     def __init__(self, root, node_list):
-        if root is None:  # Check if root is unknown
+        if root is None:  # Checks if root is unknown
             self.root = self.__find_root()
         else:
             self.root = root
-            if self.__find_root() != self.root:
+            if self.__find_root() != self.root:  # Checks if the input root is valid
                 raise ValueError("Inputted root is not a root")
         self.node_list = node_list
-        self.check_structure(self.root, self.node_list)
+        self.order = len(self.node_list)
+        self.__unique_index("list")  # Checks that all nodes have a unique index
+        self.check_structure()  # Checks that the structure of the DAG is valid
 
-    def check_structure(self, root, node_list):
+    def check_structure(self):
         """
         Checks the following properties in order:
             1. A unique root
@@ -144,3 +147,37 @@ class Dag:
             raise ValueError("More than one possible root found: restructure the DAG")
         if len(possible_roots) == 0:  # This catches only some cycles
             raise ValueError("No possible roots found: a cycle is likely present, restructure the DAG")
+
+    def add_node(self, node):
+        """
+        Adds a node to the node_list and verifies the structure of the DAG
+
+        :param node: a Node object to be appended to the self.node_list
+        :return: None
+        """
+        self.__unique_index("node", node)  # Checks that the node has a unique index relative to node_list
+        self.node_list.append(node)
+        self.check_structure()  # Checks that adding the node doesn't ruin the DAG's structure
+
+    def __unique_index(self, data_type, data=None):
+        """
+        Checks to see if the given list or element either has all unique elements or if the element appended
+        to the node_list is unique, where, if not unique, will infringe on other functions
+
+        :param data_type: string ("list" or "node")
+        :param data: Node object or None
+        :return: True if valid; else, error
+        """
+        if data_type == "list":  # Check that all nodes in the list have unique indexes
+            for node in self.node_list:
+                for inner_node in self.node_list:
+                    if node.index == inner_node.index:
+                        raise ValueError("The same index is applied to more than one node")
+            return True
+        elif data_type == "node":
+            for node in self.node_list:
+                if node.index == data.index:
+                    raise ValueError("The same index is applied to more than one node")
+            return True
+        else:
+            raise ValueError("Invalid data_type given")
