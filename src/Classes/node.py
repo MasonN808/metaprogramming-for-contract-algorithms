@@ -29,7 +29,7 @@ class Node:
         self.expr_type = expr_type
         self.time = time
         self.parents = parents
-        self.children = children
+        # self.children = children
         self.performance_profile = performance_profile  # This will be a an dictionary in the embedded dictionary of
         # performance profiles for the contract program
 

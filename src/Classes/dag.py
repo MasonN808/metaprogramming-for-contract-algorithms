@@ -85,7 +85,7 @@ class Dag:
         :return: True, if the DAG has self-loops; else False
         """
         for node in self.node_list:
-            if node in node.children | node in node.parents:
+            if node in node.parents:
                 return True  # Has self-loops
         return False  # No self-loops
 
@@ -103,12 +103,12 @@ class Dag:
         visited[v.id] = True
         rec_stack[v.id] = True
 
-        # Recur for all children if any child is visited and in recStack then graph is cyclic
-        for child in v.children:
-            if not visited[child.id]:
-                if self.__is_cyclic_util(child, visited, rec_stack):
+        # Recur for all parents if any parent is visited and in rec_stack then graph is cyclic
+        for parent in v.parents:
+            if not visited[parent.id]:
+                if self.__is_cyclic_util(parent, visited, rec_stack):
                     return True
-            elif rec_stack[child.id]:
+            elif rec_stack[parent.id]:
                 return True
 
         # The node needs to be popped from recursion stack before function ends
@@ -137,8 +137,13 @@ class Dag:
         :return: Node (root) or Error
         """
         possible_roots = []
+        # This double for-loop checks to see if the node is a parent of any other nodes for potential roots
         for node in self.node_list:
-            if len(node.children) == 0:  # Check if node has no children, a property of the root
+            is_parent = False
+            for inner_node in self.node_list:
+                if node in inner_node.parents:  # Check if node is a parent of any nodes, a property not of the root
+                    is_parent = True
+            if not is_parent:
                 possible_roots.append(node)
         if len(possible_roots) == 1:
             return possible_roots[0]  # Return the only possible root
