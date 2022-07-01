@@ -34,16 +34,18 @@ class Dag:
         # Done in constructor
         # Check for connectedness
         if self.__is_disconnected(self.root):
-            raise ValueError("Provided DAG is disconnected, must be connected")
+            raise ValueError("Provided DAG is invalid, has disconnectedness")
         self.__reset_traversed()  # Reset the traversed pointers for the nodes in node_list to False
         # Check for self-loops
-        # TODO: Finish this
+        if self.__has_self_loops():
+            raise ValueError("Provided DAG is invalid, has self-loops")
         # Check for directed cycles
-        # TODO: Finish this
+        if self.__is_cyclic():
+            raise ValueError("Provided DAG is invalid, has directed cycles")
 
     def __is_disconnected(self, node):
         """
-        Checks for disconnectedness in the provided DAG by doing a DFS from the root and check if all nodes have been
+        Checks for disconnectedness in the provided DAG by doing a DFS from the root and checks that all nodes have been
         traversed in the node_list
 
         :assumption: The unique root has been found and pointed to self.root
@@ -69,6 +71,20 @@ class Dag:
         """
         for node in self.node_list:
             node.traversed = False
+
+    def __has_self_loops(self):
+        """
+        Checks for self-loops in the provided DAG by doing a DFS from the root
+
+        :assumption: The unique root has been found and pointed to self.root
+                     and the DAG is connected
+        :param: node: a Node object
+        :return: True, if the DAG has self-loops; else False
+        """
+        for node in self.node_list:
+            if node in node.children | node in node.parents:
+                return True  # Has self-loops
+        return False  # No self-loops
 
     def __is_cyclic_util(self, v, visited, rec_stack):
         """
@@ -96,7 +112,7 @@ class Dag:
         rec_stack[v.index] = False
         return False
 
-    def is_cyclic(self):
+    def __is_cyclic(self):
         """
         An adaptation from https://www.geeksforgeeks.org/detect-cycle-in-a-graph/#:~:text=To%20detect%20cycle%2C
         %20check%20for,a%20cycle%20in%20the%20tree to detect a cycle in the given DAG
