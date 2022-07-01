@@ -30,6 +30,10 @@ class Program:
         return
 
     def __discretize_budget(self):
+        """
+        Discretizes the budget into equal partitions relative to the order of the DAG
+        :return:
+        """
         allocation = self.budget / self.dag.order  # Divide the budget into equal allocations for every contract algo
         # TODO: Take into account for no nice division (i.e. Floats)
         return [allocation] * self.dag.order

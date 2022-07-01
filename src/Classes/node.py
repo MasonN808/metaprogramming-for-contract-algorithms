@@ -7,10 +7,10 @@ class Node:
     index : non-negative int, required
         A unique index appended to the node
 
-    expr_type : string, required
+    expr_type : string, optional
         The type of the expression (e.g., functional, contract, or conditional)
 
-    time : non-negative int, required
+    time : non-negative int
         The time allocation given to the contract algorithm in seconds (one-second intervals)
 
     parents : Node[], required for non-leaf nodes
@@ -23,7 +23,7 @@ class Node:
         the performance profile of a node in the DAG
     """
 
-    def __init__(self, index, expr_type, time, parents, children, pp):
+    def __init__(self, index, parents, children, pp, expr_type=None, time=None):
         self.index = index  # Index of the node in the tree in no particular order
         self.traversed = False  # Used in checking for connectedness in the DAG
         self.expr_type = expr_type
