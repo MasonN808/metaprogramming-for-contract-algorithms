@@ -17,6 +17,28 @@ class Program:
         self.dag = dag
         self.allocations = self.__discretize_budget()
 
+    def global_utility(self, qualities):
+        """
+        Gives a utility given the qualities of the parents of the current node
+
+        :param qualities: Qualities[], required
+                The qualities that were outputted for each contract algorithm in the DAG
+        :return: float
+        """
+        # TODO: Finish this
+
+    def global_expected_utility(self, qualities):
+        """
+        Gives the expected utility of the contract program given the performance profiles of the nodes
+        (i.e., the probability distribution of each contract program's conditional performance profile) and the
+        global utility
+
+        :param qualities: Qualities[], required
+                The qualities that were outputted for each contract algorithm in the DAG
+        :return: float
+        """
+        # TODO: Finish this
+
     def naive_hill_climbing(self):
         """
         Does naive hill climbing search by randomly replacing a set amount of time s between two different contract

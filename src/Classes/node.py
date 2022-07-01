@@ -24,4 +24,9 @@ class Node:
         # performance profiles for the contract program, likely in a JSON file
 
     def adjust_time(self, time):
+        """
+        Adjusts the time of the contract algorithm
+        :param time: non-negative int, required
+        :return: None
+        """
         self.time = time
