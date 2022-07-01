@@ -14,8 +14,8 @@ class Program:
 
     def __init__(self, dag, budget):
         self.budget = budget
-        self.allocations = self.__discretize_budget()
         self.dag = dag
+        self.allocations = self.__discretize_budget()
 
     def naive_hill_climbing(self):
         """

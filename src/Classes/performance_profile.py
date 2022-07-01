@@ -1,15 +1,33 @@
-# TODO: Make this a Class
+class PerformanceProfile:
+    """
+    A performance profile attached to a node in the DAG via an id associated with the node
 
-"""
-Synthetic performance profiles for all contract algorithms in the DAG formulated in an embedded embedded dictionary
-"""
-# TODO: Make this better somehow (n-embedded dictionaries?)
-performance_profiles = {0: {0: 1, 1: 5, 2: 8, 3: 9, 4: 9.5, 5: 9.6, 6: 9.7},
-                        1: {0: 1, 1: 5, 2: 8, 3: 9, 4: 9.5, 5: 9.6, 6: 9.7}}
+    :param id: non-negative int, required
+        A unique index appended to the node
+    """
 
-"""
-Synthetic quality mappings for all contract algorithms in the DAG formulated in an embedded dictionary
-"""
+    def __init__(self, id):
+        self.performance_profile = None
+        self.id = id
 
-qualities = {0: {0: 1, 1: 5, 2: 8, 3: 9, 4: 9.5, 5: 9.6, 6: 9.7},
-             1: {0: 1, 1: 5, 2: 8, 3: 9, 4: 9.5, 5: 9.6, 6: 9.7}}
+    def populate(self, instances):
+        """
+        Populates the performance profile using the average over a list of performance profiles from simulated instances
+        # TODO: Get back to this to confirm validity
+        :param instances: a list of embedded dictionaries stored as a JSON file
+        :return: An embedded dictionary
+        """
+        # TODO: Finish this
+        return self.performance_profile
+
+    def query_pp(self, time, current_quality, previous_qualities):
+        """
+        Queries the performance profile at a specific time given the previous qualities of the contract algorithm's
+        parents
+        :param time: the time allocation by which the contract algorithm stops
+        :param current_quality: the potential quality of the current contract algorithm
+        :param previous_qualities: the qualities outputted from the parent nodes
+        :return: [0,1], the probability of getting the current_quality, given the previous qualities and time allocation
+        """
+        # TODO: Finish this
+        return self.performance_profile[time]

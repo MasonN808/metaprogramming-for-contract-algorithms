@@ -12,15 +12,15 @@ class Dag:
 
     """
 
-    def __init__(self, root, node_list):
+    def __init__(self, node_list, root=None):
+        self.node_list = node_list
+        self.order = len(self.node_list)
         if root is None:  # Checks if root is unknown
             self.root = self.__find_root()
         else:
             self.root = root
             if self.__find_root() != self.root:  # Checks if the input root is valid
                 raise ValueError("Inputted root is not a root")
-        self.node_list = node_list
-        self.order = len(self.node_list)
         self.__unique_id("list")  # Checks that all nodes have a unique id
         self.check_structure()  # Checks that the structure of the DAG is valid
 
@@ -173,13 +173,14 @@ class Dag:
         :param data: Node object or None
         :return: True if valid; else, error
         """
-        if data_type == "list":  # Check that all nodes in the list have unique ides
+        if data_type == "list":  # Check that all nodes in the list have unique ids
             for node in self.node_list:
                 for inner_node in self.node_list:
-                    if node.id == inner_node.id:
-                        raise ValueError("The same id is applied to more than one node")
+                    if node.id == inner_node.id:  # Check that the ids are different
+                        if node != inner_node:  # Check that the inner node and outer node are different
+                            raise ValueError("The same id is applied to more than one node")
             return True
-        elif data_type == "node":
+        elif data_type == "node":  # Check that the appended node has a unique id relative to the other nodes
             for node in self.node_list:
                 if node.id == data.id:
                     raise ValueError("The same id is applied to more than one node")
