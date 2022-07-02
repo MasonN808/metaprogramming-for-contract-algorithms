@@ -39,7 +39,10 @@ if __name__ == "__main__":
     node_list = [root, node_1, node_2, node_3, node_4, node_5, node_6]
 
     # Create and verify the DAG from the node list
-    Dag = Dag(node_list)
+    dag = Dag(node_list)
 
     # Create the program with some budget
-    Program(Dag, BUDGET)
+    program = Program(dag, BUDGET)
+
+    # The initial time allocations for each contract algorithm
+    print(program.allocations)

@@ -19,7 +19,7 @@ class Program:
     def __init__(self, dag, budget):
         self.budget = budget
         self.dag = dag
-        self.allocations = self.__discretize_budget()
+        self.allocations = self.__partition_budget()
 
     def global_utility(self, qualities):
         """
@@ -58,11 +58,10 @@ class Program:
         # TODO: Finish this
         return
 
-    def __discretize_budget(self):
+    def __partition_budget(self):
         """
         Discretizes the budget into equal partitions relative to the order of the DAG
         :return:
         """
         allocation = self.budget / self.dag.order  # Divide the budget into equal allocations for every contract algo
-        # TODO: Take into account for no nice division (i.e. Floats)
         return [allocation] * self.dag.order

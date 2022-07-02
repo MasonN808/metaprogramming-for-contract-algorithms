@@ -26,7 +26,7 @@ class Dag:
                 raise ValueError("Inputted root is not a root")
         self.__unique_id("list")  # Checks that all nodes have a unique id
         self.check_structure()  # Checks that the structure of the DAG is valid
-        self.performance_profiles = self.__import_performance_profiles()  # import the performance profiles
+        # self.performance_profiles = self.__import_performance_profiles()  # import the performance profiles
 
     @staticmethod
     def __import_performance_profiles():
@@ -34,18 +34,17 @@ class Dag:
         Imports the performance profiles via an external JSON file.
         The JSON will have the following embedded format:
         # TODO: make sure this is correct
-            * List of instances
-                * List of contact algorithms/nodes in the DAG
-                    * List of possible discretized intervals for parent node 1
-                        * ...
-                            * List of possible discretized intervals for parent node n
-                                * List of possible discretized time intervals
-                                    * List of possible qualities for current node
+            * List of contact algorithms/nodes in the DAG
+                * List of possible discretized intervals for parent node 1
+                    * ...
+                        * List of possible discretized intervals for parent node n
+                            * List of possible discretized time intervals
+                                * List of possible qualities for current node
 
         :return: an embedded dictionary of instances and conditional performance profiles
         """
         # JSON file
-        f = open('PerformanceProfiles/data.json', "r")
+        f = open("src/profiles/data.json", "r")
         # Reading from file
         return json.loads(f.read())
 

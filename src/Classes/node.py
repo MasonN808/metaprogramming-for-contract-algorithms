@@ -24,8 +24,12 @@ class Node:
         # performance profiles for the contract program, likely in a JSON file
 
     def __check_time(self):
+        """
+        Checks that the time allocation is valid
+        :return:
+        """
         if not self.time >= 0 | self.time is None:
-            raise ValueError("Time allocation must be non-negative")
+            raise ValueError("Time allocation must be positive")
 
     def allocate_time(self, time):
         """
@@ -36,6 +40,11 @@ class Node:
         self.time = time
 
     def local_joint_probability_distribution(self):
+        """
+        Queries the conditional performance profiles to create a joint probability distribution of the subtree.
+        This will be used later in the expected utility function in conjunction with the utility function
+        :return:
+        """
         if self.time is None:
             raise ValueError("Node has no time allocation")
         # TODO: Finish this
