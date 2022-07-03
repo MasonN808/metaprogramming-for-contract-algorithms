@@ -26,7 +26,7 @@ class Dag:
                 raise ValueError("Inputted root is not a root")
         self.__unique_id("list")  # Checks that all nodes have a unique id
         self.check_structure()  # Checks that the structure of the DAG is valid
-        # self.performance_profiles = self.__import_performance_profiles()  # import the performance profiles
+        self.performance_profiles = self.__import_performance_profiles()  # import the performance profiles
 
     @staticmethod
     def __import_performance_profiles():
@@ -205,9 +205,12 @@ class Dag:
                             raise ValueError("The same id is applied to more than one node")
             return True
         elif data_type == "node":  # Check that the appended node has a unique id relative to the other nodes
-            for node in self.node_list:
-                if node.id == data.id:
-                    raise ValueError("The same id is applied to more than one node")
-            return True
+            if data is None:
+                raise ValueError("node must be provided")
+            else:
+                for node in self.node_list:
+                    if node.id == data.id:
+                        raise ValueError("The same id is applied to more than one node")
+                return True
         else:
             raise ValueError("Invalid data_type given")
