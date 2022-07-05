@@ -2,6 +2,8 @@ from src.Classes.dag import Dag
 from src.Classes.node import Node
 from src.Classes.program import Program
 from src.Classes.performance_profile import PerformanceProfile
+from src.profiles.simulate import create_dictionary
+import json
 
 if __name__ == "__main__":
     BUDGET = 10
@@ -46,3 +48,10 @@ if __name__ == "__main__":
 
     # The initial time allocations for each contract algorithm
     print(program.allocations)
+
+    dictionary_synthetic = create_dictionary(dag)
+    with open('data.json', 'w') as f:
+        json.dump(dictionary_synthetic, f, indent=2)
+        print("New json file is created from data.json file")
+
+    dag.import_performance_profiles("data.json")
