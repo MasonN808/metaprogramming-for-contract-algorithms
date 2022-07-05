@@ -34,7 +34,6 @@ class Dag:
         """
         Imports the performance profiles via an external JSON file.
         The JSON will have the following embedded format:
-        # TODO: make sure this is correct
             * List of contact algorithms/nodes in the DAG
                 * List of possible discretized intervals for parent node 1
                     * ...

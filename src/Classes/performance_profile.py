@@ -5,20 +5,14 @@ class PerformanceProfile:
     :param id: non-negative int, required
         A unique index appended to the node
     """
+    QUALITY_INTERVAL = 10  # The number of quality intervals to calculate the probability distribution given a
+    # performance profile
+    TIME_INTERVAL = 10  # The number of time intervals to calculate the probability distribution given a performance
+    # profile
 
     def __init__(self, id):
         self.id = id
         self.performance_profile = None
-
-    def populate(self, instances):
-        """
-        Populates the performance profile using the average over a list of performance profiles from simulated instances
-        # TODO: Get back to this to confirm validity
-        :param instances: a list of embedded dictionaries stored as a JSON file
-        :return: An embedded dictionary
-        """
-        # TODO: Finish this
-        return self.performance_profile
 
     def query(self, time, current_quality, previous_qualities):
         """

@@ -11,10 +11,6 @@ class Program:
     dag : DAG, required
         The DAG that the contract program inherits
     """
-    QUALITY_INTERVAL = 10  # The number of quality intervals to calculate the probability distribution given a
-    # performance profile
-    TIME_INTERVAL = 10  # The number of time intervals to calculate the probability distribution given a performance
-    # profile
 
     def __init__(self, dag, budget):
         self.budget = budget

@@ -2,11 +2,12 @@ from src.Classes.dag import Dag
 from src.Classes.node import Node
 from src.Classes.program import Program
 from src.Classes.performance_profile import PerformanceProfile
-from src.profiles.simulate import create_dictionary
+from src.profiles.generator import Generator
 import json
 
 if __name__ == "__main__":
     BUDGET = 10
+    INSTANCES = 5
 
     # Create a DAG manually for testing
     # Leaf node
@@ -49,9 +50,18 @@ if __name__ == "__main__":
     # The initial time allocations for each contract algorithm
     print(program.allocations)
 
-    dictionary_synthetic = create_dictionary(dag)
-    with open('data.json', 'w') as f:
-        json.dump(dictionary_synthetic, f, indent=2)
-        print("New json file is created from data.json file")
+    # Initialize a generator
+    generator = Generator()
 
-    dag.import_performance_profiles("data.json")
+    # Generate instances
+    instances = []  # file names of the instances
+    for i in range(INSTANCES):  # Create a finite number of unique instances and create JSON files for each
+        dictionary_temp = generator.create_dictionary(dag)
+        with open('instance_{}.json'.format(i), 'w') as f:
+            instances.append('instance_{}.json'.format(i))  # Add the instance name for the populate() method
+            json.dump(dictionary_temp, f, indent=2)
+            print("New JSON file created for instance_{}".format(i))
+
+    # populate the instances into one populous file
+    generator.populate(instances, "populous.json")
+    # dag.import_performance_profiles("data.json")
