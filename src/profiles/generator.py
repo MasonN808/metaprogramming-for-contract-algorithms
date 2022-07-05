@@ -5,6 +5,10 @@ import numpy as np
 
 class Generator:
 
+    def __init__(self, instances, dag):
+        self.instances = instances
+        self.dag = dag
+
     @staticmethod
     def simulate_performance_profile(time_limit, step_size):
         """
@@ -49,6 +53,20 @@ class Generator:
             dictionary_inner = {0: self.simulate_performance_profile(50, .1), 1: parent_ids}
             dictionary[i.id] = dictionary_inner
         return dictionary
+
+    def generate_instances(self):
+        """
+        Generates instances using the DAG and number of instances
+        :return: a list of the file names of the instances stored in JSON files
+        """
+        instances = []  # file names of the instances
+        for i in range(self.instances):  # Create a finite number of unique instances and create JSON files for each
+            dictionary_temp = self.create_dictionary(self.dag)
+            with open('instance_{}.json'.format(i), 'w') as f:
+                instances.append('instance_{}.json'.format(i))  # Add the instance name for the populate() method
+                json.dump(dictionary_temp, f, indent=2)
+                print("New JSON file created for instance_{}".format(i))
+        return instances
 
     def populate(self, instances, out_file):
         """

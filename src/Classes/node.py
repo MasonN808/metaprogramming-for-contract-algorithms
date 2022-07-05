@@ -10,18 +10,14 @@ class Node:
         The time allocation given to the contract algorithm in seconds (one-second intervals)
     :param parents: Node[], required for non-leaf nodes
         The parent nodes that are directed into the current node
-    :param performance_profile: dictionary, required
-        the performance profile of a node in the DAG
     """
 
-    def __init__(self, id, parents, performance_profile, expr_type=None, time=None):
+    def __init__(self, id, parents, expr_type=None, time=None):
         self.id = id  # id of the node in the tree
         self.traversed = False  # Used in checking for connectedness in the DAG
         self.expr_type = expr_type
         self.time = time
         self.parents = parents
-        self.performance_profile = performance_profile  # This will be a an dictionary in the embedded dictionary of
-        # performance profiles for the contract program, likely in a JSON file
 
     def __check_time(self):
         """
