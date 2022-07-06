@@ -23,7 +23,7 @@ class Generator:
         :return: dictionary
         """
         dictionary = {}
-        c = np.random.gamma(shape=2, scale=1)  # generate a random number from the gamma distribution
+        c = np.random.gamma(shape=1, scale=1)  # generate a random number from the gamma distribution
         for t in np.arange(0, self.time_limit, self.step_size).round(1):  # Using np.arange() for float step values
             # round to one decimal place
             dictionary[t] = 1 - math.e ** (-c * t)  # Use this function to approximate the performance profile
@@ -41,58 +41,58 @@ class Generator:
         # Reading from file
         return json.loads(f.read())
 
-    def create_dictionary(self, dag):
+    def create_dictionary(self, node):
         """
         Creates a dictionary for one instance of the performance profiles of the DAG using synthetic data
-        :param dag: The DAG
+        :param node: A node object
         :return: dictionary
         """
-        dictionary = {}
-        for i in dag.node_list:
-            # Make an embedded dictionary for each node in the DAG
-            # 0: represents the node's performance profile
-            # 1: represents the list of pointers to the node's parents
-            parent_ids = []
-            for parent in i.parents:
-                parent_ids.append(parent.id)
-            dictionary_inner = {0: self.simulate_performance_profile(), 1: parent_ids}
-            dictionary[i.id] = dictionary_inner
+        dictionary = {'instances': {}}
+        for i in range(self.instances):
+            # Make an embedded dictionary for each instance of the node in the DAG
+            dictionary_inner = self.simulate_performance_profile()
+            dictionary['instances']['instance_{}'.format(i)] = dictionary_inner
+        dictionary['parents'] = [parent.id for parent in node.parents]
         return dictionary
 
-    def generate_instances(self):
+    def generate_nodes(self):
         """
         Generates instances using the DAG and number of instances
         :return: a list of the file names of the instances stored in JSON files
         """
         instances = []  # file names of the instances
-        for i in range(self.instances):  # Create a finite number of unique instances and create JSON files for each
-            dictionary_temp = self.create_dictionary(self.dag)
-            with open('instance_{}.json'.format(i), 'w') as f:
-                instances.append('instance_{}.json'.format(i))  # Add the instance name for the populate() method
+        for (i, node) in enumerate(self.dag.node_list):  # Create a finite number of unique instances and create JSON
+            # files for each
+            dictionary_temp = self.create_dictionary(node)
+            with open('node_{}.json'.format(i), 'w') as f:
+                instances.append('node_{}.json'.format(i))  # Add the instance name for the populate() method
                 json.dump(dictionary_temp, f, indent=2)
-                print("New JSON file created for instance_{}".format(i))
+                print("New JSON file created for node_{}".format(i))
         return instances
 
-    def populate(self, instances, out_file):
+    def populate(self, nodes, out_file):
         """
-        Populates the performance profile using the average over a list of performance profiles from simulated instances
+        Populates the performance profile using the average over a list of quality mappings from simulated nodes
 
-        :param instances: a list of file names (strings) of the JSON performance profiles to be merged
+        :param nodes: a list of file names (strings) of the JSON performance profiles to be merged
         :param out_file: the file to be populated
         :return: An embedded dictionary
         """
         with open('{}'.format(out_file), 'w') as f:
-            bundle = self.import_performance_profiles(instances[0])  # Use the first instance as the dictionary to be
-            # populated with the rest of the instances
-            for node in bundle:  # Loop through all the nodes in the dictionary
-                for t in bundle[node]['0']:  # Loop through all the time steps
-                    bundle[node]['0'][t] = [bundle[node]['0'][t]]  # Make the singleton a list
-            instances.remove(instances[0])  # remove the first instance from the list
-            for instance in instances:
-                temp_dictionary = self.import_performance_profiles(instance)  # Convert the JSON file into a dictionary
-                for node in temp_dictionary:  # Loop through all the nodes in the dictionary
-                    for t in bundle[node]['0']:  # Loop through all the time steps
-                        bundle[node]['0'][t].append(temp_dictionary[node]['0'][t])  # Append the information from the
-                        # performance profile to the bundled performance profile
+            bundle = {}
+            for (i, node) in enumerate(nodes):
+                bundle["node_{}".format(i)] = {}
+                bundle["node_{}".format(i)]['qualities'] = {}
+                bundle["node_{}".format(i)]['parents'] = {}
+                temp_dictionary = self.import_performance_profiles(node)  # Convert the JSON file into a dictionary
+                for instance in temp_dictionary['instances']:
+                    for t in temp_dictionary['instances'][instance]:  # Loop through all the time steps
+                        try:
+                            bundle["node_{}".format(i)]['qualities']["{}".format(t)]
+                        except KeyError:
+                            bundle["node_{}".format(i)]['qualities']["{}".format(t)] = []
+                        bundle["node_{}".format(i)]['qualities']["{}".format(t)].append(
+                            temp_dictionary['instances'][instance][t])
+                bundle["node_{}".format(i)]['parents'] = temp_dictionary['parents']
             json.dump(bundle, f, indent=2)
-        print("Finished populating JSON file using instances")
+        print("Finished populating JSON file using nodes JSON files")

@@ -7,7 +7,7 @@ from src.profiles.generator import Generator
 if __name__ == "__main__":
     BUDGET = 10  # The budget of the contract program
     INSTANCES = 5  # The number of instances generated for the performance profiles
-    TIME_LIMIT = 50  # The time limit for the synthetic performance profiles
+    TIME_LIMIT = BUDGET  # The time limit for the synthetic performance profiles
     STEP_SIZE = .1  # The time step sizes in the performance profiles
     # Create a DAG manually for testing
     # Leaf node
@@ -40,12 +40,12 @@ if __name__ == "__main__":
     # Initialize a generator
     generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, step_size=STEP_SIZE)
 
-    # Generate the instances
-    instances = generator.generate_instances()  # Return a list of file names of the instances
-
-    # populate the instances into one populous file
+    # Generate the nodes quality mappings
+    nodes = generator.generate_nodes()  # Return a list of file names of the nodes
+    print(nodes)
+    # populate the nodes' quality mappings into one populous file
     populous_file_name = "populous.json"
-    generator.populate(instances, populous_file_name)
+    generator.populate(nodes, populous_file_name)
 
     # Initialize the performance profiles from the JSON file
     performance_profiles = PerformanceProfile(
