@@ -31,23 +31,24 @@ class PerformanceProfile:
 
     def query_quality_list(self, time, id):
         """
-        Queries the performance profile at a specific time, using some interval to create a distribution over qualities
+        Queries the quality mapping at a specific time, using some interval to create a distribution over qualities
         :param id: The node id
         :param time: The time allocation by which the contract algorithm stops
         :return: A list of qualities for node with self.id
         """
         if self.dictionary is None:
-            raise ValueError("performance profile for node is null: Import performance profiles")
+            raise ValueError("Quality mappings for node is null: Import quality mappings")
         else:
             qualities = []
+            # Initialize the start and end of the time interval for the prior
             start_step = (time // self.time_interval) * self.time_interval
             end_step = start_step + self.time_interval
             # Note: interval of [start_step, end_step)
-            for i in np.arange(start_step, end_step, self.step_size).round(1):
-                # ["{}".format(id)]: The node id
-                # ['0']: The node's performance profile
-                # ["{}".format(time)]: The time allocation
-                qualities += self.dictionary["{}".format(id)]['0']["{}".format(i)]  # Concatenates
+            for t in np.arange(start_step, end_step, self.step_size).round(1):
+                # ["node_{}".format(id)]: The node
+                # ['qualities']: The node's quality mappings
+                # ["{}".format(t)]: The time allocation
+                qualities += self.dictionary["node_{}".format(id)]['qualities']["{}".format(t)]
             return qualities
 
     def query_probability(self, time, id, queried_quality):
@@ -57,9 +58,16 @@ class PerformanceProfile:
         :param id: The id of the node/contract algorithm being queried
         :param time: The time allocation by which the contract algorithm stops
         :param queried_quality: The conditional probability of obtaining the queried quality
-        :return: [0,1], the probability of getting the current_quality, given the previous qualities and time allocation
+        :return: [0,1], the probability of getting the current_quality, given the previous qualities (not yet) and time allocation
         """
-        self.query_quality_list(time, id)
-        # TODO: finish this
-
-        return self.dictionary[time]
+        quality_list = sorted(self.query_quality_list(time, id))  # Sort in ascending order
+        number_in_interval = 0
+        # Initialize the start and end of the quality interval for the posterior
+        start_quality = (queried_quality // self.quality_interval) * self.quality_interval
+        end_quality = start_quality + self.quality_interval
+        # Note: interval of [start_step, end_step)
+        for quality in quality_list:
+            if start_quality <= quality < end_quality:
+                number_in_interval += 1
+        probability = number_in_interval/len(quality_list)
+        return probability

@@ -72,7 +72,7 @@ class Generator:
 
     def populate(self, nodes, out_file):
         """
-        Populates the performance profile using the average over a list of quality mappings from simulated nodes
+        Populates a single file with the data from the quality mappings of the node JSON files
 
         :param nodes: a list of file names (strings) of the JSON performance profiles to be merged
         :param out_file: the file to be populated

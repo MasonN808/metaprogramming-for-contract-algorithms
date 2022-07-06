@@ -49,13 +49,15 @@ if __name__ == "__main__":
 
     # Initialize the performance profiles from the JSON file
     performance_profiles = PerformanceProfile(
-        populous_file_name, time_interval=10, time_limit=TIME_LIMIT, step_size=STEP_SIZE)
+        populous_file_name, time_interval=1, time_limit=TIME_LIMIT, step_size=STEP_SIZE)
 
     # Test the query method
     print(performance_profiles.query_quality_list(time=5.4, id=0))
+
+    print(performance_profiles.query_probability(time=5.4, id=0, queried_quality=1))
 
     # Create the program with some budget
     program = Program(dag, BUDGET)
 
     # The initial time allocations for each contract algorithm
-    print(program.allocations)
+    # print(program.allocations)
