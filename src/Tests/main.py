@@ -52,7 +52,7 @@ if __name__ == "__main__":
         populous_file_name, time_interval=10, time_limit=TIME_LIMIT, step_size=STEP_SIZE)
 
     # Test the query method
-    print(performance_profiles.query_quality_list(5.4, 0))
+    print(performance_profiles.query_quality_list(time=5.4, id=0))
 
     # Create the program with some budget
     program = Program(dag, BUDGET)
