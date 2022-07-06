@@ -48,7 +48,8 @@ if __name__ == "__main__":
     generator.populate(instances, populous_file_name)
 
     # Initialize the performance profiles from the JSON file
-    performance_profiles = PerformanceProfile(populous_file_name, time_interval=10, time_limit=TIME_LIMIT, step_size=STEP_SIZE)
+    performance_profiles = PerformanceProfile(
+        populous_file_name, time_interval=10, time_limit=TIME_LIMIT, step_size=STEP_SIZE)
 
     # Test the query method
     print(performance_profiles.query_quality_list(5.4, 0))
