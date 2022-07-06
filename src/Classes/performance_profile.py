@@ -69,5 +69,5 @@ class PerformanceProfile:
         for quality in quality_list:
             if start_quality <= quality < end_quality:
                 number_in_interval += 1
-        probability = number_in_interval/len(quality_list)
+        probability = number_in_interval / len(quality_list)
         return probability
