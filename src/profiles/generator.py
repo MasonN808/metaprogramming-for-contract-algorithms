@@ -11,20 +11,20 @@ class Generator:
     :param dag: the dag to be used for performance profile simulation
     """
 
-    def __init__(self, instances, dag, time_limit):
+    def __init__(self, instances, dag, time_limit, step_size):
         self.instances = instances
         self.dag = dag
         self.time_limit = time_limit
+        self.step_size = step_size
 
-    def simulate_performance_profile(self, step_size):
+    def simulate_performance_profile(self):
         """
         Simulates a performance profile of a contract algorithm using synthetic data
-        :param step_size: the step sizes of time
         :return: dictionary
         """
         dictionary = {}
         c = np.random.gamma(shape=2, scale=1)  # generate a random number from the gamma distribution
-        for t in np.arange(0, self.time_limit, step_size).round(1):  # Using np.arange() for float step values
+        for t in np.arange(0, self.time_limit, self.step_size).round(1):  # Using np.arange() for float step values
             # round to one decimal place
             dictionary[t] = 1 - math.e ** (-c * t)  # Use this function to approximate the performance profile
         return dictionary
@@ -55,7 +55,7 @@ class Generator:
             parent_ids = []
             for parent in i.parents:
                 parent_ids.append(parent.id)
-            dictionary_inner = {0: self.simulate_performance_profile(50, .1), 1: parent_ids}
+            dictionary_inner = {0: self.simulate_performance_profile(), 1: parent_ids}
             dictionary[i.id] = dictionary_inner
         return dictionary
 
