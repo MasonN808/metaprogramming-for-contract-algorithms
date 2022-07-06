@@ -37,7 +37,7 @@ if __name__ == "__main__":
     dag = Dag(node_list)
 
     # Initialize a generator
-    generator = Generator(INSTANCES, dag)
+    generator = Generator(INSTANCES, dag, time_limit=50)
 
     # Generate the instances
     instances = generator.generate_instances()  # Return a list of file names of the instances
@@ -46,7 +46,10 @@ if __name__ == "__main__":
     populous_file_name = "populous.json"
     generator.populate(instances, populous_file_name)
 
+    # Initialize the performance profiles from the JSON file
     performance_profiles = PerformanceProfile(populous_file_name)
+
+    # Test the query method
     print(performance_profiles.query_quality_list(20.0, 0))
 
     # Create the program with some budget

@@ -4,22 +4,27 @@ import numpy as np
 
 
 class Generator:
+    """
+    A generator to create synthetic performance profiles
 
-    def __init__(self, instances, dag):
+    :param instances: the number of instances to be produced
+    :param dag: the dag to be used for performance profile simulation
+    """
+
+    def __init__(self, instances, dag, time_limit):
         self.instances = instances
         self.dag = dag
+        self.time_limit = time_limit
 
-    @staticmethod
-    def simulate_performance_profile(time_limit, step_size):
+    def simulate_performance_profile(self, step_size):
         """
         Simulates a performance profile of a contract algorithm using synthetic data
-        :param time_limit: the time that the performance profile terminates at
         :param step_size: the step sizes of time
         :return: dictionary
         """
         dictionary = {}
         c = np.random.gamma(shape=2, scale=1)  # generate a random number from the gamma distribution
-        for t in np.arange(0, time_limit, step_size).round(1):  # Using np.arange() for float step values
+        for t in np.arange(0, self.time_limit, step_size).round(1):  # Using np.arange() for float step values
             # round to one decimal place
             dictionary[t] = 1 - math.e ** (-c * t)  # Use this function to approximate the performance profile
         return dictionary
