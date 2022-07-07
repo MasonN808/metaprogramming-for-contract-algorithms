@@ -9,18 +9,18 @@ if __name__ == "__main__":
     INSTANCES = 5
     TIME_LIMIT = BUDGET
     STEP_SIZE = 0.1
-    
+
     # Create a DAG manually for testing
     # Leaf nodes
     node_3 = Node(3, [], expression_type="contract")
     node_4 = Node(4, [], expression_type="contract")
     node_5 = Node(5, [], expression_type="contract")
     node_6 = Node(6, [], expression_type="contract")
-    
+
     # Intermediate nodes
     node_1 = Node(1, [node_3, node_4], expression_type="contract")
     node_2 = Node(2, [node_5, node_6], expression_type="contract")
-    
+
     # Root node
     root = Node(0, [node_1, node_2], expression_type="contract")
 
