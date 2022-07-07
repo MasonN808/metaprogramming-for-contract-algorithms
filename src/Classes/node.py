@@ -13,8 +13,10 @@ class Node:
     """
 
     def __init__(self, id, parents, expr_type=None, time=None):
-        self.id = id  # id of the node in the tree
-        self.traversed = False  # Used in checking for connectedness in the DAG
+        # id of the node in the tree
+        self.id = id
+        # Used in checking for connectedness in the DAG
+        self.traversed = False
         self.expr_type = expr_type
         self.time = time
         self.parents = parents

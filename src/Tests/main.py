@@ -1,4 +1,4 @@
-from src.Classes.dag import Dag
+from src.Classes.directed_acyclic_graph import DirectedAcyclicGraph
 from src.Classes.node import Node
 from src.Classes.program import Program
 from src.Classes.performance_profile import PerformanceProfile
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     node_list = [root, node_1, node_2, node_3, node_4, node_5, node_6]
 
     # Create and verify the DAG from the node list
-    dag = Dag(node_list)
+    dag = DirectedAcyclicGraph(node_list, root)
 
     # Initialize a generator
     generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, step_size=STEP_SIZE)

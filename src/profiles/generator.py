@@ -57,15 +57,15 @@ class Generator:
 
     def generate_nodes(self):
         """
-        Generates instances using the DAG and number of instances
+        Generates instances using the DAG and number of instances required
         :return: a list of the file names of the instances stored in JSON files
         """
         instances = []  # file names of the instances
-        for (i, node) in enumerate(self.dag.node_list):  # Create a finite number of unique instances and create JSON
-            # files for each
+        # Create a finite number of unique instances and create JSON files for each
+        for (i, node) in enumerate(self.dag.nodes):
             dictionary_temp = self.create_dictionary(node)
             with open('node_{}.json'.format(i), 'w') as f:
-                instances.append('node_{}.json'.format(i))  # Add the instance name for the populate() method
+                instances.append('node_{}.json'.format(i))
                 json.dump(dictionary_temp, f, indent=2)
                 print("New JSON file created for node_{}".format(i))
         return instances
@@ -84,9 +84,11 @@ class Generator:
                 bundle["node_{}".format(i)] = {}
                 bundle["node_{}".format(i)]['qualities'] = {}
                 bundle["node_{}".format(i)]['parents'] = {}
-                temp_dictionary = self.import_performance_profiles(node)  # Convert the JSON file into a dictionary
+                # Convert the JSON file into a dictionary
+                temp_dictionary = self.import_performance_profiles(node)
                 for instance in temp_dictionary['instances']:
-                    for t in temp_dictionary['instances'][instance]:  # Loop through all the time steps
+                    # Loop through all the time steps
+                    for t in temp_dictionary['instances'][instance]:
                         try:
                             bundle["node_{}".format(i)]['qualities']["{}".format(t)]
                         except KeyError:

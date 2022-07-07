@@ -1,52 +1,28 @@
-import json
-
-
-class Dag:
+class DirectedAcyclicGraph:
     """
     Creates a DAG from a list of Node objects and a root node
 
     Parameters
     ----------
-    root : Node, optional
+    root : Node, required
         The root of the DAG
 
-    node_list : Nodes[], required
+    nodes : Nodes[], required
         The list of nodes in the DAG, including the root
-
     """
 
-    def __init__(self, node_list, root=None):
-        self.node_list = node_list
-        self.order = len(self.node_list)
-        if root is None:  # Checks if root is unknown
-            self.root = self.__find_root()
-        else:
-            self.root = root
-            if self.__find_root() != self.root:  # Checks if the input root is valid
-                raise ValueError("Inputted root is not a root")
-        self.__unique_id("list")  # Checks that all nodes have a unique id
-        self.check_structure()  # Checks that the structure of the DAG is valid
-        # self.performance_profiles = self.import_performance_profiles()  # import the performance profiles
+    def __init__(self, nodes, root):
+        self.nodes = nodes
+        self.order = len(self.nodes)
+        self.root = root
+        # Checks if the input root is valid
+        if self.__find_root() != self.root:
+            raise ValueError("Inputted root is not a root")
+        # Checks that all nodes have a unique id
+        self.__unique_id("list")
+        # Checks that the structure of the DAG is valid
+        self.check_structure()
         self.performance_profiles = None
-
-    @staticmethod
-    def import_performance_profiles(file_name):
-        """
-        Imports the performance profiles via an external JSON file.
-        The JSON will have the following embedded format:
-            * List of contact algorithms/nodes in the DAG
-                * List of possible discretized intervals for parent node 1
-                    * ...
-                        * List of possible discretized intervals for parent node n
-                            * List of possible discretized time intervals
-                                * List of possible qualities for current node
-
-        :return: an embedded dictionary of instances and conditional performance profiles
-        """
-        # JSON file
-        f = open('{}'.format(file_name), "r")
-        # Reading from file
-        return json.loads(f.read())
 
     def check_structure(self):
         """
@@ -62,7 +38,8 @@ class Dag:
         # Check for connectedness
         if self.__is_disconnected(self.root):
             raise ValueError("Provided DAG is invalid, has disconnectedness")
-        self.__reset_traversed()  # Reset the traversed pointers for the nodes in node_list to False
+        # Reset the traversed pointers for the nodes in nodes to False
+        self.__reset_traversed()
         # Check for self-loops
         if self.__has_self_loops():
             raise ValueError("Provided DAG is invalid, has self-loops")
@@ -73,30 +50,35 @@ class Dag:
     def __is_disconnected(self, node):
         """
         Checks for disconnectedness in the provided DAG by doing a DFS from the root and checks that all nodes have been
-        traversed in the node_list
+        traversed in the nodes
 
         :assumption: The unique root has been found and pointed to self.root
         :param: node: a Node object
         :return: True, if the DAG is disconnected; else False
         """
         node.traversed = True
-        if len(node.parents) == 0:  # Hit a leaf node or trivial DAG with one root node
+        # Hit a leaf node or trivial DAG with one root node
+        if len(node.parents) == 0:
             if node == self.root:
-                return False  # Return False since trivially connected
-            return  # Pop the call stack
+                # Return False since trivially connected
+                return False
+            # Pop the call stack
+            return
         else:
-            for parent in node.parents:  # Do a recursive call on all the parents
+            # Do a recursive call on all the parents
+            for parent in node.parents:
                 self.__is_disconnected(parent)
-        for temp_node in self.node_list:
+        for temp_node in self.nodes:
             if not temp_node.traversed:
-                return True  # Found a node that wasn't traversed, so the DAG is disconnected
+                # Found a node that wasn't traversed, so the DAG is disconnected
+                return True
         return False
 
     def __reset_traversed(self):
         """
         Reset the traversed attribute/pointer in all the nodes to False for future traversals
         """
-        for node in self.node_list:
+        for node in self.nodes:
             node.traversed = False
 
     def __has_self_loops(self):
@@ -108,10 +90,12 @@ class Dag:
         :param: node: a Node object
         :return: True, if the DAG has self-loops; else False
         """
-        for node in self.node_list:
+        for node in self.nodes:
             if node in node.parents:
-                return True  # Has self-loops
-        return False  # No self-loops
+                # Has self-loops
+                return True
+        # No self-loops
+        return False
 
     def __is_cyclic_util(self, v, visited, rec_stack):
         """
@@ -147,9 +131,9 @@ class Dag:
         :Assumption: The DAG is connected
         :return: True, if the DAG has a cycle; else False
         """
-        visited = [False] * (len(self.node_list) + 1)
-        rec_stack = [False] * (len(self.node_list) + 1)
-        for node in self.node_list:
+        visited = [False] * (len(self.nodes) + 1)
+        rec_stack = [False] * (len(self.nodes) + 1)
+        for node in self.nodes:
             if not visited[node.id]:
                 if self.__is_cyclic_util(node, visited, rec_stack):
                     return True
@@ -162,53 +146,62 @@ class Dag:
         """
         possible_roots = []
         # This double for-loop checks to see if the node is a parent of any other nodes for potential roots
-        for node in self.node_list:
+        for node in self.nodes:
             is_parent = False
-            for inner_node in self.node_list:
-                if node in inner_node.parents:  # Check if node is a parent of any nodes, a property not of the root
+            for inner_node in self.nodes:
+                # Check if node is a parent of any nodes, a property not of the root
+                if node in inner_node.parents:
                     is_parent = True
             if not is_parent:
                 possible_roots.append(node)
         if len(possible_roots) == 1:
-            return possible_roots[0]  # Return the only possible root
+            # Return the only possible root
+            return possible_roots[0]
         if len(possible_roots) > 1:
             # More than one possible root found; DAG must be restructured with one root
             raise ValueError("More than one possible root found: restructure the DAG")
-        if len(possible_roots) == 0:  # This catches only some cycles
+        # This catches only some cycles
+        if len(possible_roots) == 0:
             raise ValueError("No possible roots found: a cycle is likely present, restructure the DAG")
 
     def add_node(self, node):
         """
-        Adds a node to the node_list and verifies the structure of the DAG
+        Adds a node to the nodes and verifies the structure of the DAG
 
-        :param node: a Node object to be appended to the self.node_list
+        :param node: a Node object to be appended to the self.nodes
         :return: None
         """
-        self.__unique_id("node", node)  # Checks that the node has a unique id relative to node_list
-        self.node_list.append(node)
-        self.check_structure()  # Checks that adding the node doesn't ruin the DAG's structure
+        # Checks that the node has a unique id relative to nodes
+        self.__unique_id("node", node)
+        self.nodes.append(node)
+        # Checks that adding the node doesn't ruin the DAG's structure
+        self.check_structure()
 
     def __unique_id(self, data_type, data=None):
         """
         Checks to see if the given list or element either has all unique elements or if the element appended
-        to the node_list is unique, where, if not unique, will infringe on other functions
+        to the nodes is unique, where, if not unique, will infringe on other functions
 
         :param data_type: string ("list" or "node")
         :param data: Node object or None
         :return: True if valid; else, error
         """
-        if data_type == "list":  # Check that all nodes in the list have unique ids
-            for node in self.node_list:
-                for inner_node in self.node_list:
-                    if node.id == inner_node.id:  # Check that the ids are different
-                        if node != inner_node:  # Check that the inner node and outer node are different
+        # Check that all nodes in the list have unique ids
+        if data_type == "list":
+            for node in self.nodes:
+                for inner_node in self.nodes:
+                    # Check that the ids are different
+                    if node.id == inner_node.id:
+                        # Check that the inner node and outer node are different
+                        if node != inner_node:
                             raise ValueError("The same id is applied to more than one node")
             return True
-        elif data_type == "node":  # Check that the appended node has a unique id relative to the other nodes
+        # Check that the appended node has a unique id relative to the other nodes
+        elif data_type == "node":
             if data is None:
                 raise ValueError("node must be provided")
             else:
-                for node in self.node_list:
+                for node in self.nodes:
                     if node.id == data.id:
                         raise ValueError("The same id is applied to more than one node")
                 return True

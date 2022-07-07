@@ -11,11 +11,16 @@ class PerformanceProfile:
     """
 
     def __init__(self, file_name, time_interval=10, time_limit=50, step_size=50, quality_interval=.05):
-        self.dictionary = self.import_performance_profiles(file_name)  # a dictionary of performance profiles
-        self.time_interval = time_interval  # The interval for the prior of the conditional probability
-        self.quality_interval = quality_interval  # The interval over the qualities to create a quality distribution
-        self.time_limit = time_limit  # The time limit of the performance profiles
-        self.step_size = step_size  # The step size of the time steps in the performance profiles
+        # a dictionary of performance profiles
+        self.dictionary = self.import_performance_profiles(file_name)
+        # The interval for the prior of the conditional probability
+        self.time_interval = time_interval
+        # The interval over the qualities to create a quality distribution
+        self.quality_interval = quality_interval
+        # The time limit of the performance profiles
+        self.time_limit = time_limit
+        # The step size of the time steps in the performance profiles
+        self.step_size = step_size
 
     @staticmethod
     def import_performance_profiles(file_name):
@@ -53,14 +58,16 @@ class PerformanceProfile:
 
     def query_probability(self, time, id, queried_quality):
         """
-        Queries the performance profile at a specific time given the previous qualities of the contract algorithm's
-        parents
+        The performance profile: Queries the quality mapping at a specific time given the previous qualities of the
+        contract algorithm's parents
         :param id: The id of the node/contract algorithm being queried
         :param time: The time allocation by which the contract algorithm stops
         :param queried_quality: The conditional probability of obtaining the queried quality
-        :return: [0,1], the probability of getting the current_quality, given the previous qualities (not yet) and time allocation
+        :return: [0,1], the probability of getting the current_quality, given the previous qualities (not yet) and time
+        allocation
         """
-        quality_list = sorted(self.query_quality_list(time, id))  # Sort in ascending order
+        # Sort in ascending order
+        quality_list = sorted(self.query_quality_list(time, id))
         number_in_interval = 0
         # Initialize the start and end of the quality interval for the posterior
         start_quality = (queried_quality // self.quality_interval) * self.quality_interval
