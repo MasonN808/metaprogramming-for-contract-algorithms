@@ -11,11 +11,14 @@ class Generator:
     :param dag: the dag to be used for performance profile simulation
     """
 
-    def __init__(self, instances, dag, time_limit, step_size):
+    def __init__(self, instances, dag, time_limit, step_size, uniform_low, uniform_high):
         self.instances = instances
         self.dag = dag
         self.time_limit = time_limit
         self.step_size = step_size
+        self.uniform_low = uniform_low
+        self.uniform_high = uniform_high
+
 
     def simulate_performance_profile(self, random_number):
         """
@@ -49,7 +52,7 @@ class Generator:
         """
         dictionary = {'instances': {}}
         # Take a random value from a uniform distribution
-        c = np.random.uniform(low=.05, high=.1)
+        c = np.random.uniform(low=self.uniform_low, high=self.uniform_high)
         for i in range(self.instances):
             # Add some noise to the random value
             c = c + abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.

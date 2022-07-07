@@ -20,12 +20,13 @@ class ContractProgram(PerformanceProfile):
     STEP_SIZE = 0.1
     POPULOUS_FILE_NAME = "populous.json"
 
-    def __init__(self, dag, budget):
+    def __init__(self, dag, budget, scale):
         PerformanceProfile.__init__(self, file_name=self.POPULOUS_FILE_NAME, time_interval=1, time_limit=budget,
                                     step_size=self.STEP_SIZE)
         self.budget = budget
         self.dag = dag
         self.allocations = self.__partition_budget()
+        self.scale = scale
 
     @staticmethod
     def global_utility(qualities):
@@ -72,16 +73,16 @@ class ContractProgram(PerformanceProfile):
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
         allocation = self.budget / self.dag.order
-        time_switched = allocation / 2
+        time_switched = allocation / 1.1
         while time_switched > .05:
-            print("_________________")
+            # print("_________________")
             possible_local_max = []
 
             for combination in permutations(self.allocations, 2):
                 # Avoids exchanging time with itself
                 if combination[0].node_id == combination[1].node_id:
                     continue
-                print("Combination: {}".format([i.node_id for i in combination]))
+                # print("Combination: {}".format([i.node_id for i in combination]))
 
                 # Make a deep copy to avoid pointers to the same list
                 adjusted_allocations = copy.deepcopy(self.allocations)
@@ -89,14 +90,18 @@ class ContractProgram(PerformanceProfile):
                 if adjusted_allocations[combination[0].node_id].time - time_switched < 0:
                     continue
                 else:
-                    adjusted_allocations[combination[0].node_id].time = adjusted_allocations[combination[0].node_id].time - time_switched
-                    adjusted_allocations[combination[1].node_id].time = adjusted_allocations[combination[1].node_id].time + time_switched
-                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
+                    adjusted_allocations[combination[0].node_id].time = adjusted_allocations[
+                                                                            combination[0].node_id].time - time_switched
+                    adjusted_allocations[combination[1].node_id].time = adjusted_allocations[
+                                                                            combination[1].node_id].time + time_switched
+                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
+                            self.allocations):
                         possible_local_max.append(adjusted_allocations)
-                    print("EU(adjusted): {}\nEU(original): {}".format(
-                        self.global_expected_utility(adjusted_allocations) * 10 ** 6,
-                        self.global_expected_utility(
-                            self.allocations) * 10 ** 6))
+                    print("Amount of time switched: {:<21} => EU(adjusted): {:<18}      EU(original): {}".format(time_switched,
+                                                                        self.global_expected_utility(
+                                                                            adjusted_allocations) * self.scale,
+                                                                        self.global_expected_utility(
+                                                                            self.allocations) * self.scale))
 
             # arg max here
             if possible_local_max:
@@ -105,8 +110,8 @@ class ContractProgram(PerformanceProfile):
                     if self.global_expected_utility(j) == best_allocation:
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j)
-                print("Allocations: {}\nEU: {}".format(self.allocations,
-                                                       self.global_expected_utility(self.allocations) * 10 ** 6))
+                # print("Allocations: {}\nEU: {}".format([i.time for i in self.allocations],
+                #                                        self.global_expected_utility(self.allocations) * self.scale))
             else:
                 time_switched = time_switched / 2
         return self.allocations
