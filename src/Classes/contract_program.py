@@ -48,10 +48,15 @@ class ContractProgram(PerformanceProfile):
         :return: float
         """
         # TODO: make sure that node ids are non-negative integers (for our example, it is)
+        probability = 1
+        average_qualities = []
         for (id, time) in enumerate(time_allocations):
-            # self.query_probability(time, id, )
-            # TODO: Finish this
-            return
+            qualities = self.query_quality_list(time, id)
+            average_quality = self.average_quality(qualities)
+            average_qualities.append(average_quality)
+            probability = probability * self.query_probability(time, id, average_quality)
+        expected_utility = probability * self.global_utility(average_qualities)
+        return expected_utility
 
     def naive_hill_climbing(self):
         """

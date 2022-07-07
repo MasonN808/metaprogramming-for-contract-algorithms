@@ -48,6 +48,16 @@ class PerformanceProfile:
                 qualities += self.dictionary["node_{}".format(id)]['qualities']["{}".format(t)]
             return qualities
 
+    @staticmethod
+    def average_quality(qualities):
+        """
+        Gets the average quality over a list of qualities
+        :param qualities: float[]
+        :return: float
+        """
+        average = sum(qualities) / len(qualities)
+        return average
+
     def query_probability(self, time, id, queried_quality):
         """
         The performance profile: Queries the quality mapping at a specific time given the previous qualities of the

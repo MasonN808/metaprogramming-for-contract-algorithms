@@ -49,4 +49,5 @@ if __name__ == "__main__":
     print(program.query_probability(time=8, id=0, queried_quality=1))
 
     # The initial time allocations for each contract algorithm
-    print(program.allocations)
+    print("Initial Time Allocations: {}".format(program.allocations))
+    print("Initial Expected Utility: {}".format(program.global_expected_utility(program.allocations)))
