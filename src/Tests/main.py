@@ -51,3 +51,4 @@ if __name__ == "__main__":
     # The initial time allocations for each contract algorithm
     print("Initial Time Allocations: {}".format(program.allocations))
     print("Initial Expected Utility: {}".format(program.global_expected_utility(program.allocations)))
+    print("Naive Hill Climbing Search: {}".format(program.naive_hill_climbing()))

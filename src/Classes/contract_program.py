@@ -1,3 +1,5 @@
+import math
+
 from src.Classes.performance_profile import PerformanceProfile
 
 
@@ -67,8 +69,30 @@ class ContractProgram(PerformanceProfile):
 
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
-        # TODO: Finish this
-        return
+        allocation = self.budget / self.dag.order
+        comparisons = 1
+        time_switched = allocation
+        rollback_index = 0
+        index = 1
+        while time_switched > .5:
+            while comparisons <= math.comb(self.dag.order, 2):
+                try:
+                    # Make a shallow copy
+                    adjusted_allocations = self.allocations.copy()
+                    adjusted_allocations[rollback_index] = adjusted_allocations[rollback_index] - time_switched
+                    adjusted_allocations[rollback_index + index] = adjusted_allocations[rollback_index + index] \
+                                                                   + time_switched
+
+                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
+                        self.allocations = adjusted_allocations.copy()
+                except IndexError:
+                    rollback_index += 1
+                    index = 0
+
+                index += 1
+                comparisons += 1
+            time_switched = time_switched/2
+        return self.allocations
 
     def __partition_budget(self):
         """
