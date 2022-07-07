@@ -28,7 +28,7 @@ class Generator:
         for t in np.arange(0, self.time_limit, self.step_size).round(1):  # Using np.arange() for float step values
             # round to one decimal place
             dictionary[t] = 1 - math.e ** (
-                        -random_number * t)  # Use this function to approximate the performance profile
+                -random_number * t)  # Use this function to approximate the performance profile
         return dictionary
 
     @staticmethod
