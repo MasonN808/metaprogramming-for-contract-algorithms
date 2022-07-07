@@ -91,17 +91,17 @@ class ContractProgram(PerformanceProfile):
                     continue
                 else:
                     adjusted_allocations[combination[0].node_id].time = adjusted_allocations[
-                                                                            combination[0].node_id].time - time_switched
+                        combination[0].node_id].time - time_switched
                     adjusted_allocations[combination[1].node_id].time = adjusted_allocations[
-                                                                            combination[1].node_id].time + time_switched
+                        combination[1].node_id].time + time_switched
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations):
                         possible_local_max.append(adjusted_allocations)
                     print("Amount of time switched: {:<21} => EU(adjusted): {:<18}      EU(original): {}".format(time_switched,
-                                                                        self.global_expected_utility(
-                                                                            adjusted_allocations) * self.scale,
-                                                                        self.global_expected_utility(
-                                                                            self.allocations) * self.scale))
+                                                                                                                 self.global_expected_utility(
+                                                                                                                     adjusted_allocations) * self.scale,
+                                                                                                                 self.global_expected_utility(
+                                                                                                                     self.allocations) * self.scale))
 
             # arg max here
             if possible_local_max:

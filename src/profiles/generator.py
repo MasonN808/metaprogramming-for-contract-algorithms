@@ -19,7 +19,6 @@ class Generator:
         self.uniform_low = uniform_low
         self.uniform_high = uniform_high
 
-
     def simulate_performance_profile(self, random_number):
         """
         Simulates a performance profile of a contract algorithm using synthetic data
