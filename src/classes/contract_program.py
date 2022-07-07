@@ -1,5 +1,4 @@
 import copy
-import math
 from itertools import permutations
 from src.classes.performance_profile import PerformanceProfile
 from src.classes.time_allocation import TimeAllocation
@@ -73,31 +72,7 @@ class ContractProgram(PerformanceProfile):
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
         allocation = self.budget / self.dag.order
-        comparisons = 1
-        time_switched = allocation/2
-        rollback_index = 0
-        index = 1
-        # while time_switched > .5:
-        #     while comparisons <= math.comb(self.dag.order, 2):
-        #         try:
-        #             # Make a shallow copy
-        #             adjusted_allocations = self.allocations.copy()
-        #             adjusted_allocations[rollback_index] = adjusted_allocations[rollback_index] - time_switched
-        #             if adjusted_allocations[rollback_index] < 0:
-        #                 rollback_index
-        #             adjusted_allocations[rollback_index + index] = adjusted_allocations[rollback_index + index] \
-        #                 + time_switched
-        #             print("Allocations: {}\nEU: {}".format(adjusted_allocations, self.global_expected_utility(adjusted_allocations)*10**6))
-        #             if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
-        #                 self.allocations = adjusted_allocations.copy()
-        #         except IndexError:
-        #             rollback_index += 1
-        #             index = 0
-        #
-        #         index += 1
-        #         comparisons += 1
-        #     time_switched = time_switched / 2
-        index = 0
+        time_switched = allocation / 2
         while time_switched > .05:
             print("_________________")
             possible_local_max = []
@@ -119,9 +94,9 @@ class ContractProgram(PerformanceProfile):
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
                         possible_local_max.append(adjusted_allocations)
                     print("EU(adjusted): {}\nEU(original): {}".format(
-                            self.global_expected_utility(adjusted_allocations) * 10 ** 6,
-                            self.global_expected_utility(
-                                self.allocations) * 10 ** 6))
+                        self.global_expected_utility(adjusted_allocations) * 10 ** 6,
+                        self.global_expected_utility(
+                            self.allocations) * 10 ** 6))
 
             # arg max here
             if possible_local_max:
