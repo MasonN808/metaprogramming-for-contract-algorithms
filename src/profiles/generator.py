@@ -17,16 +17,18 @@ class Generator:
         self.time_limit = time_limit
         self.step_size = step_size
 
-    def simulate_performance_profile(self):
+    def simulate_performance_profile(self, random_number):
         """
         Simulates a performance profile of a contract algorithm using synthetic data
+
+        :param random_number: a random number from a uniform distribution with some noise
         :return: dictionary
         """
         dictionary = {}
-        c = np.random.gamma(shape=1, scale=1)  # generate a random number from the gamma distribution
         for t in np.arange(0, self.time_limit, self.step_size).round(1):  # Using np.arange() for float step values
             # round to one decimal place
-            dictionary[t] = 1 - math.e ** (-c * t)  # Use this function to approximate the performance profile
+            dictionary[t] = 1 - math.e ** (
+                        -random_number * t)  # Use this function to approximate the performance profile
         return dictionary
 
     @staticmethod
@@ -46,9 +48,13 @@ class Generator:
         :return: dictionary
         """
         dictionary = {'instances': {}}
+        # Take a random value from a uniform distribution
+        c = np.random.uniform(low=.05, high=.1)
         for i in range(self.instances):
+            # Add some noise to the random value
+            c = c + abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
             # Make an embedded dictionary for each instance of the node in the DAG
-            dictionary_inner = self.simulate_performance_profile()
+            dictionary_inner = self.simulate_performance_profile(c)
             dictionary['instances']['instance_{}'.format(i)] = dictionary_inner
         dictionary['parents'] = [parent.id for parent in node.parents]
         return dictionary
