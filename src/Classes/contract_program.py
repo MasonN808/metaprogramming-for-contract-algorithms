@@ -81,7 +81,7 @@ class ContractProgram(PerformanceProfile):
                     adjusted_allocations = self.allocations.copy()
                     adjusted_allocations[rollback_index] = adjusted_allocations[rollback_index] - time_switched
                     adjusted_allocations[rollback_index + index] = adjusted_allocations[rollback_index + index] \
-                                                                   + time_switched
+                        + time_switched
 
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
                         self.allocations = adjusted_allocations.copy()
@@ -91,7 +91,7 @@ class ContractProgram(PerformanceProfile):
 
                 index += 1
                 comparisons += 1
-            time_switched = time_switched/2
+            time_switched = time_switched / 2
         return self.allocations
 
     def __partition_budget(self):
