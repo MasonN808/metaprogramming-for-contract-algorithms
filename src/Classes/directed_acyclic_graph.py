@@ -17,7 +17,7 @@ class DirectedAcyclicGraph:
         self.root = root
         # Checks if the input root is valid
         if self.__find_root() != self.root:
-            raise ValueError("Inputted root is not a root")
+            raise ValueError("Input root node is not the root node of the DAG")
         # Checks that all nodes have a unique id
         self.__unique_id("list")
         # Checks that the structure of the DAG is valid
@@ -26,26 +26,22 @@ class DirectedAcyclicGraph:
 
     def check_structure(self):
         """
-        Checks the following properties in order:
-            1. A unique root
-            2. Connectedness
-            3. No self-loops
-            4. No directed cycles
+        Checks the following properties in order: a unique root exists, connectedness, no self-loops, no directed cycles
         :return: Error; else, continue
         """
         # Check for a unique root
         # Done in constructor
         # Check for connectedness
         if self.__is_disconnected(self.root):
-            raise ValueError("Provided DAG is invalid, has disconnectedness")
+            raise ValueError("Received an invalid directed acyclic graph: has disconnectedness")
         # Reset the traversed pointers for the nodes in nodes to False
         self.__reset_traversed()
         # Check for self-loops
         if self.__has_self_loops():
-            raise ValueError("Provided DAG is invalid, has self-loops")
+            raise ValueError("Received an invalid directed acyclic graph: contains self-loops")
         # Check for directed cycles
         if self.__is_cyclic():
-            raise ValueError("Provided DAG is invalid, has directed cycles")
+            raise ValueError("Received an invalid directed acyclic graph: contains directed cycles")
 
     def __is_disconnected(self, node):
         """
@@ -97,30 +93,30 @@ class DirectedAcyclicGraph:
         # No self-loops
         return False
 
-    def __is_cyclic_util(self, v, visited, rec_stack):
+    def __check_cyclicity(self, node, visited, stack):
         """
         An adaptation from https://www.geeksforgeeks.org/detect-cycle-in-a-graph/#:~:text=To%20detect%20cycle%2C
         %20check%20for,a%20cycle%20in%20the%20tree to detect a cycle in the given DAG
 
-        :param v: The current node v being evaluated
+        :param node: The current node being evaluated
         :param visited: The visited Nodes
-        :param rec_stack: The recursion stack
-        :return: True, if v has been visited; else False
+        :param stack: The recursion stack
+        :return: True, if node has been visited; else False
         """
         # Mark current node as visited and add to recursion stack
-        visited[v.id] = True
-        rec_stack[v.id] = True
+        visited[node.id] = True
+        stack[node.id] = True
 
-        # Recur for all parents if any parent is visited and in rec_stack then graph is cyclic
-        for parent in v.parents:
+        # Recur for all parents if any parent is visited and in stack then graph is cyclic
+        for parent in node.parents:
             if not visited[parent.id]:
-                if self.__is_cyclic_util(parent, visited, rec_stack):
+                if self.__check_cyclicity(parent, visited, stack):
                     return True
-            elif rec_stack[parent.id]:
+            elif stack[parent.id]:
                 return True
 
         # The node needs to be popped from recursion stack before function ends
-        rec_stack[v.id] = False
+        stack[node.id] = False
         return False
 
     def __is_cyclic(self):
@@ -128,20 +124,21 @@ class DirectedAcyclicGraph:
         An adaptation from https://www.geeksforgeeks.org/detect-cycle-in-a-graph/#:~:text=To%20detect%20cycle%2C
         %20check%20for,a%20cycle%20in%20the%20tree to detect a cycle in the given DAG
 
-        :Assumption: The DAG is connected
+        :assumption: The DAG is connected
         :return: True, if the DAG has a cycle; else False
         """
         visited = [False] * (len(self.nodes) + 1)
-        rec_stack = [False] * (len(self.nodes) + 1)
+        stack = [False] * (len(self.nodes) + 1)
         for node in self.nodes:
             if not visited[node.id]:
-                if self.__is_cyclic_util(node, visited, rec_stack):
+                if self.__check_cyclicity(node, visited, stack):
                     return True
         return False
 
     def __find_root(self):
         """
-        If the root isn't provided, an exhaustive search over the nodes is used
+        An exhaustive search over the nodes is used to find possible roots
+
         :return: Node (root) or Error
         """
         possible_roots = []
@@ -158,9 +155,7 @@ class DirectedAcyclicGraph:
             # Return the only possible root
             return possible_roots[0]
         if len(possible_roots) > 1:
-            # More than one possible root found; DAG must be restructured with one root
             raise ValueError("More than one possible root found: restructure the DAG")
-        # This catches only some cycles
         if len(possible_roots) == 0:
             raise ValueError("No possible roots found: a cycle is likely present, restructure the DAG")
 
@@ -199,11 +194,11 @@ class DirectedAcyclicGraph:
         # Check that the appended node has a unique id relative to the other nodes
         elif data_type == "node":
             if data is None:
-                raise ValueError("node must be provided")
+                raise ValueError("A node must be provided")
             else:
                 for node in self.nodes:
                     if node.id == data.id:
                         raise ValueError("The same id is applied to more than one node")
                 return True
         else:
-            raise ValueError("Invalid data_type given")
+            raise ValueError("Received an invalid data type")

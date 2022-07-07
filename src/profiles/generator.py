@@ -36,9 +36,7 @@ class Generator:
 
         :return: an embedded dictionary
         """
-        # JSON file
         f = open('{}'.format(file_name), "r")
-        # Reading from file
         return json.loads(f.read())
 
     def create_dictionary(self, node):

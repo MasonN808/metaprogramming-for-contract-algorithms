@@ -11,27 +11,20 @@ class PerformanceProfile:
     """
 
     def __init__(self, file_name, time_interval=10, time_limit=50, step_size=50, quality_interval=.05):
-        # a dictionary of performance profiles
-        self.dictionary = self.import_performance_profiles(file_name)
-        # The interval for the prior of the conditional probability
+        self.dictionary = self.import_quality_mappings(file_name)
         self.time_interval = time_interval
-        # The interval over the qualities to create a quality distribution
         self.quality_interval = quality_interval
-        # The time limit of the performance profiles
         self.time_limit = time_limit
-        # The step size of the time steps in the performance profiles
         self.step_size = step_size
 
     @staticmethod
-    def import_performance_profiles(file_name):
+    def import_quality_mappings(file_name):
         """
         Imports the performance profiles as dictionary via an external JSON file.
 
         :return: An embedded dictionary
         """
-        # JSON file
         f = open('{}'.format(file_name), "r")
-        # Reading from file
         return json.loads(f.read())
 
     def query_quality_list(self, time, id):
@@ -42,7 +35,7 @@ class PerformanceProfile:
         :return: A list of qualities for node with self.id
         """
         if self.dictionary is None:
-            raise ValueError("Quality mappings for node is null: Import quality mappings")
+            raise ValueError("The quality mapping for this node is null")
         else:
             qualities = []
             # Initialize the start and end of the time interval for the prior

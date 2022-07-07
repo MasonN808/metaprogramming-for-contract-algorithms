@@ -4,7 +4,7 @@ class Node:
 
     :param id: non-negative int, required
         A unique index appended to the node
-    :param expr_type: string, optional
+    :param expression_type: string, required
         The type of the expression (e.g., functional, contract, or conditional)
     :param time: non-negative int
         The time allocation given to the contract algorithm in seconds (one-second intervals)
@@ -12,12 +12,12 @@ class Node:
         The parent nodes that are directed into the current node
     """
 
-    def __init__(self, id, parents, expr_type=None, time=None):
+    def __init__(self, id, parents, expression_type=None, time=None):
         # id of the node in the tree
         self.id = id
         # Used in checking for connectedness in the DAG
         self.traversed = False
-        self.expr_type = expr_type
+        self.expr_type = expression_type
         self.time = time
         self.parents = parents
 
@@ -26,7 +26,7 @@ class Node:
         Checks that the time allocation is valid
         :return:
         """
-        if not self.time >= 0 | self.time is None:
+        if not self.time >= 0 or self.time is None:
             raise ValueError("Time allocation must be positive")
 
     def allocate_time(self, time):

@@ -1,4 +1,4 @@
-class Program:
+class ContractProgram:
     """
     Structures a directed-acyclic graph (DAG) as a contract program by applying a budget on a DAG of
     contract algorithms.  The edges are directed from the leaves to the root
