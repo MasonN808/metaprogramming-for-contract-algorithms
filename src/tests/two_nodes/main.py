@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     # The initial time allocations for each contract algorithm
     print("Initial Time Allocations: {}".format([i.time for i in program.allocations]))
-    print("Initial Expected Utility: {}".format(program.global_expected_utility(program.allocations) * 10**6))
+    print("Initial Expected Utility: {}".format(program.global_expected_utility(program.allocations) * program.scale))
     optimal_allocations = program.naive_hill_climbing()
     print("Naive Hill Climbing Search --> Time Allocations: {}".format([i.time for i in optimal_allocations]))
     print("Naive Hill Climbing Search --> Expected Utility: {}".format(program.global_expected_utility(optimal_allocations) * program.scale))
