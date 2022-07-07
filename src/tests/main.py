@@ -1,6 +1,6 @@
-from src.Classes.directed_acyclic_graph import DirectedAcyclicGraph
-from src.Classes.node import Node
-from src.Classes.contract_program import ContractProgram
+from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
+from src.classes.node import Node
+from src.classes.contract_program import ContractProgram
 from src.profiles.generator import Generator
 from os.path import exists
 
@@ -50,5 +50,7 @@ if __name__ == "__main__":
 
     # The initial time allocations for each contract algorithm
     print("Initial Time Allocations: {}".format(program.allocations))
-    print("Initial Expected Utility: {}".format(program.global_expected_utility(program.allocations)))
-    print("Naive Hill Climbing Search: {}".format(program.naive_hill_climbing()))
+    print("Initial Expected Utility: {}".format(program.global_expected_utility(program.allocations)*10**6))
+    optimal_allocations = program.naive_hill_climbing()
+    print("Naive Hill Climbing Search --> Time Allocations: {}".format([i.time for i in optimal_allocations]))
+    print("Naive Hill Climbing Search --> Expected Utility: {}".format(program.global_expected_utility(optimal_allocations)*10**6))
