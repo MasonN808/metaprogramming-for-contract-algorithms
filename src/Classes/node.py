@@ -45,4 +45,3 @@ class Node:
         """
         if self.time is None:
             raise ValueError("Node has no time allocation")
-        # TODO: Finish this

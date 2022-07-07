@@ -1,4 +1,7 @@
-class ContractProgram:
+from src.Classes.performance_profile import PerformanceProfile
+
+
+class ContractProgram(PerformanceProfile):
     """
     Structures a directed-acyclic graph (DAG) as a contract program by applying a budget on a DAG of
     contract algorithms.  The edges are directed from the leaves to the root
@@ -11,13 +14,18 @@ class ContractProgram:
     dag : DAG, required
         The DAG that the contract program inherits
     """
+    STEP_SIZE = 0.1
+    POPULOUS_FILE_NAME = "populous.json"
 
     def __init__(self, dag, budget):
+        PerformanceProfile.__init__(self, file_name=self.POPULOUS_FILE_NAME, time_interval=1, time_limit=budget,
+                                    step_size=self.STEP_SIZE)
         self.budget = budget
         self.dag = dag
         self.allocations = self.__partition_budget()
 
-    def global_utility(self, qualities):
+    @staticmethod
+    def global_utility(qualities):
         """
         Gives a utility given the qualities of the parents of the current node
 
@@ -25,9 +33,9 @@ class ContractProgram:
                 The qualities that were outputted for each contract algorithm in the DAG
         :return: float
         """
-        # TODO: Finish this
+        return sum(qualities)
 
-    def global_expected_utility(self, qualities):
+    def global_expected_utility(self, time_allocations):
         """
         Gives the expected utility of the contract program given the performance profiles of the nodes
         (i.e., the probability distribution of each contract program's conditional performance profile) and the
@@ -35,12 +43,15 @@ class ContractProgram:
 
         Assumption(s): 1) A time-allocation is given to each node in the contract program
 
-        :param qualities: Qualities[], required
-                The qualities that were outputted for each contract algorithm in the DAG
+        :param time_allocations: float[], required
+                The time allocations for each contract algorithm
         :return: float
         """
-        # self.dag.root
-        # TODO: Finish this
+        # TODO: make sure that node ids are non-negative integers (for our example, it is)
+        for (id, time) in enumerate(time_allocations):
+            # self.query_probability(time, id, )
+            # TODO: Finish this
+            return
 
     def naive_hill_climbing(self):
         """

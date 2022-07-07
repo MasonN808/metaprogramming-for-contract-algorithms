@@ -1,8 +1,8 @@
 from src.Classes.directed_acyclic_graph import DirectedAcyclicGraph
 from src.Classes.node import Node
 from src.Classes.contract_program import ContractProgram
-from src.Classes.performance_profile import PerformanceProfile
 from src.profiles.generator import Generator
+from os.path import exists
 
 if __name__ == "__main__":
     BUDGET = 10
@@ -30,27 +30,23 @@ if __name__ == "__main__":
     # Create and verify the DAG from the node list
     dag = DirectedAcyclicGraph(nodes, root)
 
-    # Initialize a generator
-    generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, step_size=STEP_SIZE)
+    # Used to create the synthetic data as instances and a populous file
+    if not exists("populous.json"):
+        # Initialize a generator
+        generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, step_size=STEP_SIZE)
 
-    # Generate the nodes quality mappings
-    nodes = generator.generate_nodes()  # Return a list of file names of the nodes
-    print(nodes)
-    # populate the nodes' quality mappings into one populous file
-    populous_file_name = "populous.json"
-    generator.populate(nodes, populous_file_name)
+        # Generate the nodes' quality mappings
+        nodes = generator.generate_nodes()  # Return a list of file names of the nodes
 
-    # Initialize the performance profiles from the JSON file
-    performance_profiles = PerformanceProfile(
-        populous_file_name, time_interval=1, time_limit=TIME_LIMIT, step_size=STEP_SIZE)
-
-    # Test the query method
-    print(performance_profiles.query_quality_list(time=5.4, id=0))
-
-    print(performance_profiles.query_probability(time=5.4, id=0, queried_quality=1))
+        # populate the nodes' quality mappings into one populous file
+        generator.populate(nodes, "populous.json")
 
     # Create the program with some budget
     program = ContractProgram(dag, BUDGET)
 
+    # Test the query method
+    print(program.query_quality_list(time=5.4, id=0))
+    print(program.query_probability(time=8, id=0, queried_quality=1))
+
     # The initial time allocations for each contract algorithm
-    # print(program.allocations)
+    print(program.allocations)
