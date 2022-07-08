@@ -78,22 +78,22 @@ class ContractProgram(PerformanceProfile):
             # print("_________________")
             possible_local_max = []
 
-            for combination in permutations(self.allocations, 2):
+            for permutation in permutations(self.allocations, 2):
                 # Avoids exchanging time with itself
-                if combination[0].node_id == combination[1].node_id:
+                if permutation[0].node_id == permutation[1].node_id:
                     continue
-                # print("Combination: {}".format([i.node_id for i in combination]))
+                # print("permutation: {}".format([i.node_id for i in permutation]))
 
                 # Make a deep copy to avoid pointers to the same list
                 adjusted_allocations = copy.deepcopy(self.allocations)
 
-                if adjusted_allocations[combination[0].node_id].time - time_switched < 0:
+                if adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
                     continue
                 else:
-                    adjusted_allocations[combination[0].node_id].time = adjusted_allocations[
-                        combination[0].node_id].time - time_switched
-                    adjusted_allocations[combination[1].node_id].time = adjusted_allocations[
-                        combination[1].node_id].time + time_switched
+                    adjusted_allocations[permutation[0].node_id].time = adjusted_allocations[
+                        permutation[0].node_id].time - time_switched
+                    adjusted_allocations[permutation[1].node_id].time = adjusted_allocations[
+                        permutation[1].node_id].time + time_switched
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations):
                         possible_local_max.append(adjusted_allocations)

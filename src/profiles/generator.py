@@ -1,7 +1,7 @@
 import json
 import math
 import numpy as np
-# from itertools import permutations
+from itertools import permutations
 
 
 class Generator:
@@ -21,17 +21,20 @@ class Generator:
         self.uniform_high = uniform_high
         self.quality_interval = quality_interval
 
-    def simulate_performance_profile(self, random_number):
+    def simulate_performance_profile(self, random_number, node):
         """
         Simulates a performance profile of a contract algorithm using synthetic data
 
+        :param node: Node object
         :param random_number: a random number from a uniform distribution with some noise
         :return: dictionary
         """
         dictionary = {}
         # TODO: Finish this
-        # parent_qualities = [self.dag.peroformance_profile]
-        # for combination in permutations(self.allocations, 2):
+        potential_parent_qualities = [i for i in np.arange(0, 1, self.quality_interval)]
+        for permutation in permutations(potential_parent_qualities, len(node.parents)):
+            pass
+            # TODO: Finish here
         # Using np.arange() for float step values
         # round to one decimal place
         for t in np.arange(0, self.time_limit, self.step_size).round(1):
