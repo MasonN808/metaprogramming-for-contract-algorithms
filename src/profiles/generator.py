@@ -42,18 +42,37 @@ class Generator:
         :param random_number: To produce noise in the quality mappings
         :return:
         """
-        potential_parent_qualities = [i for i in np.arange(0, 1, self.quality_interval)]
-        for quality in potential_parent_qualities:
-            dictionary[quality] = {quality: {}}
-            # Base Case
-            if depth == len(node.parents):
-                dictionary[quality] = {}
-                for t in np.arange(0, self.time_limit, self.step_size).round(1):
-                    # Use this function to approximate the performance profile
-                    dictionary[quality][t] = 1 - math.e ** (-random_number * t)
-            else:
-                self.recur(depth + 1, node, qualities.append(quality), dictionary[quality], random_number)
+        potential_parent_qualities = [i.round(2) for i in np.arange(0, 1, self.quality_interval)]
+        if not node.parents:
+            velocity = self.parent_dependent_transform(node, qualities, random_number)
+            for t in np.arange(0, self.time_limit, self.step_size).round(1):
+                # Use this function to approximate the performance profile
+                dictionary[t] = 1 - math.e ** (-velocity * t)
+        else:
+            for quality in potential_parent_qualities:
+                dictionary[quality] = {quality: {}}
+                # Base Case
+                if depth == len(node.parents) - 1:
+                    dictionary[quality] = {}
+                    # To change the quality mapping with respect to the parent qualities
+                    velocity = self.parent_dependent_transform(node, qualities, random_number)
+                    for t in np.arange(0, self.time_limit, self.step_size).round(1):
+                        # Use this function to approximate the performance profile
+                        dictionary[quality][t] = 1 - math.e ** (-velocity * t)
+                else:
+                    self.recur(depth + 1, node, qualities.append(quality), dictionary[quality], random_number)
         return dictionary
+
+    @staticmethod
+    def parent_dependent_transform(node, qualities, random_number):
+        if qualities:
+            # Get the average parent quality (this may not be what we want)
+            average_parent_quality = sum(qualities) / len(node.parents)
+            velocity = (10**average_parent_quality) - 1
+            return velocity
+        else:
+            # If node has no parents
+            return random_number
 
     @staticmethod
     def import_performance_profiles(file_name):
