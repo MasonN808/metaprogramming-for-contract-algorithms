@@ -20,9 +20,9 @@ class ContractProgram(PerformanceProfile):
     STEP_SIZE = 0.1
     POPULOUS_FILE_NAME = "populous.json"
 
-    def __init__(self, dag, budget, scale, decimals):
+    def __init__(self, dag, budget, scale, decimals, quality_interval=.05):
         PerformanceProfile.__init__(self, file_name=self.POPULOUS_FILE_NAME, time_interval=1, time_limit=budget,
-                                    step_size=self.STEP_SIZE)
+                                    quality_interval=quality_interval, step_size=self.STEP_SIZE)
         self.budget = budget
         self.dag = dag
         self.allocations = self.__partition_budget()

@@ -1,6 +1,7 @@
 import json
 import math
 import numpy as np
+# from itertools import permutations
 
 
 class Generator:
@@ -11,13 +12,14 @@ class Generator:
     :param dag: the dag to be used for performance profile simulation
     """
 
-    def __init__(self, instances, dag, time_limit, step_size, uniform_low, uniform_high):
+    def __init__(self, instances, dag, time_limit, step_size, uniform_low, uniform_high, quality_interval=.05):
         self.instances = instances
         self.dag = dag
         self.time_limit = time_limit
         self.step_size = step_size
         self.uniform_low = uniform_low
         self.uniform_high = uniform_high
+        self.quality_interval = quality_interval
 
     def simulate_performance_profile(self, random_number):
         """
@@ -27,10 +29,14 @@ class Generator:
         :return: dictionary
         """
         dictionary = {}
-        for t in np.arange(0, self.time_limit, self.step_size).round(1):  # Using np.arange() for float step values
-            # round to one decimal place
-            dictionary[t] = 1 - math.e ** (
-                -random_number * t)  # Use this function to approximate the performance profile
+        # TODO: Finish this
+        # parent_qualities = [self.dag.peroformance_profile]
+        # for combination in permutations(self.allocations, 2):
+        # Using np.arange() for float step values
+        # round to one decimal place
+        for t in np.arange(0, self.time_limit, self.step_size).round(1):
+            # Use this function to approximate the performance profile
+            dictionary[t] = 1 - math.e ** (-random_number * t)
         return dictionary
 
     @staticmethod

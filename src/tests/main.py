@@ -9,6 +9,7 @@ if __name__ == "__main__":
     INSTANCES = 5
     TIME_LIMIT = BUDGET
     STEP_SIZE = 0.1
+    QUALITY_INTERVAL = .05
 
     # Create a DAG manually for testing
     # Leaf nodes
@@ -33,8 +34,8 @@ if __name__ == "__main__":
     # Used to create the synthetic data as instances and a populous file
     if not exists("populous.json"):
         # Initialize a generator
-        generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT,
-                              step_size=STEP_SIZE, uniform_low=.05, uniform_high=.1)
+        generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, step_size=STEP_SIZE, uniform_low=.05,
+                              uniform_high=.1)
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
