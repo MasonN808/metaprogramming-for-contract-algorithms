@@ -98,16 +98,21 @@ class ContractProgram(PerformanceProfile):
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations):
                         possible_local_max.append(adjusted_allocations)
+
                     temp_time_switched = time_switched
                     eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
                     eu_original = self.global_expected_utility(self.allocations) * self.scale
+                    print_allocations = [i.time for i in adjusted_allocations]
+                    # Check for rounding
                     if self.decimals is not None:
+                        print_allocations = [round(i.time, self.decimals) for i in adjusted_allocations]
                         eu_adjusted = round(eu_adjusted, self.decimals)
                         eu_original = round(eu_original, self.decimals)
                         self.global_expected_utility(self.allocations) * self.scale
                         temp_time_switched = round(temp_time_switched, self.decimals)
-                    print("Amount of time switched: {:<15} ==> EU(adjusted): {:<15} EU(original): {}".format(
-                        temp_time_switched, eu_adjusted, eu_original))
+                    print("Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> "
+                          "Allocations: {}".format(
+                              temp_time_switched, eu_adjusted, eu_original, print_allocations))
 
             # arg max here
             if possible_local_max:
