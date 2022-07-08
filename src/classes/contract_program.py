@@ -92,9 +92,9 @@ class ContractProgram(PerformanceProfile):
                     continue
                 else:
                     adjusted_allocations[combination[0].node_id].time = adjusted_allocations[
-                                                                            combination[0].node_id].time - time_switched
+                        combination[0].node_id].time - time_switched
                     adjusted_allocations[combination[1].node_id].time = adjusted_allocations[
-                                                                            combination[1].node_id].time + time_switched
+                        combination[1].node_id].time + time_switched
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations):
                         possible_local_max.append(adjusted_allocations)

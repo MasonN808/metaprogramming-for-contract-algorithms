@@ -60,7 +60,6 @@ if __name__ == "__main__":
     print("Naive Hill Climbing Search --> Time Allocations: {}".format(optimal_time_allocations))
     print("Naive Hill Climbing Search --> Expected Utility: {}".format(eu_optimal))
 
-
     # probability = 1
     # average_qualities = []
     # for (id, time) in enumerate(program.allocations):
