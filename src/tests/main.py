@@ -58,7 +58,7 @@ if __name__ == "__main__":
     # Check the decimal count for rounding
     # This is a list of TimeAllocation objects
     optimal_allocations = program.naive_hill_climbing()
-    optimal_time_allocations = [i.time for i in program.naive_hill_climbing()]
+    optimal_time_allocations = [i.time for i in optimal_allocations]
     eu_optimal = program.global_expected_utility(optimal_allocations) * program.scale
     if program.decimals is not None:
         optimal_time_allocations = [round(i.time, program.decimals) for i in program.allocations]

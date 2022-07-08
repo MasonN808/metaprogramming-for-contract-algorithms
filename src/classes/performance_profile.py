@@ -58,10 +58,11 @@ class PerformanceProfile:
         average = sum(qualities) / len(qualities)
         return average
 
-    def query_probability(self, time, id, queried_quality):
+    def query_probability(self, time, id, queried_quality, parent_qualities):
         """
         The performance profile: Queries the quality mapping at a specific time given the previous qualities of the
         contract algorithm's parents
+        :param parent_qualities: float[], the qualities of the parent nodes given their respective time allocations
         :param id: The id of the node/contract algorithm being queried
         :param time: The time allocation by which the contract algorithm stops
         :param queried_quality: The conditional probability of obtaining the queried quality

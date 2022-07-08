@@ -52,22 +52,10 @@ if __name__ == "__main__":
     # Check the decimal count for rounding
     # This is a list of TimeAllocation objects
     optimal_allocations = program.naive_hill_climbing()
-    optimal_time_allocations = [i.time for i in program.naive_hill_climbing()]
+    optimal_time_allocations = [i.time for i in optimal_allocations]
     eu_optimal = program.global_expected_utility(optimal_allocations) * program.scale
     if program.decimals is not None:
         optimal_time_allocations = [round(i.time, program.decimals) for i in program.allocations]
         eu_optimal = round(eu_optimal, program.decimals)
     print("Naive Hill Climbing Search --> Time Allocations: {}".format(optimal_time_allocations))
     print("Naive Hill Climbing Search --> Expected Utility: {}".format(eu_optimal))
-
-    # probability = 1
-    # average_qualities = []
-    # for (id, time) in enumerate(program.allocations):
-    #     qualities = program.query_quality_list(time.time, id)
-    #     average_quality = program.average_quality(qualities)
-    #     average_qualities.append(average_quality)
-    #     probability = probability * program.query_probability(time.time, id, average_quality)
-    #
-    # sns.distplot(subset['arr_delay'], hist=False, kde=True,
-    #              kde_kws={'shade': True, 'linewidth': 3},
-    #              label=airline)

@@ -59,8 +59,7 @@ class ContractProgram(PerformanceProfile):
             qualities = self.query_quality_list(time.time, id)
             average_quality = self.average_quality(qualities)
             average_qualities.append(average_quality)
-            probability = probability * self.query_probability(time.time, id, average_quality)
-
+            probability = probability * self.query_probability(time.time, id, average_quality)  # TODO: Finish this
         expected_utility = probability * self.global_utility(average_qualities)
         return expected_utility
 
@@ -75,7 +74,7 @@ class ContractProgram(PerformanceProfile):
         """
         allocation = self.budget / self.dag.order
         time_switched = allocation / 1.1
-        while time_switched > .05:
+        while time_switched > .001:
             # print("_________________")
             possible_local_max = []
 
@@ -124,7 +123,7 @@ class ContractProgram(PerformanceProfile):
                 # print("Allocations: {}\nEU: {}".format([i.time for i in self.allocations],
                 #                                        self.global_expected_utility(self.allocations) * self.scale))
             else:
-                time_switched = time_switched / 2
+                time_switched = time_switched / 1.5
         return self.allocations
 
     def __partition_budget(self):
