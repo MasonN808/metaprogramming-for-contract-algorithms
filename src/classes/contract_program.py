@@ -20,13 +20,14 @@ class ContractProgram(PerformanceProfile):
     STEP_SIZE = 0.1
     POPULOUS_FILE_NAME = "populous.json"
 
-    def __init__(self, dag, budget, scale):
+    def __init__(self, dag, budget, scale, decimals):
         PerformanceProfile.__init__(self, file_name=self.POPULOUS_FILE_NAME, time_interval=1, time_limit=budget,
                                     step_size=self.STEP_SIZE)
         self.budget = budget
         self.dag = dag
         self.allocations = self.__partition_budget()
         self.scale = scale
+        self.decimals = decimals
 
     @staticmethod
     def global_utility(qualities):
@@ -91,17 +92,22 @@ class ContractProgram(PerformanceProfile):
                     continue
                 else:
                     adjusted_allocations[combination[0].node_id].time = adjusted_allocations[
-                        combination[0].node_id].time - time_switched
+                                                                            combination[0].node_id].time - time_switched
                     adjusted_allocations[combination[1].node_id].time = adjusted_allocations[
-                        combination[1].node_id].time + time_switched
+                                                                            combination[1].node_id].time + time_switched
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations):
                         possible_local_max.append(adjusted_allocations)
-                    print("Amount of time switched: {:<21} => EU(adjusted): {:<18}      EU(original): {}".format(time_switched,
-                                                                                                                 self.global_expected_utility(
-                                                                                                                     adjusted_allocations) * self.scale,
-                                                                                                                 self.global_expected_utility(
-                                                                                                                     self.allocations) * self.scale))
+                    temp_time_switched = time_switched
+                    eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
+                    eu_original = self.global_expected_utility(self.allocations) * self.scale
+                    if self.decimals is not None:
+                        eu_adjusted = round(eu_adjusted, self.decimals)
+                        eu_original = round(eu_original, self.decimals)
+                        self.global_expected_utility(self.allocations) * self.scale
+                        temp_time_switched = round(temp_time_switched, self.decimals)
+                    print("Amount of time switched: {:<15} ==> EU(adjusted): {:<15} EU(original): {}".format(
+                        temp_time_switched, eu_adjusted, eu_original))
 
             # arg max here
             if possible_local_max:

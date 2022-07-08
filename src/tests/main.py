@@ -43,15 +43,25 @@ if __name__ == "__main__":
         generator.populate(nodes, "populous.json")
 
     # Create the program with some budget
-    program = ContractProgram(dag, BUDGET, scale=10**6)
+    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3)
 
-    # Test the query method
-    # print(program.query_quality_list(time=5.4, id=0))
-    # print(program.query_probability(time=8, id=0, queried_quality=1))
-
+    # Check the decimal count for rounding
+    initial_time_allocations = [i.time for i in program.allocations]
+    eu_initial = program.global_expected_utility(program.allocations) * program.scale
+    if program.decimals is not None:
+        initial_time_allocations = [round(i.time, program.decimals) for i in program.allocations]
+        eu_initial = round(eu_initial, program.decimals)
     # The initial time allocations for each contract algorithm
-    print("Initial Time Allocations: {}".format([i.time for i in program.allocations]))
-    print("Initial Expected Utility: {}".format(program.global_expected_utility(program.allocations) * program.scale))
+    print("Initial Time Allocations: {}".format(initial_time_allocations))
+    print("Initial Expected Utility: {}".format(eu_initial))
+
+    # Check the decimal count for rounding
+    # This is a list of TimeAllocation objects
     optimal_allocations = program.naive_hill_climbing()
-    print("Naive Hill Climbing Search --> Time Allocations: {}".format([i.time for i in optimal_allocations]))
-    print("Naive Hill Climbing Search --> Expected Utility: {}".format(program.global_expected_utility(optimal_allocations) * program.scale))
+    optimal_time_allocations = [i.time for i in program.naive_hill_climbing()]
+    eu_optimal = program.global_expected_utility(optimal_allocations) * program.scale
+    if program.decimals is not None:
+        optimal_time_allocations = [round(i.time, program.decimals) for i in program.allocations]
+        eu_optimal = round(eu_optimal, program.decimals)
+    print("Naive Hill Climbing Search --> Time Allocations: {}".format(optimal_time_allocations))
+    print("Naive Hill Climbing Search --> Expected Utility: {}".format(eu_optimal))
