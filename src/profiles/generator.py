@@ -1,7 +1,6 @@
 import json
 import math
 import numpy as np
-from itertools import permutations
 
 
 class Generator:
@@ -29,17 +28,31 @@ class Generator:
         :param random_number: a random number from a uniform distribution with some noise
         :return: dictionary
         """
-        dictionary = {}
-        # TODO: Finish this
+        dictionary = self.recur(0, node, [], {}, random_number)
+        return dictionary
+
+    def recur(self, depth, node, qualities, dictionary, random_number):
+        """
+        Used to recursively generate the synthetic quality mappings
+
+        :param depth: The depth of the recursion
+        :param node: Synthetic quality mapping for this particular node given its parents
+        :param qualities: The parent qualities as inputs of the node
+        :param dictionary: The dictionary being generated
+        :param random_number: To produce noise in the quality mappings
+        :return:
+        """
         potential_parent_qualities = [i for i in np.arange(0, 1, self.quality_interval)]
-        for permutation in permutations(potential_parent_qualities, len(node.parents)):
-            pass
-            # TODO: Finish here
-        # Using np.arange() for float step values
-        # round to one decimal place
-        for t in np.arange(0, self.time_limit, self.step_size).round(1):
-            # Use this function to approximate the performance profile
-            dictionary[t] = 1 - math.e ** (-random_number * t)
+        for quality in potential_parent_qualities:
+            dictionary[quality] = {quality: {}}
+            # Base Case
+            if depth == len(node.parents):
+                dictionary[quality] = {}
+                for t in np.arange(0, self.time_limit, self.step_size).round(1):
+                    # Use this function to approximate the performance profile
+                    dictionary[quality][t] = 1 - math.e ** (-random_number * t)
+            else:
+                self.recur(depth + 1, node, qualities.append(quality), dictionary[quality], random_number)
         return dictionary
 
     @staticmethod
@@ -65,7 +78,7 @@ class Generator:
             # Add some noise to the random value
             c = c + abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
             # Make an embedded dictionary for each instance of the node in the DAG
-            dictionary_inner = self.simulate_performance_profile(c)
+            dictionary_inner = self.simulate_performance_profile(c, node)
             dictionary['instances']['instance_{}'.format(i)] = dictionary_inner
         dictionary['parents'] = [parent.id for parent in node.parents]
         return dictionary
