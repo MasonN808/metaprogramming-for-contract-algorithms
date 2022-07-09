@@ -28,10 +28,10 @@ class Generator:
         :param random_number: a random number from a uniform distribution with some noise
         :return: dictionary
         """
-        dictionary = self.recur(0, node, [], {}, random_number)
+        dictionary = self.recur_build(0, node, [], {}, random_number)
         return dictionary
 
-    def recur(self, depth, node, qualities, dictionary, random_number):
+    def recur_build(self, depth, node, qualities, dictionary, random_number):
         """
         Used to recursively generate the synthetic quality mappings
 
@@ -91,7 +91,7 @@ class Generator:
         :return: dictionary
         """
         dictionary = {'instances': {}}
-        # Take a random value from a uniform distribution
+        # Take a random value from a uniform distribution; used for nodes without parents
         c = np.random.uniform(low=self.uniform_low, high=self.uniform_high)
         for i in range(self.instances):
             # Add some noise to the random value
@@ -135,7 +135,11 @@ class Generator:
                 temp_dictionary = self.import_performance_profiles(node)
                 for instance in temp_dictionary['instances']:
                     # Loop through all the time steps
+                    # TODO: write a recursive statement here using recur_traverse
                     for t in temp_dictionary['instances'][instance]:
+                        recursion_dictionary = temp_dictionary['instances'][instance]
+                        populate_dictionary = bundle["node_{}".format(i)]['qualities']
+                        self.recur_traverse(0, node, [], recursion_dictionary, populate_dictionary)
                         try:
                             bundle["node_{}".format(i)]['qualities']["{}".format(t)]
                         except KeyError:
@@ -145,3 +149,33 @@ class Generator:
                 bundle["node_{}".format(i)]['parents'] = temp_dictionary['parents']
             json.dump(bundle, f, indent=2)
         print("Finished populating JSON file using nodes JSON files")
+
+    def recur_traverse(self, depth, node, qualities, dictionary, populate_dictionary):
+        """
+        Used to recursively generate the synthetic quality mappings
+
+        :param populate_dictionary: Dictionary to be populated
+        :param depth: The depth of the recursion
+        :param node: Synthetic quality mapping for this particular node given its parents
+        :param qualities: The parent qualities as inputs of the node
+        :param dictionary: The dictionary being generated
+        :return:
+        """
+        if not node.parents:
+            for t in dictionary:
+                # Use this function to approximate the performance profile
+                populate_dictionary[t] = dictionary[t]
+        else:
+            for parent_quality in dictionary:
+                dictionary[parent_quality] = {parent_quality: {}}
+                # Base Case
+                if depth == len(node.parents) - 1:
+                    populate_dictionary[parent_quality] = dictionary[parent_quality]
+                    # To change the parent_quality mapping with respect to the parent qualities
+                    velocity = self.parent_dependent_transform(node, qualities)
+                    for t in np.arange(0, self.time_limit, self.step_size).round(1):
+                        # Use this function to approximate the performance profile
+                        dictionary[parent_quality][t] = 1 - math.e ** (-velocity * t)
+                else:
+                    self.recur_traverse(depth + 1, node, qualities.append(parent_quality), dictionary[parent_quality])
+        return populate_dictionary
