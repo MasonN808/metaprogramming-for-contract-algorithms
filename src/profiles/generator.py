@@ -163,28 +163,36 @@ class Generator:
         :param dictionary: The dictionary being generated
         :return:
         """
+        # Node without parents
         if not node.parents:
             for t in dictionary:
                 try:
                     # See if a list object exists
-                    populate_dictionary["{}".format(t)]
+                    if not isinstance(populate_dictionary["{}".format(t)], list):
+                        populate_dictionary["{}".format(t)] = []
                 except KeyError:
                     populate_dictionary["{}".format(t)] = []
-                populate_dictionary["{}".format(t)].append(t)
+                populate_dictionary["{}".format(t)].append(dictionary[t])
+        # Node with parents
         else:
+            # Loop through layer of the parent qualities
             for parent_quality in dictionary:
-                populate_dictionary[parent_quality] = dictionary[parent_quality]
+                try:
+                    populate_dictionary[parent_quality]
+                except KeyError:
+                    populate_dictionary[parent_quality] = {"{}".format(parent_quality): {}}
                 # Base Case
                 if depth == len(node.parents) - 1:
-                    populate_dictionary[parent_quality] = dictionary[parent_quality]
+                    # populate_dictionary[parent_quality] = {}
                     # To change the parent_quality mapping with respect to the parent qualities
-                    for t in dictionary:
+                    for t in dictionary[parent_quality]:
                         try:
                             # See if a list object exists
-                            populate_dictionary["{}".format(t)]
+                            if not isinstance(populate_dictionary[parent_quality]["{}".format(t)], list):
+                                populate_dictionary[parent_quality]["{}".format(t)] = []
                         except KeyError:
-                            populate_dictionary["{}".format(t)] = []
-                        populate_dictionary["{}".format(t)].append(t)
+                            populate_dictionary[parent_quality]["{}".format(t)] = []
+                        populate_dictionary[parent_quality]["{}".format(t)].append(dictionary[parent_quality][t])
                 else:
                     self.recur_traverse(depth + 1, node, qualities.append(parent_quality),
                                         dictionary[parent_quality], populate_dictionary[parent_quality])
