@@ -107,15 +107,15 @@ class Generator:
         Generates instances using the DAG and number of instances required
         :return: a list of the file names of the instances stored in JSON files
         """
-        instances = []  # file names of the instances
-        # Create a finite number of unique instances and create JSON files for each
+        nodes = []  # file names of the nodes
+        # Create a finite number of unique nodes and create JSON files for each
         for (i, node) in enumerate(self.dag.nodes):
             dictionary_temp = self.create_dictionary(node)
             with open('node_{}.json'.format(i), 'w') as f:
-                instances.append('node_{}.json'.format(i))
+                nodes.append('node_{}.json'.format(i))
                 json.dump(dictionary_temp, f, indent=2)
                 print("New JSON file created for node_{}".format(i))
-        return instances
+        return nodes
 
     def populate(self, nodes, out_file):
         """
@@ -136,16 +136,18 @@ class Generator:
                 for instance in temp_dictionary['instances']:
                     # Loop through all the time steps
                     # TODO: write a recursive statement here using recur_traverse
+                    recursion_dictionary = temp_dictionary['instances'][instance]
+                    populate_dictionary = bundle["node_{}".format(i)]['qualities']
+                    self.recur_traverse(0, self.dag.nodes[i], [], recursion_dictionary, populate_dictionary)
                     for t in temp_dictionary['instances'][instance]:
-                        recursion_dictionary = temp_dictionary['instances'][instance]
-                        populate_dictionary = bundle["node_{}".format(i)]['qualities']
-                        self.recur_traverse(0, node, [], recursion_dictionary, populate_dictionary)
-                        try:
-                            bundle["node_{}".format(i)]['qualities']["{}".format(t)]
-                        except KeyError:
-                            bundle["node_{}".format(i)]['qualities']["{}".format(t)] = []
-                        bundle["node_{}".format(i)]['qualities']["{}".format(t)].append(
-                            temp_dictionary['instances'][instance][t])
+                        pass
+
+                        # try:
+                        #     bundle["node_{}".format(i)]['qualities']["{}".format(t)]
+                        # except KeyError:
+                        #     bundle["node_{}".format(i)]['qualities']["{}".format(t)] = []
+                        # bundle["node_{}".format(i)]['qualities']["{}".format(t)].append(
+                        #     temp_dictionary['instances'][instance][t])
                 bundle["node_{}".format(i)]['parents'] = temp_dictionary['parents']
             json.dump(bundle, f, indent=2)
         print("Finished populating JSON file using nodes JSON files")
@@ -163,19 +165,27 @@ class Generator:
         """
         if not node.parents:
             for t in dictionary:
-                # Use this function to approximate the performance profile
-                populate_dictionary[t] = dictionary[t]
+                try:
+                    # See if a list object exists
+                    populate_dictionary["{}".format(t)]
+                except KeyError:
+                    populate_dictionary["{}".format(t)] = []
+                populate_dictionary["{}".format(t)].append(t)
         else:
             for parent_quality in dictionary:
-                dictionary[parent_quality] = {parent_quality: {}}
+                populate_dictionary[parent_quality] = dictionary[parent_quality]
                 # Base Case
                 if depth == len(node.parents) - 1:
                     populate_dictionary[parent_quality] = dictionary[parent_quality]
                     # To change the parent_quality mapping with respect to the parent qualities
-                    velocity = self.parent_dependent_transform(node, qualities)
-                    for t in np.arange(0, self.time_limit, self.step_size).round(1):
-                        # Use this function to approximate the performance profile
-                        dictionary[parent_quality][t] = 1 - math.e ** (-velocity * t)
+                    for t in dictionary:
+                        try:
+                            # See if a list object exists
+                            populate_dictionary["{}".format(t)]
+                        except KeyError:
+                            populate_dictionary["{}".format(t)] = []
+                        populate_dictionary["{}".format(t)].append(t)
                 else:
-                    self.recur_traverse(depth + 1, node, qualities.append(parent_quality), dictionary[parent_quality])
+                    self.recur_traverse(depth + 1, node, qualities.append(parent_quality),
+                                        dictionary[parent_quality], populate_dictionary[parent_quality])
         return populate_dictionary
