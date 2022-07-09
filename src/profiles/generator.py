@@ -60,7 +60,7 @@ class Generator:
                         # Use this function to approximate the performance profile
                         dictionary[quality][t] = 1 - math.e ** (-velocity * t)
                 else:
-                    self.recur(depth + 1, node, qualities.append(quality), dictionary[quality], random_number)
+                    self.recur_build(depth + 1, node, qualities.append(quality), dictionary[quality], random_number)
         return dictionary
 
     @staticmethod
