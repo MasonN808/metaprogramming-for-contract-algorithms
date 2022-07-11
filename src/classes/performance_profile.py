@@ -26,9 +26,10 @@ class PerformanceProfile:
         f = open('{}'.format(file_name), "r")
         return json.loads(f.read())
 
-    def query_quality_list(self, time, id):
+    def query_quality_list(self, time, id, parent_qualities):
         """
         Queries the quality mapping at a specific time, using some interval to create a distribution over qualities
+        :param parent_qualities: List of qualities of the parent nodes
         :param id: The node id
         :param time: The time allocation by which the contract algorithm stops
         :return: A list of qualities for node with self.id
@@ -36,16 +37,19 @@ class PerformanceProfile:
         if self.dictionary is None:
             raise ValueError("The quality mapping for this node is null")
         else:
+            # ["node_{}".format(id)]: The node
+            # ['qualities']: The node's quality mappings
+            dictionary = self.dictionary["node_{}".format(id)]['qualities']
+            for parent_quality in parent_qualities:
+                dictionary = dictionary[parent_quality]
             qualities = []
             # Initialize the start and end of the time interval for the prior
             start_step = (time // self.time_interval) * self.time_interval
             end_step = start_step + self.time_interval
-            # Note: interval of [start_step, end_step)
+            # Note: interval is [start_step, end_step)
             for t in np.arange(start_step, end_step, self.step_size).round(1):
-                # ["node_{}".format(id)]: The node
-                # ['qualities']: The node's quality mappings
                 # ["{}".format(t)]: The time allocation
-                qualities += self.dictionary["node_{}".format(id)]['qualities']["{}".format(t)]
+                qualities += self.dictionary["{}".format(t)]
             return qualities
 
     @staticmethod

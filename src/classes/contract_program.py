@@ -56,12 +56,17 @@ class ContractProgram(PerformanceProfile):
         probability = 1
         average_qualities = []
         for (id, time) in enumerate(time_allocations):
-            qualities = self.query_quality_list(time.time, id)
+            # TODO: make sure to finish this (may not be the best place to put it)
+            # parent_qualities = self.find_parent_qualities()
+            qualities = self.query_quality_list(time.time, id, parent_qualities=None)
             average_quality = self.average_quality(qualities)
             average_qualities.append(average_quality)
-            probability = probability * self.query_probability(time.time, id, average_quality)  # TODO: Finish this
+            probability = probability * \
+                self.query_probability(time.time, id, average_quality, parent_qualities=None)  # TODO: Finish this
         expected_utility = probability * self.global_utility(average_qualities)
         return expected_utility
+
+    # def find_parent_qualities(self, ):
 
     def naive_hill_climbing(self):
         """
