@@ -42,7 +42,8 @@ class Generator:
         :param random_number: To produce noise in the quality mappings
         :return:
         """
-        potential_parent_qualities = [format(i, '.2f') for i in np.arange(0, 1 + self.quality_interval, self.quality_interval).round(2)]
+        potential_parent_qualities = [format(i, '.2f') for i in np.arange(
+            0, 1 + self.quality_interval, self.quality_interval).round(2)]
         if not node.parents:
             velocity = self.parent_dependent_transform(node, qualities, random_number)
             for t in np.arange(0, self.time_limit + self.step_size, self.step_size).round(1):
