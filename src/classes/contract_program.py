@@ -57,7 +57,7 @@ class ContractProgram(PerformanceProfile):
         average_qualities = []
         # The for loop should be a breadth-first search given that the time-allocations is ordered correctly
         for (id, time) in enumerate(time_allocations):
-            # TODO: make sure to finish this (may not be the best place to put it)
+            # TODO: make sure to finish this (may not be the best place to put it) use self.decimals
             node = self.find_node(id)
             parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
             qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
@@ -90,13 +90,14 @@ class ContractProgram(PerformanceProfile):
             if depth == 1:
                 return parent_qualities
             else:
-                # Return a list of parent-dependent qualities (not a leaf)
+                # Return a list of parent-dependent qualities (not a leaf or root)
                 quality = self.query_quality(node.id, time_allocations[node.id], parent_qualities)
+
                 return quality
         # Base Case (Leaf Nodes in a functional expression)
         else:
             # Leaf Node as a trivial functional expression
-            if depth == 0:
+            if depth == 1:
                 return []
             else:
                 quality = self.query_quality(node.id, time_allocations[node.id], [])
@@ -114,7 +115,7 @@ class ContractProgram(PerformanceProfile):
                 return node
         raise IndexError("Node not found with given id")
 
-    def naive_hill_climbing(self):
+    def naive_hill_climbing(self, verbose=False):
         """
         Does naive hill climbing search by randomly replacing a set amount of time s between two different contract
         algorithms. If the expected value of the root node of the contract algorithm increases, we commit to the
@@ -161,9 +162,10 @@ class ContractProgram(PerformanceProfile):
                         eu_original = round(eu_original, self.decimals)
                         self.global_expected_utility(self.allocations) * self.scale
                         temp_time_switched = round(temp_time_switched, self.decimals)
-                    print("Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> "
-                          "Allocations: {}".format(
-                              temp_time_switched, eu_adjusted, eu_original, print_allocations))
+                    if verbose:
+                        print("Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> "
+                              "Allocations: {}".format(
+                                  temp_time_switched, eu_adjusted, eu_original, print_allocations))
 
             # arg max here
             if possible_local_max:
