@@ -55,18 +55,49 @@ class ContractProgram(PerformanceProfile):
         # TODO: make sure that node ids are non-negative integers (for our example, it is)
         probability = 1
         average_qualities = []
+        # The for loop should be a breadth-first search given that the time-allocations is ordered correctly
         for (id, time) in enumerate(time_allocations):
             # TODO: make sure to finish this (may not be the best place to put it)
-            # parent_qualities = self.find_parent_qualities()
-            qualities = self.query_quality_list(time.time, id, parent_qualities=None)
+            node = self.find_node(id)
+            parent_qualities = self.find_parent_qualities(node, time_allocations, [])
+            qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
             average_quality = self.average_quality(qualities)
             average_qualities.append(average_quality)
             probability = probability * \
-                self.query_probability(time.time, id, average_quality, parent_qualities=None)  # TODO: Finish this
+                self.query_probability(time.time, id, average_quality,
+                                       parent_qualities=parent_qualities)  # TODO: Finish this
         expected_utility = probability * self.global_utility(average_qualities)
         return expected_utility
 
-    # def find_parent_qualities(self, ):
+    def find_parent_qualities(self, node, time_allocations, parent_qualities):
+        """
+        Returns the parent qualities given the time allocations and node
+        # TODO: make sure that the pulling of elements in the lists are accurate
+
+        :param node: Node object, finding the parent qualities of this node
+        :param time_allocations: float[], for the entire DAG
+        :param parent_qualities: float[], the qualities of the parents
+        :return: A list of parent qualities
+        """
+        # Recur down the DAG
+        if node.parents:
+            for parent in node.parents:
+                self.find_parent_qualities(parent, time_allocations, parent_qualities)
+        # Base Case (Leaf Nodes)
+        else:
+            self.query_quality(node.id, time_allocations[node.id])
+
+    def find_node(self, node_id):
+        """
+        Finds the node in the node list given the id
+
+        :param node_id: The id of the node
+        :return: Node object
+        """
+        for node in self.dag.nodes:
+            if node.id == node_id:
+                return node
+        raise IndexError("Node not found with given id")
 
     def naive_hill_climbing(self):
         """
@@ -107,6 +138,7 @@ class ContractProgram(PerformanceProfile):
                     eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
                     eu_original = self.global_expected_utility(self.allocations) * self.scale
                     print_allocations = [i.time for i in adjusted_allocations]
+
                     # Check for rounding
                     if self.decimals is not None:
                         print_allocations = [round(i.time, self.decimals) for i in adjusted_allocations]
@@ -125,15 +157,15 @@ class ContractProgram(PerformanceProfile):
                     if self.global_expected_utility(j) == best_allocation:
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j)
-                # print("Allocations: {}\nEU: {}".format([i.time for i in self.allocations],
-                #                                        self.global_expected_utility(self.allocations) * self.scale))
             else:
                 time_switched = time_switched / 1.5
+
         return self.allocations
 
     def __partition_budget(self):
         """
         Discretizes the budget into equal partitions relative to the order of the DAG
+
         :return:
         """
         allocation = self.budget / self.dag.order  # Divide the budget into equal allocations for every contract algo

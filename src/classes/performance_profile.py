@@ -26,9 +26,10 @@ class PerformanceProfile:
         f = open('{}'.format(file_name), "r")
         return json.loads(f.read())
 
-    def query_quality_list(self, time, id, parent_qualities):
+    def query_quality_list_on_interval(self, time, id, parent_qualities):
         """
         Queries the quality mapping at a specific time, using some interval to create a distribution over qualities
+
         :param parent_qualities: List of qualities of the parent nodes
         :param id: The node id
         :param time: The time allocation by which the contract algorithm stops
@@ -40,22 +41,26 @@ class PerformanceProfile:
             # ["node_{}".format(id)]: The node
             # ['qualities']: The node's quality mappings
             dictionary = self.dictionary["node_{}".format(id)]['qualities']
-            for parent_quality in parent_qualities:
-                dictionary = dictionary[parent_quality]
+            # Finding node quality given the parents' qualities
+            if parent_qualities:
+                for parent_quality in parent_qualities:
+                    dictionary = dictionary[parent_quality]
             qualities = []
-            # Initialize the start and end of the time interval for the prior
+            # Initialize the start and end of the time interval for descritization of the prior
             start_step = (time // self.time_interval) * self.time_interval
             end_step = start_step + self.time_interval
             # Note: interval is [start_step, end_step)
+            # TODO: may need to fix the hardcoded round function
             for t in np.arange(start_step, end_step, self.step_size).round(1):
                 # ["{}".format(t)]: The time allocation
-                qualities += self.dictionary["{}".format(t)]
+                qualities += dictionary["{}".format(t)]
             return qualities
 
     @staticmethod
     def average_quality(qualities):
         """
         Gets the average quality over a list of qualities
+
         :param qualities: float[]
         :return: float
         """
@@ -66,6 +71,7 @@ class PerformanceProfile:
         """
         The performance profile: Queries the quality mapping at a specific time given the previous qualities of the
         contract algorithm's parents
+
         :param parent_qualities: float[], the qualities of the parent nodes given their respective time allocations
         :param id: The id of the node/contract algorithm being queried
         :param time: The time allocation by which the contract algorithm stops
@@ -74,7 +80,7 @@ class PerformanceProfile:
         allocation
         """
         # Sort in ascending order
-        quality_list = sorted(self.query_quality_list(time, id))
+        quality_list = sorted(self.query_quality_list_on_interval(time, id, parent_qualities))
         number_in_interval = 0
         # Initialize the start and end of the quality interval for the posterior
         start_quality = (queried_quality // self.quality_interval) * self.quality_interval
@@ -85,3 +91,28 @@ class PerformanceProfile:
                 number_in_interval += 1
         probability = number_in_interval / len(quality_list)
         return probability
+
+    def query_quality(self, id, time):
+        """
+        Queries a single, estimated quality given a time allocation
+
+        :Assumption: The node is a leaf node
+
+        :param id: non-negative int: the id of the Node object
+        :param time:
+        :return:
+        """
+        if self.dictionary is None:
+            raise ValueError("The quality mapping for this node is null")
+        else:
+            # ["node_{}".format(id)]: The node
+            # ['qualities']: The node's quality mappings
+            dictionary = self.dictionary["node_{}".format(id)]['qualities']
+            # Round the time to the respective
+            estimated_time = self.round_nearest(time, self.time_interval)
+            quality = dictionary["{}".format(estimated_time)]
+            return quality
+
+    @staticmethod
+    def round_nearest(time, time_step):
+        return round(time / time_step) * time_step
