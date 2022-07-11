@@ -1,3 +1,5 @@
+from os.path import exists
+
 from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
 from src.classes.node import Node
 from src.classes.contract_program import ContractProgram
@@ -25,16 +27,16 @@ if __name__ == "__main__":
     dag = DirectedAcyclicGraph(nodes, root)
 
     # Used to create the synthetic data as instances and a populous file
-    # if not exists("populous.json"):
-    # Initialize a generator
-    generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT,
-                          step_size=STEP_SIZE, uniform_low=.05, uniform_high=.9)
+    if not exists("populous.json"):
+        # Initialize a generator
+        generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT,
+                              step_size=STEP_SIZE, uniform_low=.05, uniform_high=.9)
 
-    # Generate the nodes' quality mappings
-    nodes = generator.generate_nodes()  # Return a list of file names of the nodes
+        # Generate the nodes' quality mappings
+        nodes = generator.generate_nodes()  # Return a list of file names of the nodes
 
-    # populate the nodes' quality mappings into one populous file
-    generator.populate(nodes, "populous.json")
+        # populate the nodes' quality mappings into one populous file
+        generator.populate(nodes, "populous.json")
 
     # Create the program with some budget
     program = ContractProgram(dag, BUDGET, scale=10, decimals=3)

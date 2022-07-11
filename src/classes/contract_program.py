@@ -59,33 +59,48 @@ class ContractProgram(PerformanceProfile):
         for (id, time) in enumerate(time_allocations):
             # TODO: make sure to finish this (may not be the best place to put it)
             node = self.find_node(id)
-            parent_qualities = self.find_parent_qualities(node, time_allocations, [])
+            parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
             qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
             average_quality = self.average_quality(qualities)
             average_qualities.append(average_quality)
-            probability = probability * \
-                self.query_probability(time.time, id, average_quality,
-                                       parent_qualities=parent_qualities)  # TODO: Finish this
+
+            probability = probability * self.query_probability(average_quality, qualities)
+
         expected_utility = probability * self.global_utility(average_qualities)
         return expected_utility
 
-    def find_parent_qualities(self, node, time_allocations, parent_qualities):
+    def find_parent_qualities(self, node, time_allocations, depth):
         """
         Returns the parent qualities given the time allocations and node
         # TODO: make sure that the pulling of elements in the lists are accurate
 
+        :param depth: The depth of the recursive call
         :param node: Node object, finding the parent qualities of this node
-        :param time_allocations: float[], for the entire DAG
-        :param parent_qualities: float[], the qualities of the parents
+        :param time_allocations: float[] (order matters), for the entire DAG
         :return: A list of parent qualities
         """
         # Recur down the DAG
+        depth += 1
         if node.parents:
+            parent_qualities = []
             for parent in node.parents:
-                self.find_parent_qualities(parent, time_allocations, parent_qualities)
-        # Base Case (Leaf Nodes)
+                quality = self.find_parent_qualities(parent, time_allocations, depth)
+                # Reset the parent qualities for the next node
+                parent_qualities.append(quality)
+            if depth == 1:
+                return parent_qualities
+            else:
+                # Return a list of parent-dependent qualities (not a leaf)
+                quality = self.query_quality(node.id, time_allocations[node.id], parent_qualities)
+                return quality
+        # Base Case (Leaf Nodes in a functional expression)
         else:
-            self.query_quality(node.id, time_allocations[node.id])
+            # Leaf Node as a trivial functional expression
+            if depth == 0:
+                return []
+            else:
+                quality = self.query_quality(node.id, time_allocations[node.id], [])
+                return quality
 
     def find_node(self, node_id):
         """

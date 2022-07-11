@@ -42,10 +42,10 @@ class Generator:
         :param random_number: To produce noise in the quality mappings
         :return:
         """
-        potential_parent_qualities = [i.round(2) for i in np.arange(0, 1, self.quality_interval)]
+        potential_parent_qualities = [format(i, '.2f') for i in np.arange(0, 1 + self.quality_interval, self.quality_interval).round(2)]
         if not node.parents:
             velocity = self.parent_dependent_transform(node, qualities, random_number)
-            for t in np.arange(0, self.time_limit, self.step_size).round(1):
+            for t in np.arange(0, self.time_limit + self.step_size, self.step_size).round(1):
                 # Use this function to approximate the performance profile
                 dictionary[t] = 1 - math.e ** (-velocity * t)
         else:
@@ -56,7 +56,7 @@ class Generator:
                     dictionary[quality] = {}
                     # To change the quality mapping with respect to the parent qualities
                     velocity = self.parent_dependent_transform(node, qualities, random_number)
-                    for t in np.arange(0, self.time_limit, self.step_size).round(1):
+                    for t in np.arange(0, self.time_limit + self.step_size, self.step_size).round(1):
                         # Use this function to approximate the performance profile
                         dictionary[quality][t] = 1 - math.e ** (-velocity * t)
                 else:
@@ -87,6 +87,7 @@ class Generator:
     def create_dictionary(self, node):
         """
         Creates a dictionary for one instance of the performance profiles of the DAG using synthetic data
+
         :param node: A node object
         :return: dictionary
         """
@@ -135,19 +136,9 @@ class Generator:
                 temp_dictionary = self.import_performance_profiles(node)
                 for instance in temp_dictionary['instances']:
                     # Loop through all the time steps
-                    # TODO: write a recursive statement here using recur_traverse
                     recursion_dictionary = temp_dictionary['instances'][instance]
                     populate_dictionary = bundle["node_{}".format(i)]['qualities']
                     self.recur_traverse(0, self.dag.nodes[i], [], recursion_dictionary, populate_dictionary)
-                    for t in temp_dictionary['instances'][instance]:
-                        pass
-
-                        # try:
-                        #     bundle["node_{}".format(i)]['qualities']["{}".format(t)]
-                        # except KeyError:
-                        #     bundle["node_{}".format(i)]['qualities']["{}".format(t)] = []
-                        # bundle["node_{}".format(i)]['qualities']["{}".format(t)].append(
-                        #     temp_dictionary['instances'][instance][t])
                 bundle["node_{}".format(i)]['parents'] = temp_dictionary['parents']
             json.dump(bundle, f, indent=2)
         print("Finished populating JSON file using nodes JSON files")

@@ -43,15 +43,18 @@ class PerformanceProfile:
             dictionary = self.dictionary["node_{}".format(id)]['qualities']
             # Finding node quality given the parents' qualities
             if parent_qualities:
+                print(parent_qualities)
+                print(id)
                 for parent_quality in parent_qualities:
-                    dictionary = dictionary[parent_quality]
+                    parent_quality = self.round_nearest(parent_quality, step=self.quality_interval)
+                    dictionary = dictionary["{:.2f}".format(parent_quality)]
             qualities = []
             # Initialize the start and end of the time interval for descritization of the prior
             start_step = (time // self.time_interval) * self.time_interval
             end_step = start_step + self.time_interval
             # Note: interval is [start_step, end_step)
             # TODO: may need to fix the hardcoded round function
-            for t in np.arange(start_step, end_step, self.step_size).round(1):
+            for t in np.arange(start_step, end_step + self.step_size, self.step_size).round(1):
                 # ["{}".format(t)]: The time allocation
                 qualities += dictionary["{}".format(t)]
             return qualities
@@ -67,12 +70,12 @@ class PerformanceProfile:
         average = sum(qualities) / len(qualities)
         return average
 
-    def query_probability(self, time, id, queried_quality, parent_qualities):
+    def query_probability(self, queried_quality, quality_list):
         """
         The performance profile: Queries the quality mapping at a specific time given the previous qualities of the
         contract algorithm's parents
 
-        :param parent_qualities: float[], the qualities of the parent nodes given their respective time allocations
+        :param quality_list: A list of qualities from query_quality_list_on_interval()
         :param id: The id of the node/contract algorithm being queried
         :param time: The time allocation by which the contract algorithm stops
         :param queried_quality: The conditional probability of obtaining the queried quality
@@ -80,7 +83,7 @@ class PerformanceProfile:
         allocation
         """
         # Sort in ascending order
-        quality_list = sorted(self.query_quality_list_on_interval(time, id, parent_qualities))
+        quality_list = sorted(quality_list)
         number_in_interval = 0
         # Initialize the start and end of the quality interval for the posterior
         start_quality = (queried_quality // self.quality_interval) * self.quality_interval
@@ -92,27 +95,47 @@ class PerformanceProfile:
         probability = number_in_interval / len(quality_list)
         return probability
 
-    def query_quality(self, id, time):
+    def query_quality(self, id, time, parent_qualities):
         """
-        Queries a single, estimated quality given a time allocation
+        Queries a single, estimated quality given a time allocation and possibly has parent qualities
 
-        :Assumption: The node is a leaf node
-
+        :param parent_qualities: float[] (order matters), the qualities of the parents given their time allocations
         :param id: non-negative int: the id of the Node object
-        :param time:
-        :return:
+        :param time: TimeAllocation object, The time allocation to the node
+        :return: A quality
         """
         if self.dictionary is None:
             raise ValueError("The quality mapping for this node is null")
-        else:
+        # For leaf nodes
+        elif not parent_qualities:
             # ["node_{}".format(id)]: The node
             # ['qualities']: The node's quality mappings
             dictionary = self.dictionary["node_{}".format(id)]['qualities']
             # Round the time to the respective
-            estimated_time = self.round_nearest(time, self.time_interval)
-            quality = dictionary["{}".format(estimated_time)]
-            return quality
+            estimated_time = self.round_nearest(time.time, self.time_interval)
+            # Use .1f to add a trailing zero
+
+            qualities = dictionary["{:.1f}".format(estimated_time)]
+            average_quality = self.average_quality(qualities)
+            return average_quality
+        # For intermediate or root nodes
+        else:
+            dictionary = self.dictionary["node_{}".format(id)]['qualities']
+            # Round the time to the respective
+            estimated_time = self.round_nearest(time.time, self.time_interval)
+            for parent_quality in parent_qualities:
+                dictionary = dictionary[parent_quality]
+            qualities = dictionary["{:.1f}".format(estimated_time)]
+            average_quality = self.average_quality(qualities)
+            return average_quality
 
     @staticmethod
-    def round_nearest(time, time_step):
-        return round(time / time_step) * time_step
+    def round_nearest(number, step):
+        """
+        Finds the nearest element with respect to the step size
+
+        :param number: A float
+        :param step: A float
+        :return: A float
+        """
+        return round(number / step) * step
