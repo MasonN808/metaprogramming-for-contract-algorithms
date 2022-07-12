@@ -10,6 +10,7 @@ if __name__ == "__main__":
     TIME_LIMIT = BUDGET
     STEP_SIZE = 0.1
     QUALITY_INTERVAL = .05
+    VERBOSE = False
 
     # Create a DAG manually for testing
     # Leaf nodes
@@ -47,6 +48,19 @@ if __name__ == "__main__":
     # Create the program with some budget
     program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3)
 
+    for i in range(0, 10):
+        program.allocations = program.random_budget()
+        optimal_allocations = program.naive_hill_climbing(verbose=VERBOSE)
+        optimal_time_allocations = [i.time for i in optimal_allocations]
+        eu_optimal = program.global_expected_utility(optimal_allocations) * program.scale
+        if program.decimals is not None:
+            optimal_time_allocations = [round(i.time, program.decimals) for i in program.allocations]
+            eu_optimal = round(eu_optimal, program.decimals)
+        print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
+              "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
+
+    # Initial using Uniform Distribution
+    program.allocations = program.uniform_budget()
     initial_time_allocations = [i.time for i in program.allocations]
     eu_initial = program.global_expected_utility(program.allocations) * program.scale
     if program.decimals is not None:
@@ -56,8 +70,9 @@ if __name__ == "__main__":
     print("Initial ==> Expected Utility: {:<5} ==> "
           "Time Allocations: {}".format(eu_initial, initial_time_allocations))
 
+    # Optimal using Uniform Distribution
     # This is a list of TimeAllocation objects
-    optimal_allocations = program.naive_hill_climbing(verbose=True)
+    optimal_allocations = program.naive_hill_climbing(verbose=VERBOSE)
     optimal_time_allocations = [i.time for i in optimal_allocations]
     eu_optimal = program.global_expected_utility(optimal_allocations) * program.scale
     if program.decimals is not None:

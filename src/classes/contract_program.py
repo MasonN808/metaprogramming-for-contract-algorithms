@@ -1,6 +1,9 @@
 import copy
 # import math
 from itertools import permutations
+
+import numpy as np
+
 from src.classes.performance_profile import PerformanceProfile
 from src.classes.time_allocation import TimeAllocation
 
@@ -10,12 +13,11 @@ class ContractProgram(PerformanceProfile):
     Structures a directed-acyclic graph (DAG) as a contract program by applying a budget on a DAG of
     contract algorithms.  The edges are directed from the leaves to the root
 
-    Parameters
-    ----------
-    budget : non-negative int, required
+
+    :param: budget : non-negative int, required
         The budget of the contract program represented as seconds
 
-    dag : DAG, required
+    :param: dag : DAG, required
         The DAG that the contract program inherits
     """
     STEP_SIZE = 0.1
@@ -26,7 +28,7 @@ class ContractProgram(PerformanceProfile):
                                     quality_interval=quality_interval, step_size=self.STEP_SIZE)
         self.budget = budget
         self.dag = dag
-        self.allocations = self.__partition_budget()
+        self.allocations = self.uniform_budget()
         self.scale = scale
         self.decimals = decimals
 
@@ -54,12 +56,10 @@ class ContractProgram(PerformanceProfile):
                 The time allocations for each contract algorithm
         :return: float
         """
-        # TODO: make sure that node ids are non-negative integers (for our example, it is)
         probability = 1
         average_qualities = []
         # The for loop should be a breadth-first search given that the time-allocations is ordered correctly
         for (id, time) in enumerate(time_allocations):
-            # TODO: make sure to finish this (may not be the best place to put it) use self.decimals
             node = self.find_node(id)
             parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
             qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
@@ -74,11 +74,10 @@ class ContractProgram(PerformanceProfile):
     def find_parent_qualities(self, node, time_allocations, depth):
         """
         Returns the parent qualities given the time allocations and node
-        # TODO: make sure that the pulling of elements in the lists are accurate
 
-        :param depth: The depth of the recursive call
-        :param node: Node object, finding the parent qualities of this node
-        :param time_allocations: float[] (order matters), for the entire DAG
+        :param: depth: The depth of the recursive call
+        :param: node: Node object, finding the parent qualities of this node
+        :param: time_allocations: float[] (order matters), for the entire DAG
         :return: A list of parent qualities
         """
         # Recur down the DAG
@@ -117,19 +116,21 @@ class ContractProgram(PerformanceProfile):
                 return node
         raise IndexError("Node not found with given id")
 
-    def naive_hill_climbing(self, verbose=False):
+    def naive_hill_climbing(self, decay=1.2, threshold=.001, verbose=False):
         """
         Does naive hill climbing search by randomly replacing a set amount of time s between two different contract
         algorithms. If the expected value of the root node of the contract algorithm increases, we commit to the
-        replacement; else, we divide s by 2 and repeat the above until s reaches some threshold epsilon by which we
+        replacement; else, we divide s by a decay rate and repeat the above until s reaches some threshold by which we
         terminate
 
+        :param verbose: Verbose mode
+        :param threshold: float, the threshold of the temperature decay during annealing
+        :type decay: float, the decay rate of the temperature during annealing
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
         allocation = self.budget / self.dag.order
         time_switched = allocation
-        while time_switched > .001:
-            # print("_________________")
+        while time_switched > threshold:
             possible_local_max = []
 
             for permutation in permutations(self.allocations, 2):
@@ -176,15 +177,27 @@ class ContractProgram(PerformanceProfile):
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j)
             else:
-                time_switched = time_switched / 1.2
+                time_switched = time_switched / decay
 
         return self.allocations
 
-    def __partition_budget(self):
+    def uniform_budget(self):
         """
-        Discretizes the budget into equal partitions relative to the order of the DAG
+        Partitions the budget into equal partitions relative to the order of the DAG
 
-        :return:
+        :return: TimeAllocation[]
         """
         allocation = self.budget / self.dag.order  # Divide the budget into equal allocations for every contract algo
         return [TimeAllocation(allocation, node_id) for node_id in range(0, self.dag.order)]
+
+    def random_budget(self):
+        """
+        Partitions the budget into random partitions such that they add to the budget
+
+        :return: TimeAllocation
+        """
+        allocations_array = np.random.dirichlet(np.ones(self.dag.order), size=1).squeeze()
+        allocations_list = allocations_array.tolist()
+        # Multiply all elements by the budget
+        allocations_list = [time * self.budget for time in allocations_list]
+        return [TimeAllocation(time=time, node_id=id) for (id, time) in enumerate(allocations_list)]
