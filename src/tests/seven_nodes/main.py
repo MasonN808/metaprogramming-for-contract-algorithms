@@ -57,4 +57,3 @@ if __name__ == "__main__":
     # Test initial vs optimal expected utility and allocations
     test.find_utility_and_allocations(allocation_type="initial", verbose=False)
     test.find_utility_and_allocations(allocation_type="optimal", verbose=False)
-
