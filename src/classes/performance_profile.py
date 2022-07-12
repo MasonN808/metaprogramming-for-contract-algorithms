@@ -67,25 +67,14 @@ class PerformanceProfile:
                 qualities += dictionary["{}".format(t)]
             return qualities
 
-    @staticmethod
-    def average_quality(qualities):
-        """
-        Gets the average quality over a list of qualities
-
-        :param qualities: float[]
-        :return: float
-        """
-        average = sum(qualities) / len(qualities)
-        return average
-
-    def query_probability(self, queried_quality, quality_list):
+    def query_probability_contract_expression(self, queried_quality, quality_list):
         """
         The performance profile: Queries the quality mapping at a specific time given the previous qualities of the
         contract algorithm's parents
 
         :param quality_list: A list of qualities from query_quality_list_on_interval()
         :param queried_quality: The conditional probability of obtaining the queried quality
-        :return: [0,1], the probability of getting the current_quality, given the previous qualities (not yet) and time
+        :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
         allocation
         """
         # Sort in ascending order
@@ -101,7 +90,7 @@ class PerformanceProfile:
         probability = number_in_interval / len(quality_list)
         return probability
 
-    def query_quality(self, id, time, parent_qualities):
+    def query_average_quality(self, id, time, parent_qualities):
         """
         Queries a single, estimated quality given a time allocation and possibly has parent qualities
 
@@ -135,6 +124,19 @@ class PerformanceProfile:
             qualities = dictionary["{:.1f}".format(estimated_time)]
             average_quality = self.average_quality(qualities)
             return average_quality
+
+    @staticmethod
+    def average_quality(qualities):
+        """
+        Gets the average quality over a list of qualities
+
+        :param qualities: float[]
+        :return: float
+        """
+        average = sum(qualities) / len(qualities)
+        return average
+
+    # def query_probability_conditional_expression(self, queried_quality, quality_list):
 
     @staticmethod
     def round_nearest(number, step):

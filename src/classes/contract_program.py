@@ -66,7 +66,7 @@ class ContractProgram(PerformanceProfile):
             average_quality = self.average_quality(qualities)
             average_qualities.append(average_quality)
 
-            probability = probability * self.query_probability(average_quality, qualities)
+            probability = probability * self.query_probability_contract_expression(average_quality, qualities)
 
         expected_utility = probability * self.global_utility(average_qualities)
         return expected_utility
@@ -92,7 +92,7 @@ class ContractProgram(PerformanceProfile):
                 return parent_qualities
             else:
                 # Return a list of parent-dependent qualities (not a leaf or root)
-                quality = self.query_quality(node.id, time_allocations[node.id], parent_qualities)
+                quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
 
                 return quality
         # Base Case (Leaf Nodes in a functional expression)
@@ -101,7 +101,7 @@ class ContractProgram(PerformanceProfile):
             if depth == 1:
                 return []
             else:
-                quality = self.query_quality(node.id, time_allocations[node.id], [])
+                quality = self.query_average_quality(node.id, time_allocations[node.id], [])
                 return quality
 
     def find_node(self, node_id):
