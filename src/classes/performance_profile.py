@@ -74,8 +74,6 @@ class PerformanceProfile:
         contract algorithm's parents
 
         :param quality_list: A list of qualities from query_quality_list_on_interval()
-        :param id: The id of the node/contract algorithm being queried
-        :param time: The time allocation by which the contract algorithm stops
         :param queried_quality: The conditional probability of obtaining the queried quality
         :return: [0,1], the probability of getting the current_quality, given the previous qualities (not yet) and time
         allocation
@@ -122,7 +120,8 @@ class PerformanceProfile:
             # Round the time to the respective
             estimated_time = self.round_nearest(time.time, self.time_interval)
             for parent_quality in parent_qualities:
-                dictionary = dictionary[parent_quality]
+                parent_quality = self.round_nearest(parent_quality, step=self.quality_interval)
+                dictionary = dictionary["{:.2f}".format(parent_quality)]
             qualities = dictionary["{:.1f}".format(estimated_time)]
             average_quality = self.average_quality(qualities)
             return average_quality

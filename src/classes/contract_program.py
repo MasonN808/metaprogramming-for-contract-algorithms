@@ -1,4 +1,5 @@
 import copy
+import math
 from itertools import permutations
 from src.classes.performance_profile import PerformanceProfile
 from src.classes.time_allocation import TimeAllocation
@@ -39,6 +40,7 @@ class ContractProgram(PerformanceProfile):
         :return: float
         """
         return sum(qualities)
+        # return math.prod(qualities)
 
     def global_expected_utility(self, time_allocations):
         """
@@ -125,7 +127,7 @@ class ContractProgram(PerformanceProfile):
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
         allocation = self.budget / self.dag.order
-        time_switched = allocation / 1.1
+        time_switched = allocation
         while time_switched > .001:
             # print("_________________")
             possible_local_max = []
@@ -134,11 +136,10 @@ class ContractProgram(PerformanceProfile):
                 # Avoids exchanging time with itself
                 if permutation[0].node_id == permutation[1].node_id:
                     continue
-                # print("permutation: {}".format([i.node_id for i in permutation]))
-
                 # Make a deep copy to avoid pointers to the same list
                 adjusted_allocations = copy.deepcopy(self.allocations)
 
+                # Avoids negative time allocation
                 if adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
                     continue
                 else:
@@ -175,7 +176,7 @@ class ContractProgram(PerformanceProfile):
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j)
             else:
-                time_switched = time_switched / 1.5
+                time_switched = time_switched / 1.2
 
         return self.allocations
 
