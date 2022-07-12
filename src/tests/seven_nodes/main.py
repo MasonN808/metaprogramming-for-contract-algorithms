@@ -2,6 +2,7 @@ from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
 from src.classes.node import Node
 from src.classes.contract_program import ContractProgram
 from src.profiles.generator import Generator
+from src.tests.test import Test
 from os.path import exists
 
 if __name__ == "__main__":
@@ -48,35 +49,12 @@ if __name__ == "__main__":
     # Create the program with some budget
     program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3)
 
-    for i in range(0, 10):
-        program.allocations = program.random_budget()
-        optimal_allocations = program.naive_hill_climbing(verbose=VERBOSE)
-        optimal_time_allocations = [i.time for i in optimal_allocations]
-        eu_optimal = program.global_expected_utility(optimal_allocations) * program.scale
-        if program.decimals is not None:
-            optimal_time_allocations = [round(i.time, program.decimals) for i in program.allocations]
-            eu_optimal = round(eu_optimal, program.decimals)
-        print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
-              "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
+    test = Test(program)
 
-    # Initial using Uniform Distribution
-    program.allocations = program.uniform_budget()
-    initial_time_allocations = [i.time for i in program.allocations]
-    eu_initial = program.global_expected_utility(program.allocations) * program.scale
-    if program.decimals is not None:
-        initial_time_allocations = [round(i.time, program.decimals) for i in program.allocations]
-        eu_initial = round(eu_initial, program.decimals)
-    # The initial time allocations for each contract algorithm
-    print("Initial ==> Expected Utility: {:<5} ==> "
-          "Time Allocations: {}".format(eu_initial, initial_time_allocations))
+    # Test a random distribution on the initial allocations
+    # print(test.test_initial_allocations(iterations=5, initial_is_random=False, verbose=False))
 
-    # Optimal using Uniform Distribution
-    # This is a list of TimeAllocation objects
-    optimal_allocations = program.naive_hill_climbing(verbose=VERBOSE)
-    optimal_time_allocations = [i.time for i in optimal_allocations]
-    eu_optimal = program.global_expected_utility(optimal_allocations) * program.scale
-    if program.decimals is not None:
-        optimal_time_allocations = [round(i.time, program.decimals) for i in program.allocations]
-        eu_optimal = round(eu_optimal, program.decimals)
-    print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
-          "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
+    # Test initial vs optimal expected utility and allocations
+    test.find_utility_and_allocations(allocation_type="initial", verbose=False)
+    test.find_utility_and_allocations(allocation_type="optimal", verbose=False)
+

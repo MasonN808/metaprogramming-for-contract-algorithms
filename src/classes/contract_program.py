@@ -192,7 +192,7 @@ class ContractProgram(PerformanceProfile):
 
     def random_budget(self):
         """
-        Partitions the budget into random partitions such that they add to the budget
+        Partitions the budget into random partitions such that they add to the budget using a Dirichlet distribution
 
         :return: TimeAllocation
         """
