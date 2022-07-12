@@ -59,7 +59,7 @@ class Test:
                                             for i in self.contract_program.allocations]
                 eu_initial = round(eu_initial, self.contract_program.decimals)
             # The initial time allocations for each contract algorithm
-            print("Initial ==> Expected Utility: {:<5} ==> "
+            print("                   Initial ==> Expected Utility: {:<5} ==> "
                   "Time Allocations: {}".format(eu_initial, initial_time_allocations))
         else:
             raise ValueError("Invalid allocation type: must be 'initial' or 'optimal'")

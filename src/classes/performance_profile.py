@@ -7,20 +7,25 @@ class PerformanceProfile:
     A performance profile attached to a node in the DAG via an id associated with the node
 
     :param file_name: the file name of the JSON file of performance profiles to be used
+    :param time_interval: the interval w.r.t. time to query from in the quality mapping
+    :param time_limit: the time limit for each quality mapping
+    :param time_step_size: the step size for each time step
+    :param quality_interval: the interval w.r.t. qualities to query from in the quality mapping
     """
 
-    def __init__(self, file_name, time_interval=10, time_limit=50, step_size=50, quality_interval=.05):
+    def __init__(self, file_name, time_interval, time_limit, time_step_size=.1, quality_interval=.05):
         self.dictionary = self.import_quality_mappings(file_name)
         self.time_interval = time_interval
         self.quality_interval = quality_interval
         self.time_limit = time_limit
-        self.step_size = step_size
+        self.time_step_size = time_step_size
 
     @staticmethod
     def import_quality_mappings(file_name):
         """
         Imports the performance profiles as dictionary via an external JSON file.
 
+        :param file_name: the name of the file with quality mappings for each node
         :return: An embedded dictionary
         """
         f = open('{}'.format(file_name), "r")
@@ -50,9 +55,14 @@ class PerformanceProfile:
             # Initialize the start and end of the time interval for descritization of the prior
             start_step = (time // self.time_interval) * self.time_interval
             end_step = start_step + self.time_interval
-            # Note: interval is [start_step, end_step)
-            # TODO: may need to fix the hardcoded round function
-            for t in np.arange(start_step, end_step + self.step_size, self.step_size).round(1):
+            # Check if time is equal to limit
+            if time == self.time_limit:
+                start_step = ((time - self.time_interval) // self.time_interval) * self.time_interval
+                end_step = start_step + self.time_interval
+            # Note: interval is [start_step, end_step) or [start_step, end_step] for time at limit
+            num_decimals = self.find_number_of_decimals(self.time_step_size)
+            # Round to get rid of rounding error in division of time
+            for t in np.arange(start_step, end_step, self.time_step_size).round(num_decimals):
                 # ["{}".format(t)]: The time allocation
                 qualities += dictionary["{}".format(t)]
             return qualities
@@ -136,3 +146,13 @@ class PerformanceProfile:
         :return: A float
         """
         return round(number / step) * step
+
+    @staticmethod
+    def find_number_of_decimals(number):
+        """
+        Finds the number of decimals in a float
+        :param number: float
+        :return: int
+        """
+        string_number = str(number)
+        return string_number[::-1].find('.')

@@ -47,12 +47,12 @@ if __name__ == "__main__":
         generator.populate(nodes, "populous.json")
 
     # Create the program with some budget
-    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3)
+    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, time_interval=1)
 
     test = Test(program)
 
     # Test a random distribution on the initial allocations
-    # print(test.test_initial_allocations(iterations=5, initial_is_random=False, verbose=False))
+    # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))
 
     # Test initial vs optimal expected utility and allocations
     test.find_utility_and_allocations(allocation_type="initial", verbose=False)
