@@ -15,14 +15,15 @@ if __name__ == "__main__":
 
     # Create a DAG manually for testing
     # Leaf nodes
-    node_3 = Node(3, [], [], expression_type="contract")
     node_4 = Node(4, [], [], expression_type="contract")
     node_5 = Node(5, [], [], expression_type="contract")
-    node_6 = Node(6, [], [], expression_type="contract")
+
+    # Conditional Node
+    node_3 = Node(3, [node_4, node_5], [], expression_type="conditional")
 
     # Intermediate nodes
-    node_1 = Node(1, [node_3, node_4], [], expression_type="contract")
-    node_2 = Node(2, [node_5, node_6], [], expression_type="contract")
+    node_1 = Node(1, [node_3], [], expression_type="contract")
+    node_2 = Node(2, [node_3], [], expression_type="contract")
 
     # Root node
     root = Node(0, [node_1, node_2], [], expression_type="contract")
@@ -30,13 +31,12 @@ if __name__ == "__main__":
     # Add the children
     node_1.children = [root]
     node_2.children = [root]
-    node_3.children = [node_1]
-    node_4.children = [node_1]
-    node_5.children = [node_2]
-    node_6.children = [node_2]
+    node_3.children = [node_1, node_2]
+    node_4.children = [node_3]
+    node_5.children = [node_3]
 
     # Nodes
-    nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6]
+    nodes = [root, node_1, node_2, node_3, node_4, node_5]
 
     # Create and verify the DAG from the node list
     dag = DirectedAcyclicGraph(nodes, root)

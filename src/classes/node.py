@@ -10,9 +10,11 @@ class Node:
         The time allocation given to the contract algorithm in seconds (one-second intervals)
     :param parents: Node[], required for non-leaf nodes
         The parent nodes that are directed into the current node
+    :param children: Node[], required for non-root nodes
+        Used directly for contract conditionals
     """
 
-    def __init__(self, id, parents, expression_type=None, time=None):
+    def __init__(self, id, parents, children, expression_type=None, time=None):
         # id of the node in the tree
         self.id = id
         # Used in checking for connectedness in the DAG
@@ -20,6 +22,7 @@ class Node:
         self.expr_type = expression_type
         self.time = time
         self.parents = parents
+        self.children = children
 
     def __check_time(self):
         """
