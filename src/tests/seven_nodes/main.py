@@ -65,4 +65,3 @@ if __name__ == "__main__":
         eu_optimal = round(eu_optimal, program.decimals)
     print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
           "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
-
