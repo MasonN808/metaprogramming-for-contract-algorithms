@@ -32,10 +32,23 @@ class Test:
                       "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
         return sorted(expected_utilities)
 
-    def find_utility_and_allocations(self, allocation_type, verbose=False):
-        if allocation_type == "optimal":
+    def find_utility_and_allocations(self, allocation_type, initial_is_random, verbose=False):
+        """
+        Finds the expected utility and time allocations for an optimal expected utility or initial expected utility
+        given the initial time allocations
+
+        :param allocation_type:
+        :param initial_is_random:
+        :param verbose:
+        :return:
+        """
+        if initial_is_random:
+            # Optimal using Dirichlet Distribution
+            self.contract_program.allocations = self.contract_program.random_budget()
+        else:
             # Optimal using Uniform Distribution
             self.contract_program.allocations = self.contract_program.uniform_budget()
+        if allocation_type == "optimal":
             # This is a list of TimeAllocation objects
             allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
             optimal_time_allocations = [i.time for i in allocations]
@@ -47,8 +60,6 @@ class Test:
             print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
                   "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
         elif allocation_type == "initial":
-            # Initial using Uniform Distribution
-            self.contract_program.allocations = self.contract_program.uniform_budget()
             # This is a list of TimeAllocation objects
             allocations = self.contract_program.allocations
             initial_time_allocations = [i.time for i in allocations]

@@ -50,7 +50,7 @@ class ContractProgram(PerformanceProfile):
         (i.e., the probability distribution of each contract program's conditional performance profile) and the
         global utility
 
-        Assumption(s): 1) A time-allocation is given to each node in the contract program
+        Assumption: A time-allocation is given to each node in the contract program
 
         :param time_allocations: float[], required
                 The time allocations for each contract algorithm
@@ -60,16 +60,29 @@ class ContractProgram(PerformanceProfile):
         average_qualities = []
         # The for loop should be a breadth-first search given that the time-allocations is ordered correctly
         for (id, time) in enumerate(time_allocations):
+            # TODO: will have to change this somewhat to incorporate conditional expressions
             node = self.find_node(id)
             parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
             qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
             average_quality = self.average_quality(qualities)
             average_qualities.append(average_quality)
-
-            probability = probability * self.query_probability_contract_expression(average_quality, qualities)
-
+            if not self.child_of_conditional(node):
+                probability = probability * self.query_probability_contract_expression(average_quality, qualities)
+            else:
+                pass
         expected_utility = probability * self.global_utility(average_qualities)
         return expected_utility
+
+    # For conditional expressions
+    # -------------------------------
+    @staticmethod
+    def child_of_conditional(node):
+        for child in node.children:
+            if child.expr_type == "conditional":
+                return True
+        return False
+
+    # -------------------------------
 
     def find_parent_qualities(self, node, time_allocations, depth):
         """

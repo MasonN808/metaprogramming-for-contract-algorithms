@@ -136,7 +136,17 @@ class PerformanceProfile:
         average = sum(qualities) / len(qualities)
         return average
 
-    # def query_probability_conditional_expression(self, queried_quality, quality_list):
+    def query_probability_conditional_expression(self, queried_quality, quality_list):
+        # TODO: Finish this
+        pass
+
+    def estimate_rho(self):
+        # TODO: Finish this
+        pass
+
+    def calculate_tau(self):
+        # TODO: Finish this
+        pass
 
     @staticmethod
     def round_nearest(number, step):
