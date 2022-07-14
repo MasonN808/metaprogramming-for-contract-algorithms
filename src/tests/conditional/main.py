@@ -48,6 +48,9 @@ if __name__ == "__main__":
         generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, step_size=STEP_SIZE, uniform_low=.05,
                               uniform_high=.9)
 
+        # Adjust the DAG structure that has conditionals for generation
+        generator.dag = generator.adjust_dag_with_conditionals(dag)
+
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
 
@@ -63,5 +66,5 @@ if __name__ == "__main__":
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))
 
     # Test initial vs optimal expected utility and allocations
-    test.find_utility_and_allocations(allocation_type="initial", verbose=False)
-    test.find_utility_and_allocations(allocation_type="optimal", verbose=False)
+    test.find_utility_and_allocations(allocation_type="initial", initial_is_random=False, verbose=False)
+    test.find_utility_and_allocations(allocation_type="optimal", initial_is_random=False, verbose=False)

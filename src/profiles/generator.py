@@ -36,7 +36,7 @@ class Generator:
         Used to recursively generate the synthetic quality mappings
 
         :param depth: The depth of the recursion
-        :param node: Synthetic quality mapping for this particular node given its parents
+        :param node: Node object, Synthetic quality mapping for this particular node given its parents
         :param qualities: The parent qualities as inputs of the node
         :param dictionary: The dictionary being generated
         :param random_number: To produce noise in the quality mappings
@@ -146,7 +146,8 @@ class Generator:
 
     def recur_traverse(self, depth, node, qualities, dictionary, populate_dictionary):
         """
-        Used to recursively generate the synthetic quality mappings
+        Used to recursively traverse the synthetic quality mappings to generate the populated JSON file of quality
+        mappings
 
         :param populate_dictionary: Dictionary to be populated
         :param depth: The depth of the recursion
@@ -189,3 +190,24 @@ class Generator:
                     self.recur_traverse(depth + 1, node, qualities.append(parent_quality),
                                         dictionary[parent_quality], populate_dictionary[parent_quality])
         return populate_dictionary
+
+    @staticmethod
+    def adjust_dag_with_conditionals(dag):
+        """
+        Changes the structure of the DAG by removing any conditional nodes and appending its parents to its children
+        temporarily for generation. Note that the original structure of the DAG remains intact
+
+        :param dag: directedAcyclicGraph Object, original version
+        :return: directedAcyclicGraph Object, a trimmed version
+        """
+        for node in dag.nodes:
+            if node.expr_type == "conditional":
+                # Append its parents to the children
+                # Then remove the node
+                for child in node.children:
+                    child.parents.extend(node.parents)
+                    child.parents.remove(node)
+                for parent in node.parents:
+                    parent.children.extend(node.children)
+                    parent.children.remove(node)
+        return dag
