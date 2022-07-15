@@ -1,9 +1,13 @@
+import numpy as np
+
 from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
 from src.classes.node import Node
 from src.classes.contract_program import ContractProgram
 from src.profiles.generator import Generator
 from src.tests.test import Test
 from os.path import exists
+from geneticalgorithm import geneticalgorithm as ga
+
 
 if __name__ == "__main__":
     BUDGET = 10
@@ -65,3 +69,16 @@ if __name__ == "__main__":
     # Test initial vs optimal expected utility and allocations
     test.find_utility_and_allocations(allocation_type="initial", initial_is_random=False, verbose=False)
     test.find_utility_and_allocations(allocation_type="optimal", initial_is_random=False, verbose=False)
+
+    # switch to genetic algorithm mode
+    program.using_genetic_algorithm = True
+
+    varbound = np.array([[0, 10]] * len(dag.nodes))
+
+    model = ga(function=program.global_expected_utility_genetic, dimension=len(
+        dag.nodes), variable_type='real', variable_boundaries=varbound)
+
+    model.run()
+
+    #    print(program.global_expected_utility_genetic([0.48491174, 0.46411803, 2.11797894, 0.8621937, 2.39910455, 2.42336483,
+    # 1.24305552]))

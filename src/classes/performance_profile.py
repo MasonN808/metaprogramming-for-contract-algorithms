@@ -13,12 +13,13 @@ class PerformanceProfile:
     :param quality_interval: the interval w.r.t. qualities to query from in the quality mapping
     """
 
-    def __init__(self, file_name, time_interval, time_limit, time_step_size=.1, quality_interval=.05):
+    def __init__(self, file_name, time_interval, time_limit, time_step_size=.1, quality_interval=.05, using_genetic_algorithm=False):
         self.dictionary = self.import_quality_mappings(file_name)
         self.time_interval = time_interval
         self.quality_interval = quality_interval
         self.time_limit = time_limit
         self.time_step_size = time_step_size
+        self.using_genetic_algorithm = using_genetic_algorithm
 
     @staticmethod
     def import_quality_mappings(file_name):
@@ -106,18 +107,25 @@ class PerformanceProfile:
             # ["node_{}".format(id)]: The node
             # ['qualities']: The node's quality mappings
             dictionary = self.dictionary["node_{}".format(id)]['qualities']
-            # Round the time to the respective
-            estimated_time = self.round_nearest(time.time, self.time_interval)
-            # Use .1f to add a trailing zero
 
+            if not self.using_genetic_algorithm:
+                estimated_time = self.round_nearest(time.time, self.time_interval)
+            else:
+                estimated_time = self.round_nearest(time, self.time_interval)
+
+            # Use .1f to add a trailing zero
             qualities = dictionary["{:.1f}".format(estimated_time)]
             average_quality = self.average_quality(qualities)
             return average_quality
         # For intermediate or root nodes
         else:
             dictionary = self.dictionary["node_{}".format(id)]['qualities']
-            # Round the time to the respective
-            estimated_time = self.round_nearest(time.time, self.time_interval)
+
+            if not self.using_genetic_algorithm:
+                estimated_time = self.round_nearest(time.time, self.time_interval)
+            else:
+                estimated_time = self.round_nearest(time, self.time_interval)
+
             for parent_quality in parent_qualities:
                 parent_quality = self.round_nearest(parent_quality, step=self.quality_interval)
                 dictionary = dictionary["{:.2f}".format(parent_quality)]
