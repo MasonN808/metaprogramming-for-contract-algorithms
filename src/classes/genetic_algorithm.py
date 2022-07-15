@@ -427,6 +427,28 @@ class GeneticAlgorithm():
                              + ' maximum number of iterations without improvement was met!')
 
     ##############################################################################
+
+    def select_parents(self, pop, cumprob):
+        # Select parents
+        par = np.array([np.zeros(self.dim + 1)] * self.par_s)
+
+        for k in range(0, self.num_elit):
+            par[k] = pop[k].copy()
+        for k in range(self.num_elit, self.par_s):
+            index = np.searchsorted(cumprob, np.random.random())
+            par[k] = pop[index].copy()
+
+        ef_par_list = np.array([False] * self.par_s)
+        par_count = 0
+        while par_count == 0:
+            for k in range(0, self.par_s):
+                if np.random.random() <= self.prob_cross:
+                    ef_par_list[k] = True
+                    par_count += 1
+
+        ef_par = par[ef_par_list].copy()
+        return [ef_par, par, par_count]
+
     ##############################################################################
 
     def cross(self, x, y, c_type):
@@ -460,27 +482,6 @@ class GeneticAlgorithm():
         return np.array([ofs1, ofs2])
 
     ###############################################################################
-
-    def select_parents(self, pop, cumprob):
-        # Select parents
-        par = np.array([np.zeros(self.dim + 1)] * self.par_s)
-
-        for k in range(0, self.num_elit):
-            par[k] = pop[k].copy()
-        for k in range(self.num_elit, self.par_s):
-            index = np.searchsorted(cumprob, np.random.random())
-            par[k] = pop[index].copy()
-
-        ef_par_list = np.array([False] * self.par_s)
-        par_count = 0
-        while par_count == 0:
-            for k in range(0, self.par_s):
-                if np.random.random() <= self.prob_cross:
-                    ef_par_list[k] = True
-                    par_count += 1
-
-        ef_par = par[ef_par_list].copy()
-        return [ef_par, par, par_count]
 
     def mut(self, x):
 
@@ -530,8 +531,8 @@ class GeneticAlgorithm():
 
     ###############################################################################
 
-    def sim(self, X):
-        self.temp = X.copy()
+    def sim(self, x):
+        self.temp = x.copy()
         obj = None
         try:
             obj = func_timeout(self.funtimeout, self.evaluate)
@@ -542,7 +543,8 @@ class GeneticAlgorithm():
         return obj
 
     ###############################################################################
-    def progress(self, count, total, status=''):
+    @staticmethod
+    def progress(count, total, status=''):
         bar_len = 50
         filled_len = int(round(bar_len * count / float(total)))
 
