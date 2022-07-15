@@ -57,7 +57,7 @@ class ContractProgram(PerformanceProfile):
         :return: float
         """
         epsilon = .01
-        if self.budget - epsilon <= sum(time_allocations) <= self.budget:
+        if (self.budget - epsilon) <= sum(time_allocations) <= self.budget:
             probability = 1
             average_qualities = []
             # The for loop should be a breadth-first search given that the time-allocations is ordered correctly
@@ -78,7 +78,7 @@ class ContractProgram(PerformanceProfile):
             expected_utility = probability * self.global_utility(average_qualities)
             return -expected_utility
         else:
-            return 0
+            return None
 
     def global_expected_utility(self, time_allocations):
         """
