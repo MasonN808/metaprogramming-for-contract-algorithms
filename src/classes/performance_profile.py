@@ -204,18 +204,36 @@ class PerformanceProfile:
         # Recur down the DAG
         depth += 1
         if node.parents:
-            parent_qualities = []
-            for parent in node.parents:
-                quality = self.find_parent_qualities(parent, time_allocations, depth)
-                # Reset the parent qualities for the next node
-                parent_qualities.append(quality)
-            if depth == 1:
-                return parent_qualities
-            else:
-                # Return a list of parent-dependent qualities (not a leaf or root)
-                quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
+            # Check that none of the parents are conditional expressions
+            if not self.is_conditional_node(node, "parents"):
+                parent_qualities = []
+                for parent in node.parents:
+                    quality = self.find_parent_qualities(parent, time_allocations, depth)
+                    # Reset the parent qualities for the next node
+                    parent_qualities.append(quality)
+                if depth == 1:
+                    return parent_qualities
+                else:
+                    # Return a list of parent-dependent qualities (not a leaf or root)
+                    quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
 
-                return quality
+                    return quality
+            else:
+                # Assumption: Node only has one parent (the conditional)
+                # Skip the conditional node since no relevant mapping exists
+                node = node.parents[0]
+                parent_qualities = []
+                for parent in node.parents:
+                    quality = self.find_parent_qualities(parent, time_allocations, depth)
+                    # Reset the parent qualities for the next node
+                    parent_qualities.append(quality)
+                if depth == 1:
+                    return parent_qualities
+                else:
+                    # Return a list of parent-dependent qualities (not a leaf or root)
+                    quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
+
+                    return quality
         # Base Case (Leaf Nodes in a functional expression)
         else:
             # Leaf Node as a trivial functional expression
@@ -245,3 +263,18 @@ class PerformanceProfile:
         """
         string_number = str(number)
         return string_number[::-1].find('.')
+
+    @staticmethod
+    def is_conditional_node(node, family_type):
+        if family_type == "parents":
+            for parent in node.parents:
+                if parent.expr_type == "conditional":
+                    return True
+            return False
+        elif family_type == "children":
+            for child in node.parents:
+                if child.expr_type == "conditional":
+                    return True
+            return False
+        else:
+            raise ValueError("Invalid family_type")

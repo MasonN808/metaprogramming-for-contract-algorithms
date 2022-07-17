@@ -99,9 +99,8 @@ class ContractProgram(PerformanceProfile):
             node = self.find_node(id)
             if not node.traversed:
                 node.traversed = True
-                if not self.child_of_conditional(node):
+                if not self.child_of_conditional(node) or node.expr_type != "conditional":
                     parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
-
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
                     qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
 
