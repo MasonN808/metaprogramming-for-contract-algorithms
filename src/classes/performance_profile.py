@@ -13,7 +13,8 @@ class PerformanceProfile:
     :param quality_interval: the interval w.r.t. qualities to query from in the quality mapping
     """
 
-    def __init__(self, file_name, time_interval, time_limit, time_step_size=.1, quality_interval=.05, using_genetic_algorithm=False):
+    def __init__(self, file_name, time_interval, time_limit, time_step_size=.1, quality_interval=.05,
+                 using_genetic_algorithm=False):
         self.dictionary = self.import_quality_mappings(file_name)
         self.time_interval = time_interval
         self.quality_interval = quality_interval
@@ -73,6 +74,7 @@ class PerformanceProfile:
         The performance profile (contract expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
 
+        :param node: Node object, node being evaluated
         :param quality_list: A list of qualities from query_quality_list_on_interval()
         :param queried_quality: The conditional probability of obtaining the queried quality
         :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
@@ -144,26 +146,84 @@ class PerformanceProfile:
         average = sum(qualities) / len(qualities)
         return average
 
-    def query_probability_conditional_expression(self, queried_quality, quality_list):
-        # TODO: Finish This
+    def query_probability_conditional_expression(self, conditional_node, time_to_conditional,
+                                                 queried_quality_branches, qualities_branches):
         """
         The performance profile (conditional expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
 
+        :param conditional_node: Node object, the conditional node being evaluated
         :param quality_list: A list of qualities from query_quality_list_on_interval()
         :param queried_quality: The conditional probability of obtaining the queried quality
         :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
         allocation
         """
-        pass
+        # Sort in ascending order
+        qualities_branches[0] = sorted(qualities_branches[0])
+        qualities_branches[1] = sorted(qualities_branches[1])
+        found_embedded_if = False
 
-    def estimate_rho(self):
-        # TODO: Finish this
-        pass
+        # Query the probability of the condition being true
+        rho = self.estimate_rho()
 
-    def calculate_tau(self):
-        # TODO: Finish this
-        pass
+        # TODO: implement recursion for embedded if statements
+        # TODO: For now assume that only two branches exist that are contract expressions
+        for child in conditional_node.children:
+            # Take into account branched if statements
+            if child.expr_type == "conditional":
+                found_embedded_if = True
+
+        if not found_embedded_if:
+            probability = rho * self.query_probability_contract_expression(queried_quality_branches[0], qualities_branches[0]) \
+                + (1 - rho) * self.query_probability_contract_expression(queried_quality_branches[1],
+                                                                         qualities_branches[1])
+        else:
+            # TODO: Finish this later
+            pass
+        return probability
+
+    @staticmethod
+    def estimate_rho():
+        # Assume it's constant for now
+        return .4
+
+    @staticmethod
+    def calculate_tau():
+        # Assume it takes constant time
+        return .1
+
+    def find_parent_qualities(self, node, time_allocations, depth):
+        """
+        Returns the parent qualities given the time allocations and node
+
+        :param: depth: The depth of the recursive call
+        :param: node: Node object, finding the parent qualities of this node
+        :param: time_allocations: float[] (order matters), for the entire DAG
+        :return: A list of parent qualities
+        """
+        # Recur down the DAG
+        depth += 1
+        if node.parents:
+            parent_qualities = []
+            for parent in node.parents:
+                quality = self.find_parent_qualities(parent, time_allocations, depth)
+                # Reset the parent qualities for the next node
+                parent_qualities.append(quality)
+            if depth == 1:
+                return parent_qualities
+            else:
+                # Return a list of parent-dependent qualities (not a leaf or root)
+                quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
+
+                return quality
+        # Base Case (Leaf Nodes in a functional expression)
+        else:
+            # Leaf Node as a trivial functional expression
+            if depth == 1:
+                return []
+            else:
+                quality = self.query_average_quality(node.id, time_allocations[node.id], [])
+                return quality
 
     @staticmethod
     def round_nearest(number, step):

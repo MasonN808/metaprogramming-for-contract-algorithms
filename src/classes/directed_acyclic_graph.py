@@ -52,7 +52,7 @@ class DirectedAcyclicGraph:
         :param: node: a Node object
         :return: True, if the DAG is disconnected; else False
         """
-        node.traversed = True
+        node.traversed_connectedness = True
         # Hit a leaf node or trivial DAG with one root node
         if len(node.parents) == 0:
             if node == self.root:
@@ -65,7 +65,7 @@ class DirectedAcyclicGraph:
             for parent in node.parents:
                 self.__is_disconnected(parent)
         for temp_node in self.nodes:
-            if not temp_node.traversed:
+            if not temp_node.traversed_connectedness:
                 # Found a node that wasn't traversed, so the DAG is disconnected
                 return True
         return False
@@ -75,7 +75,7 @@ class DirectedAcyclicGraph:
         Reset the traversed attribute/pointer in all the nodes to False for future traversals
         """
         for node in self.nodes:
-            node.traversed = False
+            node.traversed_connectedness = False
 
     def __has_self_loops(self):
         """

@@ -96,17 +96,57 @@ class ContractProgram(PerformanceProfile):
         average_qualities = []
         # The for loop should be a breadth-first search given that the time-allocations is ordered correctly
         for (id, time) in enumerate(time_allocations):
-            # TODO: will have to change this somewhat to incorporate conditional expressions
             node = self.find_node(id)
-            parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
-            qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
-            average_quality = self.average_quality(qualities)
-            average_qualities.append(average_quality)
-            if not self.child_of_conditional(node):
-                probability = probability * self.query_probability_contract_expression(average_quality, qualities)
+            if not node.traversed:
+                node.traversed = True
+                if not self.child_of_conditional(node):
+                    parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
+
+                    # Outputs a list of qualities from the instances at the specified time given a quality mapping
+                    qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
+
+                    # Calculates the average quality on the list of qualities for querying
+                    average_quality = self.average_quality(qualities)
+
+                    average_qualities.append(average_quality)
+
+                    probability = probability * self.query_probability_contract_expression(average_quality, qualities)
+                else:
+                    # Here, we assume that the parents are the same for both conditional branches
+                    parent_qualities_true = self.find_parent_qualities(node.children[0], time_allocations,
+                                                                       depth=0)
+                    node.children[0].traversed = True
+                    parent_qualities_false = self.find_parent_qualities(node.children[1], time_allocations,
+                                                                        depth=0)
+                    node.children[1].traversed = True
+
+                    # Outputs a list of qualities from the instances at the specified time given a quality mapping
+                    qualities_true = self.query_quality_list_on_interval(time.time, node.children[0].id,
+                                                                         parent_qualities=parent_qualities_true)
+                    qualities_false = self.query_quality_list_on_interval(time.time, node.children[1].id,
+                                                                          parent_qualities=parent_qualities_false)
+                    qualities = [qualities_true, qualities_false]
+
+                    # Calculates the average quality on the list of qualities for querying
+                    average_quality_true = self.average_quality(qualities_true)
+                    average_quality_false = self.average_quality(qualities_false)
+                    average_quality = [average_quality_true, average_quality_false]
+
+                    average_qualities.append(average_quality)
+
+                    # Subtract amount of time to evaluate condition
+                    tau = self.calculate_tau()
+                    time_to_children = time.time - tau
+
+                    probability = probability * \
+                        self.query_probability_conditional_expression(
+                            node, time_to_children, average_quality, qualities)
             else:
                 pass
         expected_utility = probability * self.global_utility(average_qualities)
+
+        # Reset the traversed pointers on the nodes
+        self.reset_traversed()
         return expected_utility
 
     # For conditional expressions
@@ -119,39 +159,6 @@ class ContractProgram(PerformanceProfile):
         return False
 
     # -------------------------------
-
-    def find_parent_qualities(self, node, time_allocations, depth):
-        """
-        Returns the parent qualities given the time allocations and node
-
-        :param: depth: The depth of the recursive call
-        :param: node: Node object, finding the parent qualities of this node
-        :param: time_allocations: float[] (order matters), for the entire DAG
-        :return: A list of parent qualities
-        """
-        # Recur down the DAG
-        depth += 1
-        if node.parents:
-            parent_qualities = []
-            for parent in node.parents:
-                quality = self.find_parent_qualities(parent, time_allocations, depth)
-                # Reset the parent qualities for the next node
-                parent_qualities.append(quality)
-            if depth == 1:
-                return parent_qualities
-            else:
-                # Return a list of parent-dependent qualities (not a leaf or root)
-                quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
-
-                return quality
-        # Base Case (Leaf Nodes in a functional expression)
-        else:
-            # Leaf Node as a trivial functional expression
-            if depth == 1:
-                return []
-            else:
-                quality = self.query_average_quality(node.id, time_allocations[node.id], [])
-                return quality
 
     def find_node(self, node_id):
         """
@@ -250,3 +257,7 @@ class ContractProgram(PerformanceProfile):
         # Multiply all elements by the budget
         allocations_list = [time * self.budget for time in allocations_list]
         return [TimeAllocation(time=time, node_id=id) for (id, time) in enumerate(allocations_list)]
+
+    def reset_traversed(self):
+        for node in self.dag.nodes:
+            node.traversed = False

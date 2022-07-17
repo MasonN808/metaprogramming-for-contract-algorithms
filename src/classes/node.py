@@ -18,11 +18,12 @@ class Node:
         # id of the node in the tree
         self.id = id
         # Used in checking for connectedness in the DAG
-        self.traversed = False
+        self.traversed_connectedness = False
         self.expr_type = expression_type
         self.time = time
         self.parents = parents
         self.children = children
+        self.traversed = False
 
     def __check_time(self):
         """
