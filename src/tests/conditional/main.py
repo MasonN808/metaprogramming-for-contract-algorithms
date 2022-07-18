@@ -59,7 +59,9 @@ if __name__ == "__main__":
 
     # Create the program with some budget
     program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, time_interval=1)
+    print([i.time for i in program.uniform_budget()])
 
+    # Adjust allocations (hardcode)
     test = Test(program)
 
     # Test a random distribution on the initial allocations

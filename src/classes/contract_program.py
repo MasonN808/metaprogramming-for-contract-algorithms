@@ -1,5 +1,5 @@
 import copy
-# import math
+import math
 from itertools import permutations
 
 import numpy as np
@@ -41,8 +41,8 @@ class ContractProgram(PerformanceProfile):
                 The qualities that were outputted for each contract algorithm in the DAG
         :return: float
         """
-        return sum(qualities)
-        # return math.prod(qualities)
+        # return sum(qualities)
+        return math.prod(qualities)
 
     def global_expected_utility_genetic(self, time_allocations):
         """
@@ -132,14 +132,14 @@ class ContractProgram(PerformanceProfile):
                     average_quality = [average_quality_true, average_quality_false]
 
                     average_qualities.append(average_quality)
-
+                    # TODO: Force tau to be the time allocation on the conditional node instead
                     # Subtract amount of time to evaluate condition
-                    tau = self.calculate_tau()
-                    time_to_children = time.time - tau
+                    # tau = self.calculate_tau()
+                    # time_to_children = time.time - tau
 
                     probability = probability * \
                         self.query_probability_conditional_expression(
-                            node, time_to_children, average_quality, qualities)
+                            node, time.time, average_quality, qualities)
             else:
                 pass
         expected_utility = probability * self.global_utility(average_qualities)
@@ -150,6 +150,7 @@ class ContractProgram(PerformanceProfile):
 
     # For conditional expressions
     # -------------------------------
+
     @staticmethod
     def child_of_conditional(node):
         for child in node.children:
@@ -237,13 +238,33 @@ class ContractProgram(PerformanceProfile):
         return self.allocations
 
     def uniform_budget(self):
+        # TODO: take into account embedded conditionals later
         """
         Partitions the budget into equal partitions relative to the order of the DAG
 
         :return: TimeAllocation[]
         """
-        allocation = self.budget / self.dag.order  # Divide the budget into equal allocations for every contract algo
-        return [TimeAllocation(allocation, node_id) for node_id in range(0, self.dag.order)]
+        number_of_conditionals = 0
+        time_allocations = []
+        # Do an initial pass to find the conditionals and subtract tau from the budget
+        # Check for conditionals and adjust the structure of the time allocations
+        # If it is a conditional, give the conditional tau constant time
+        for node_id in range(0, self.dag.order):
+            if self.find_node(node_id).expr_type == "conditional":
+                number_of_conditionals += 1
+                # We assume every conditional takes tau time
+                tau = self.calculate_tau()
+                self.budget = self.budget - tau
+                # Add the time allocation at a specified index
+                time_allocations.insert(node_id, TimeAllocation(tau, node_id))
+        for node_id in range(0, self.dag.order):
+            if self.find_node(node_id).expr_type == "conditional":
+                continue
+            else:
+                # multiply by two since the branches get an equivalent time allocation
+                allocation = self.budget / (self.dag.order - (2 * number_of_conditionals))
+                time_allocations.insert(node_id, TimeAllocation(allocation, node_id))
+        return time_allocations
 
     def random_budget(self):
         """
