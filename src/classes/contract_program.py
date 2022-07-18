@@ -153,6 +153,13 @@ class ContractProgram(PerformanceProfile):
 
     @staticmethod
     def child_of_conditional(node):
+        for parent in node.parents:
+            if parent.expr_type == "conditional":
+                return True
+        return False
+
+    @staticmethod
+    def parent_of_conditional(node):
         for child in node.children:
             if child.expr_type == "conditional":
                 return True
@@ -184,26 +191,56 @@ class ContractProgram(PerformanceProfile):
         :type decay: float, the decay rate of the temperature during annealing
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
-        allocation = self.budget / self.dag.order
+        allocation = self.find_uniform_allocation()
         time_switched = allocation
         while time_switched > threshold:
             possible_local_max = []
-
             for permutation in permutations(self.allocations, 2):
-                # Avoids exchanging time with itself
-                if permutation[0].node_id == permutation[1].node_id:
-                    continue
                 # Make a deep copy to avoid pointers to the same list
                 adjusted_allocations = copy.deepcopy(self.allocations)
-
+                # Avoid all permutations that include the conditional node
+                if self.find_node(permutation[0].node_id).expr_type == "conditional" or self.find_node(permutation[1].node_id).expr_type == "conditional":
+                    continue
+                # Avoids exchanging time between two branch nodes of a conditional
+                elif self.child_of_conditional(self.find_node(permutation[0].node_id)) and self.child_of_conditional(self.find_node(permutation[1].node_id)):
+                    continue
+                # Avoids exchanging time with itself
+                elif permutation[0].node_id == permutation[1].node_id:
+                    continue
                 # Avoids negative time allocation
-                if adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
+                elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
                     continue
                 else:
-                    adjusted_allocations[permutation[0].node_id].time = adjusted_allocations[
-                        permutation[0].node_id].time - time_switched
-                    adjusted_allocations[permutation[1].node_id].time = adjusted_allocations[
-                        permutation[1].node_id].time + time_switched
+                    # Check if is child of conditional so that both children of the conditional are allocated same time
+                    if self.child_of_conditional(self.find_node(permutation[0].node_id)):
+                        # find the neighbor node
+                        neighbor = self.find_neighbor_branch(self.find_node(permutation[0].node_id))
+                        # Adjust the allocation to the traversed node under the conditional
+                        adjusted_allocations[permutation[0].node_id].time = adjusted_allocations[
+                            permutation[0].node_id].time - time_switched
+                        # Adjust allocation to the neighbor in parallel
+                        adjusted_allocations[neighbor.id].time = adjusted_allocations[
+                            neighbor.id].time - time_switched
+                        # Adjust allocation to then non-child of a conditional
+                        adjusted_allocations[permutation[1].node_id].time = adjusted_allocations[
+                            permutation[1].node_id].time + time_switched
+                    elif self.child_of_conditional(self.find_node(permutation[1].node_id)):
+                        # find the neighbor node
+                        neighbor = self.find_neighbor_branch(self.find_node(permutation[1].node_id))
+                        # Adjust the allocation to the traversed node under the conditional
+                        adjusted_allocations[permutation[1].node_id].time = adjusted_allocations[
+                            permutation[1].node_id].time + time_switched
+                        # Adjust allocation to the neighbor in parallel
+                        adjusted_allocations[neighbor.id].time = adjusted_allocations[
+                            neighbor.id].time + time_switched
+                        # Adjust allocation to then non-child of a conditional
+                        adjusted_allocations[permutation[0].node_id].time = adjusted_allocations[
+                            permutation[0].node_id].time - time_switched
+                    else:
+                        adjusted_allocations[permutation[0].node_id].time = adjusted_allocations[
+                            permutation[0].node_id].time - time_switched
+                        adjusted_allocations[permutation[1].node_id].time = adjusted_allocations[
+                            permutation[1].node_id].time + time_switched
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations):
                         possible_local_max.append(adjusted_allocations)
@@ -244,14 +281,12 @@ class ContractProgram(PerformanceProfile):
 
         :return: TimeAllocation[]
         """
-        number_of_conditionals = 0
         time_allocations = []
         # Do an initial pass to find the conditionals and subtract tau from the budget
         # Check for conditionals and adjust the structure of the time allocations
         # If it is a conditional, give the conditional tau constant time
         for node_id in range(0, self.dag.order):
             if self.find_node(node_id).expr_type == "conditional":
-                number_of_conditionals += 1
                 # We assume every conditional takes tau time
                 tau = self.calculate_tau()
                 self.budget = self.budget - tau
@@ -262,7 +297,7 @@ class ContractProgram(PerformanceProfile):
                 continue
             else:
                 # multiply by two since the branches get an equivalent time allocation
-                allocation = self.budget / (self.dag.order - (2 * number_of_conditionals))
+                allocation = self.find_uniform_allocation()
                 time_allocations.insert(node_id, TimeAllocation(allocation, node_id))
         return time_allocations
 
@@ -281,3 +316,25 @@ class ContractProgram(PerformanceProfile):
     def reset_traversed(self):
         for node in self.dag.nodes:
             node.traversed = False
+
+    def find_uniform_allocation(self):
+        number_of_conditionals = 0
+        for node_id in range(0, self.dag.order):
+            if self.find_node(node_id).expr_type == "conditional":
+                number_of_conditionals += 1
+        allocation = self.budget / (self.dag.order - (2 * number_of_conditionals))
+        return allocation
+
+    @staticmethod
+    def find_neighbor_branch(node):
+        """
+        Find the neighbor branch of the child node of a conditional node
+        Assumption: the input node is the child of a conditional node
+
+        :param node: Node object
+        :return: Node object
+        """
+        conditional_node = node.parents[0]
+        for child in conditional_node.children:
+            if child != node:
+                return child

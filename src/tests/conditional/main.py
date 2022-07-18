@@ -60,9 +60,13 @@ if __name__ == "__main__":
     # Create the program with some budget
     program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, time_interval=1)
     print([i.time for i in program.uniform_budget()])
+    print(sum([i.time for i in program.uniform_budget()]))
 
     # Adjust allocations (hardcode)
     test = Test(program)
+
+    # Print the tree
+    # print(test.print_tree(dag.root))
 
     # Test a random distribution on the initial allocations
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))
@@ -70,3 +74,4 @@ if __name__ == "__main__":
     # Test initial vs optimal expected utility and allocations
     test.find_utility_and_allocations(allocation_type="initial", initial_is_random=False, verbose=False)
     test.find_utility_and_allocations(allocation_type="optimal", initial_is_random=False, verbose=False)
+    print(sum([3.038, 3.087, 3.087, 0.1, 2.375, 1.001]) - 3.087 - .1)

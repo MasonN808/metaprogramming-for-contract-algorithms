@@ -74,3 +74,26 @@ class Test:
                   "Time Allocations: {}".format(eu_initial, initial_time_allocations))
         else:
             raise ValueError("Invalid allocation type: must be 'initial' or 'optimal'")
+
+    def print_tree(self, root, marker_str="+- ", level_markers=[]):
+        """
+        From https://simonhessner.de/python-3-recursively-print-structured-tree-including-hierarchy-markers-using-depth-first-search/
+        :param marker_str:
+        :param level_markers:
+        :return:
+        """
+        empty_str = " " * len(marker_str)
+        connection_str = "|" + empty_str[:-1]
+        level = len(level_markers)
+
+        def mapper(draw):
+            if draw:
+                return connection_str
+            else:
+                empty_str
+        markers = "".join(map(mapper, level_markers[:-1]))
+        markers += marker_str if level > 0 else ""
+        print(f"{markers}{root.id}")
+        for i, parent in enumerate(root.parents):
+            is_last = i == len(root.parents) - 1
+            self.print_tree(parent, marker_str, [*level_markers, not is_last])
