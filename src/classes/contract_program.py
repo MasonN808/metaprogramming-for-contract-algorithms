@@ -179,7 +179,7 @@ class ContractProgram(PerformanceProfile):
                 return node
         raise IndexError("Node not found with given id")
 
-    def naive_hill_climbing(self, decay=1.2, threshold=.001, verbose=False):
+    def naive_hill_climbing(self, decay=1.1, threshold=.0001, verbose=False):
         """
         Does naive hill climbing search by randomly replacing a set amount of time s between two different contract
         algorithms. If the expected value of the root node of the contract algorithm increases, we commit to the
@@ -191,7 +191,7 @@ class ContractProgram(PerformanceProfile):
         :type decay: float, the decay rate of the temperature during annealing
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
-        allocation = self.find_uniform_allocation()
+        allocation = self.find_uniform_allocation(self.budget)
         time_switched = allocation
         while time_switched > threshold:
             possible_local_max = []
@@ -208,7 +208,7 @@ class ContractProgram(PerformanceProfile):
                 elif permutation[0].node_id == permutation[1].node_id:
                     continue
                 # Avoids negative time allocation
-                elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
+                elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0 or adjusted_allocations[permutation[1].node_id].time - time_switched < 0:
                     continue
                 else:
                     # Check if is child of conditional so that both children of the conditional are allocated same time
@@ -281,6 +281,7 @@ class ContractProgram(PerformanceProfile):
 
         :return: TimeAllocation[]
         """
+        budget = copy.deepcopy(self.budget)
         time_allocations = []
         # Do an initial pass to find the conditionals and subtract tau from the budget
         # Check for conditionals and adjust the structure of the time allocations
@@ -289,7 +290,7 @@ class ContractProgram(PerformanceProfile):
             if self.find_node(node_id).expr_type == "conditional":
                 # We assume every conditional takes tau time
                 tau = self.calculate_tau()
-                self.budget = self.budget - tau
+                budget -= tau
                 # Add the time allocation at a specified index
                 time_allocations.insert(node_id, TimeAllocation(tau, node_id))
         for node_id in range(0, self.dag.order):
@@ -297,7 +298,7 @@ class ContractProgram(PerformanceProfile):
                 continue
             else:
                 # multiply by two since the branches get an equivalent time allocation
-                allocation = self.find_uniform_allocation()
+                allocation = self.find_uniform_allocation(budget)
                 time_allocations.insert(node_id, TimeAllocation(allocation, node_id))
         return time_allocations
 
@@ -317,12 +318,12 @@ class ContractProgram(PerformanceProfile):
         for node in self.dag.nodes:
             node.traversed = False
 
-    def find_uniform_allocation(self):
+    def find_uniform_allocation(self, budget):
         number_of_conditionals = 0
         for node_id in range(0, self.dag.order):
             if self.find_node(node_id).expr_type == "conditional":
                 number_of_conditionals += 1
-        allocation = self.budget / (self.dag.order - (2 * number_of_conditionals))
+        allocation = budget / (self.dag.order - (2 * number_of_conditionals))
         return allocation
 
     @staticmethod

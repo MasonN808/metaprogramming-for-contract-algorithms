@@ -65,7 +65,7 @@ if __name__ == "__main__":
     test = Test(program)
 
     # Test a random distribution on the initial allocations
-    # print(test.test_initial_allocations(iterations=20, initial_is_random=True, verbose=False))
+    print(test.test_initial_allocations(iterations=20, initial_is_random=True, verbose=False))
 
     # Test initial vs optimal expected utility and allocations
     test.find_utility_and_allocations(allocation_type="initial", initial_is_random=False, verbose=False)
