@@ -208,7 +208,7 @@ class ContractProgram(PerformanceProfile):
                 elif permutation[0].node_id == permutation[1].node_id:
                     continue
                 # Avoids negative time allocation
-                elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0 or adjusted_allocations[permutation[1].node_id].time - time_switched < 0:
+                elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
                     continue
                 else:
                     # Check if is child of conditional so that both children of the conditional are allocated same time

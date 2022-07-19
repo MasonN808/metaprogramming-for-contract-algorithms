@@ -1,3 +1,9 @@
+import numpy as np
+from geneticalgorithm import geneticalgorithm as ga
+from time import sleep
+from progress.bar import ChargingBar
+
+
 class Test:
     def __init__(self, contract_program):
         self.contract_program = contract_program
@@ -11,25 +17,28 @@ class Test:
         :param verbose: bool
         :return:
         """
-        expected_utilities = []
-        for i in range(0, iterations):
-            if initial_is_random:
-                self.contract_program.allocations = self.contract_program.random_budget()
-            else:
-                self.contract_program.allocations = self.contract_program.uniform_budget()
-            optimal_allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
-            optimal_time_allocations = [i.time for i in optimal_allocations]
-            eu_optimal = self.contract_program.global_expected_utility(
-                optimal_allocations) * self.contract_program.scale
-            # Round the numbers
-            if self.contract_program.decimals is not None:
-                optimal_time_allocations = [round(i.time, self.contract_program.decimals)
-                                            for i in self.contract_program.allocations]
-                eu_optimal = round(eu_optimal, self.contract_program.decimals)
-            expected_utilities.append(eu_optimal)
-            if verbose:
-                print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
-                      "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
+        with ChargingBar('Processing:', max=iterations, suffix='%(percent)d%%') as bar:
+            expected_utilities = []
+            for i in range(0, iterations):
+                if initial_is_random:
+                    self.contract_program.allocations = self.contract_program.random_budget()
+                else:
+                    self.contract_program.allocations = self.contract_program.uniform_budget()
+                optimal_allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
+                optimal_time_allocations = [i.time for i in optimal_allocations]
+                eu_optimal = self.contract_program.global_expected_utility(
+                    optimal_allocations) * self.contract_program.scale
+                # Round the numbers
+                if self.contract_program.decimals is not None:
+                    optimal_time_allocations = [round(i.time, self.contract_program.decimals)
+                                                for i in self.contract_program.allocations]
+                    eu_optimal = round(eu_optimal, self.contract_program.decimals)
+                expected_utilities.append(eu_optimal)
+                sleep(0.2)
+                bar.next()
+                if verbose:
+                    print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
+                          "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
         return sorted(expected_utilities)
 
     def find_utility_and_allocations(self, allocation_type, initial_is_random, verbose=False):
@@ -97,3 +106,15 @@ class Test:
         for i, parent in enumerate(root.parents):
             is_last = i == len(root.parents) - 1
             self.print_tree(parent, marker_str, [*level_markers, not is_last])
+
+    @staticmethod
+    def genetic_algorithm(program, dag):
+        # switch to genetic algorithm mode
+        program.using_genetic_algorithm = True
+
+        varbound = np.array([[0, 10]] * len(dag.nodes))
+
+        model = ga(function=program.global_expected_utility_genetic, dimension=len(
+            dag.nodes), variable_type='real', variable_boundaries=varbound)
+
+        model.run()
