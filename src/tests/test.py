@@ -8,22 +8,20 @@ class Test:
     def __init__(self, contract_program):
         self.contract_program = contract_program
 
-    def test_initial_allocations(self, iterations, initial_is_random, verbose=False):
+    def test_initial_allocations(self, iterations, initial_allocation, verbose=False):
         """
         Tests different initial time allocations
 
         :param iterations: non-negative int
-        :param initial_is_random:  bool
+        :param initial_allocation:  string
         :param verbose: bool
         :return:
         """
         with ChargingBar('Processing:', max=iterations, suffix='%(percent)d%%') as bar:
             expected_utilities = []
             for i in range(0, iterations):
-                if initial_is_random:
-                    self.contract_program.allocations = self.contract_program.random_budget()
-                else:
-                    self.contract_program.allocations = self.contract_program.uniform_budget()
+                # Generate an initial allocation
+                self.check_initial_allocation(initial_allocation)
                 optimal_allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
                 optimal_time_allocations = [i.time for i in optimal_allocations]
                 eu_optimal = self.contract_program.global_expected_utility(
@@ -41,22 +39,18 @@ class Test:
                           "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
         return sorted(expected_utilities)
 
-    def find_utility_and_allocations(self, allocation_type, initial_is_random, verbose=False):
+    def find_utility_and_allocations(self, allocation_type, initial_allocation, verbose=False):
         """
         Finds the expected utility and time allocations for an optimal expected utility or initial expected utility
         given the initial time allocations
 
         :param allocation_type:
-        :param initial_is_random:
+        :param initial_allocation: string
         :param verbose:
         :return:
         """
-        if initial_is_random:
-            # Optimal using Dirichlet Distribution
-            self.contract_program.allocations = self.contract_program.random_budget()
-        else:
-            # Optimal using Uniform Distribution
-            self.contract_program.allocations = self.contract_program.uniform_budget()
+        # Generate an initial allocation
+        self.check_initial_allocation(initial_allocation)
         if allocation_type == "optimal":
             # This is a list of TimeAllocation objects
             allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
@@ -84,13 +78,18 @@ class Test:
         else:
             raise ValueError("Invalid allocation type: must be 'initial' or 'optimal'")
 
-    def print_tree(self, root, marker_str="+- ", level_markers=[]):
+    def print_tree(self, root, marker_str="+- ", level_markers=None):
         """
         From https://simonhessner.de/python-3-recursively-print-structured-tree-including-hierarchy-markers-using-depth-first-search/
-        :param marker_str:
-        :param level_markers:
+        Prints a tree structure for debugging
+
+        :param root: The root of the DAG
+        :param marker_str: How each branch is printed
+        :param level_markers: Depth markers
         :return:
         """
+        if level_markers is None:
+            level_markers = []
         empty_str = " " * len(marker_str)
         connection_str = "|" + empty_str[:-1]
         level = len(level_markers)
@@ -109,6 +108,13 @@ class Test:
 
     @staticmethod
     def genetic_algorithm(program, dag):
+        """
+        Genetic Algorithm implementation
+
+        :param program: ContractProgram object
+        :param dag: DirectedAcyclicGraph object
+        :return: None
+        """
         # switch to genetic algorithm mode
         program.using_genetic_algorithm = True
 
@@ -118,3 +124,11 @@ class Test:
             dag.nodes), variable_type='real', variable_boundaries=varbound)
 
         model.run()
+
+    def check_initial_allocation(self, initial_allocation):
+        if initial_allocation == "uniform":
+            self.contract_program.allocations = self.contract_program.uniform_budget()
+        elif initial_allocation == "Dirichlet":
+            self.contract_program.allocations = self.contract_program.random_budget()
+        elif initial_allocation == "uniform with noise":
+            self.contract_program.allocations = self.contract_program.uniform_budget_with_noise()

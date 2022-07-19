@@ -1,5 +1,6 @@
 import copy
 import math
+import random
 from itertools import permutations
 
 import numpy as np
@@ -149,7 +150,7 @@ class ContractProgram(PerformanceProfile):
         return expected_utility
 
     # For conditional expressions
-    # -------------------------------
+    # -------------------------------------------------
 
     @staticmethod
     def child_of_conditional(node):
@@ -165,7 +166,7 @@ class ContractProgram(PerformanceProfile):
                 return True
         return False
 
-    # -------------------------------
+    # -------------------------------------------------
 
     def find_node(self, node_id):
         """
@@ -216,31 +217,23 @@ class ContractProgram(PerformanceProfile):
                         # find the neighbor node
                         neighbor = self.find_neighbor_branch(self.find_node(permutation[0].node_id))
                         # Adjust the allocation to the traversed node under the conditional
-                        adjusted_allocations[permutation[0].node_id].time = adjusted_allocations[
-                            permutation[0].node_id].time - time_switched
+                        adjusted_allocations[permutation[0].node_id].time -= time_switched
                         # Adjust allocation to the neighbor in parallel
-                        adjusted_allocations[neighbor.id].time = adjusted_allocations[
-                            neighbor.id].time - time_switched
+                        adjusted_allocations[neighbor.id].time -= time_switched
                         # Adjust allocation to then non-child of a conditional
-                        adjusted_allocations[permutation[1].node_id].time = adjusted_allocations[
-                            permutation[1].node_id].time + time_switched
+                        adjusted_allocations[permutation[1].node_id].time += time_switched
                     elif self.child_of_conditional(self.find_node(permutation[1].node_id)):
                         # find the neighbor node
                         neighbor = self.find_neighbor_branch(self.find_node(permutation[1].node_id))
                         # Adjust the allocation to the traversed node under the conditional
-                        adjusted_allocations[permutation[1].node_id].time = adjusted_allocations[
-                            permutation[1].node_id].time + time_switched
+                        adjusted_allocations[permutation[1].node_id].time += time_switched
                         # Adjust allocation to the neighbor in parallel
-                        adjusted_allocations[neighbor.id].time = adjusted_allocations[
-                            neighbor.id].time + time_switched
+                        adjusted_allocations[neighbor.id].time += time_switched
                         # Adjust allocation to then non-child of a conditional
-                        adjusted_allocations[permutation[0].node_id].time = adjusted_allocations[
-                            permutation[0].node_id].time - time_switched
+                        adjusted_allocations[permutation[0].node_id].time -= time_switched
                     else:
-                        adjusted_allocations[permutation[0].node_id].time = adjusted_allocations[
-                            permutation[0].node_id].time - time_switched
-                        adjusted_allocations[permutation[1].node_id].time = adjusted_allocations[
-                            permutation[1].node_id].time + time_switched
+                        adjusted_allocations[permutation[0].node_id].time -= time_switched
+                        adjusted_allocations[permutation[1].node_id].time += time_switched
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations):
                         possible_local_max.append(adjusted_allocations)
@@ -273,6 +266,9 @@ class ContractProgram(PerformanceProfile):
                 time_switched = time_switched / decay
 
         return self.allocations
+
+    # Initial Budget Allocations
+    # -------------------------------------------------
 
     def uniform_budget(self):
         # TODO: take into account embedded conditionals later
@@ -313,6 +309,59 @@ class ContractProgram(PerformanceProfile):
         # Multiply all elements by the budget
         allocations_list = [time * self.budget for time in allocations_list]
         return [TimeAllocation(time=time, node_id=id) for (id, time) in enumerate(allocations_list)]
+
+    def uniform_budget_with_noise(self, perturbation_bound=.1, iterations=10):
+        """
+        Partitions the budget into a uniform distribution with added noise
+
+        :return: TimeAllocation[]
+        """
+        time_allocations = self.uniform_budget()
+        i = 0
+        while 0 <= i <= iterations:
+            # TODO put this in its own function since used also in naive hill climbing
+            random_number = random.uniform(0, perturbation_bound)
+            random_index_0 = random.randint(0, self.dag.order - 1)
+            random_index_1 = random.randint(0, self.dag.order - 1)
+            # Do some checks to ensure the properties of conditional expressions are held
+            # Avoid all exchanges that include the conditional node
+            if self.find_node(random_index_0).expr_type == "conditional" or self.find_node(random_index_1).expr_type == "conditional":
+                continue
+            # Avoids exchanging time between two branch nodes of a conditional
+            elif self.child_of_conditional(self.find_node(random_index_0)) and self.child_of_conditional(self.find_node(random_index_1)):
+                continue
+            # Avoids exchanging time with itself
+            elif random_index_0 == random_index_1:
+                continue
+            elif time_allocations[random_index_0].time - random_number < 0:
+                continue
+            else:
+                i += 1
+                # Check if is child of conditional so that both children of the conditional are allocated same time
+                if self.child_of_conditional(self.find_node(random_index_0)):
+                    # find the neighbor node
+                    neighbor = self.find_neighbor_branch(self.find_node(random_index_0))
+                    # Adjust the allocation to the traversed node under the conditional
+                    time_allocations[random_index_0].time -= random_number
+                    # Adjust allocation to the neighbor in parallel
+                    time_allocations[neighbor.id].time -= random_number
+                    # Adjust allocation to then non-child of a conditional
+                    time_allocations[random_index_1].time += random_number
+                elif self.child_of_conditional(self.find_node(random_index_1)):
+                    # find the neighbor node
+                    neighbor = self.find_neighbor_branch(self.find_node(random_index_1))
+                    # Adjust the allocation to the traversed node under the conditional
+                    time_allocations[random_index_1].time += random_number
+                    # Adjust allocation to the neighbor in parallel
+                    time_allocations[neighbor.id].time += random_number
+                    # Adjust allocation to then non-child of a conditional
+                    time_allocations[random_index_0].time -= random_number
+                else:
+                    time_allocations[random_index_0].time -= random_number
+                    time_allocations[random_index_1].time += random_number
+        return time_allocations
+
+    # -------------------------------------------------
 
     def reset_traversed(self):
         for node in self.dag.nodes:
