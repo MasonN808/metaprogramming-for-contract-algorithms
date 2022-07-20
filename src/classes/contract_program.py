@@ -5,6 +5,7 @@ from itertools import permutations
 
 import numpy as np
 
+from src.classes.node import Node
 from src.classes.performance_profile import PerformanceProfile
 from src.classes.time_allocation import TimeAllocation
 
@@ -153,14 +154,14 @@ class ContractProgram(PerformanceProfile):
     # -------------------------------------------------
 
     @staticmethod
-    def child_of_conditional(node):
+    def child_of_conditional(node) -> bool:
         for parent in node.parents:
             if parent.expr_type == "conditional":
                 return True
         return False
 
     @staticmethod
-    def parent_of_conditional(node):
+    def parent_of_conditional(node) -> bool:
         for child in node.children:
             if child.expr_type == "conditional":
                 return True
@@ -168,7 +169,7 @@ class ContractProgram(PerformanceProfile):
 
     # -------------------------------------------------
 
-    def find_node(self, node_id):
+    def find_node(self, node_id) -> Node:
         """
         Finds the node in the node list given the id
 
@@ -234,7 +235,6 @@ class ContractProgram(PerformanceProfile):
                     else:
                         adjusted_allocations[permutation[0].node_id].time -= time_switched
                         adjusted_allocations[permutation[1].node_id].time += time_switched
-                    self.print_allocations(adjusted_allocations)
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations):
                         possible_local_max.append(adjusted_allocations)
@@ -271,7 +271,7 @@ class ContractProgram(PerformanceProfile):
     # Initial Budget Allocations
     # -------------------------------------------------
 
-    def uniform_budget(self):
+    def uniform_budget(self) -> [TimeAllocation]:
         # TODO: take into account embedded conditionals later
         """
         Partitions the budget into equal partitions relative to the order of the DAG
@@ -298,19 +298,40 @@ class ContractProgram(PerformanceProfile):
                 time_allocations.insert(node_id, TimeAllocation(allocation, node_id))
         return time_allocations
 
-    def dirichlet_budget(self):
+    def dirichlet_budget(self) -> [TimeAllocation]:
         """
         Partitions the budget into random partitions such that they add to the budget using a Dirichlet distribution
 
         :return: TimeAllocation
         """
-        allocations_array = np.random.dirichlet(np.ones(self.dag.order), size=1).squeeze()
+        number_of_conditionals = self.count_conditionals()
+        # Remove the one of the branches and the conditional node before applying the Dirichlet distribution
+        allocations_array = np.random.dirichlet(
+            np.ones(self.dag.order - (2 * number_of_conditionals)), size=1).squeeze()
+
         allocations_list = allocations_array.tolist()
-        # Multiply all elements by the budget
-        allocations_list = [time * self.budget for time in allocations_list]
+
+        # Multiply all elements by the budget and remove tau times if conditionals exist
+        # TODO: Later make this a list if multiple conditionals exist
+        tau = self.calculate_tau()
+        # Transform the list wrt the budget
+        allocations_list = [time * (self.budget - (number_of_conditionals * tau)) for time in allocations_list]
+
+        # Insert the conditional nodes into the list with tau time and
+        # Search for conditional branches and append a neighbor since we removed it prior to using Dirichlet
+        index = 0
+        while index < len(allocations_list):
+            if self.child_of_conditional(self.find_node(index)):
+                # Append the neighbor branch with same time allocation
+                allocations_list.insert(index, allocations_list[index])
+                index += 1
+                # Append the conditional node with tau time allocation
+                allocations_list.insert(index + 1, tau)
+                # Skip the next loop
+            index += 1
         return [TimeAllocation(time=time, node_id=id) for (id, time) in enumerate(allocations_list)]
 
-    def uniform_budget_with_noise(self, perturbation_bound=.1, iterations=10):
+    def uniform_budget_with_noise(self, perturbation_bound=.1, iterations=10) -> [TimeAllocation]:
         """
         Partitions the budget into a uniform distribution with added noise
 
@@ -367,17 +388,14 @@ class ContractProgram(PerformanceProfile):
         for node in self.dag.nodes:
             node.traversed = False
 
-    def find_uniform_allocation(self, budget):
-        number_of_conditionals = 0
-        for node_id in range(0, self.dag.order):
-            if self.find_node(node_id).expr_type == "conditional":
-                number_of_conditionals += 1
+    def find_uniform_allocation(self, budget) -> float:
+        number_of_conditionals = self.count_conditionals()
         # multiply by two since the branches get an equivalent time allocation
         allocation = budget / (self.dag.order - (2 * number_of_conditionals))
         return allocation
 
     @staticmethod
-    def find_neighbor_branch(node):
+    def find_neighbor_branch(node) -> Node:
         """
         Find the neighbor branch of the child node of a conditional node
         Assumption: the input node is the child of a conditional node
@@ -393,3 +411,10 @@ class ContractProgram(PerformanceProfile):
     @staticmethod
     def print_allocations(allocations):
         print([i.time for i in allocations])
+
+    def count_conditionals(self):
+        number_of_conditionals = 0
+        for node_id in range(0, self.dag.order):
+            if self.find_node(node_id).expr_type == "conditional":
+                number_of_conditionals += 1
+        return number_of_conditionals
