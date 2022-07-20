@@ -234,6 +234,7 @@ class ContractProgram(PerformanceProfile):
                     else:
                         adjusted_allocations[permutation[0].node_id].time -= time_switched
                         adjusted_allocations[permutation[1].node_id].time += time_switched
+                    self.print_allocations(adjusted_allocations)
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations):
                         possible_local_max.append(adjusted_allocations)
@@ -293,12 +294,11 @@ class ContractProgram(PerformanceProfile):
             if self.find_node(node_id).expr_type == "conditional":
                 continue
             else:
-                # multiply by two since the branches get an equivalent time allocation
                 allocation = self.find_uniform_allocation(budget)
                 time_allocations.insert(node_id, TimeAllocation(allocation, node_id))
         return time_allocations
 
-    def random_budget(self):
+    def dirichlet_budget(self):
         """
         Partitions the budget into random partitions such that they add to the budget using a Dirichlet distribution
 
@@ -372,6 +372,7 @@ class ContractProgram(PerformanceProfile):
         for node_id in range(0, self.dag.order):
             if self.find_node(node_id).expr_type == "conditional":
                 number_of_conditionals += 1
+        # multiply by two since the branches get an equivalent time allocation
         allocation = budget / (self.dag.order - (2 * number_of_conditionals))
         return allocation
 
@@ -388,3 +389,7 @@ class ContractProgram(PerformanceProfile):
         for child in conditional_node.children:
             if child != node:
                 return child
+
+    @staticmethod
+    def print_allocations(allocations):
+        print([i.time for i in allocations])

@@ -39,7 +39,7 @@ class Test:
                           "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
         return sorted(expected_utilities)
 
-    def find_utility_and_allocations(self, allocation_type, initial_allocation, verbose=False):
+    def find_utility_and_allocations(self, initial_allocation, verbose=False):
         """
         Finds the expected utility and time allocations for an optimal expected utility or initial expected utility
         given the initial time allocations
@@ -51,32 +51,28 @@ class Test:
         """
         # Generate an initial allocation
         self.check_initial_allocation(initial_allocation)
-        if allocation_type == "optimal":
-            # This is a list of TimeAllocation objects
-            allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
-            optimal_time_allocations = [i.time for i in allocations]
-            eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
-            if self.contract_program.decimals is not None:
-                optimal_time_allocations = [round(i.time, self.contract_program.decimals) for i in
-                                            self.contract_program.allocations]
-                eu_optimal = round(eu_optimal, self.contract_program.decimals)
-            print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
-                  "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
-        elif allocation_type == "initial":
-            # This is a list of TimeAllocation objects
-            allocations = self.contract_program.allocations
-            initial_time_allocations = [i.time for i in allocations]
-            eu_initial = self.contract_program.global_expected_utility(
-                self.contract_program.allocations) * self.contract_program.scale
-            if self.contract_program.decimals is not None:
-                initial_time_allocations = [round(i.time, self.contract_program.decimals)
-                                            for i in self.contract_program.allocations]
-                eu_initial = round(eu_initial, self.contract_program.decimals)
-            # The initial time allocations for each contract algorithm
-            print("                   Initial ==> Expected Utility: {:<5} ==> "
-                  "Time Allocations: {}".format(eu_initial, initial_time_allocations))
-        else:
-            raise ValueError("Invalid allocation type: must be 'initial' or 'optimal'")
+        # This is a list of TimeAllocation objects
+        allocations = self.contract_program.allocations
+        initial_time_allocations = [i.time for i in allocations]
+        eu_initial = self.contract_program.global_expected_utility(
+            self.contract_program.allocations) * self.contract_program.scale
+        if self.contract_program.decimals is not None:
+            initial_time_allocations = [round(i.time, self.contract_program.decimals)
+                                        for i in self.contract_program.allocations]
+            eu_initial = round(eu_initial, self.contract_program.decimals)
+        # The initial time allocations for each contract algorithm
+        print("                   Initial ==> Expected Utility: {:<5} ==> "
+              "Time Allocations: {}".format(eu_initial, initial_time_allocations))
+        # This is a list of TimeAllocation objects
+        allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
+        optimal_time_allocations = [i.time for i in allocations]
+        eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
+        if self.contract_program.decimals is not None:
+            optimal_time_allocations = [round(i.time, self.contract_program.decimals) for i in
+                                        self.contract_program.allocations]
+            eu_optimal = round(eu_optimal, self.contract_program.decimals)
+        print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
+              "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
 
     def print_tree(self, root, marker_str="+- ", level_markers=None):
         """
@@ -129,6 +125,6 @@ class Test:
         if initial_allocation == "uniform":
             self.contract_program.allocations = self.contract_program.uniform_budget()
         elif initial_allocation == "Dirichlet":
-            self.contract_program.allocations = self.contract_program.random_budget()
+            self.contract_program.allocations = self.contract_program.dirichlet_budget()
         elif initial_allocation == "uniform with noise":
             self.contract_program.allocations = self.contract_program.uniform_budget_with_noise()
