@@ -11,7 +11,7 @@ class Generator:
     :param dag: the dag to be used for performance profile simulation
     """
 
-    def __init__(self, instances, dag, time_limit, step_size, uniform_low, uniform_high, quality_interval=.05):
+    def __init__(self, instances, dag, time_limit, step_size, uniform_low, uniform_high, quality_interval=.05, manual_override=None):
         self.instances = instances
         self.dag = dag
         self.time_limit = time_limit
@@ -19,6 +19,7 @@ class Generator:
         self.uniform_low = uniform_low
         self.uniform_high = uniform_high
         self.quality_interval = quality_interval
+        self.manual_override = manual_override
 
     def simulate_performance_profile(self, random_number, node):
         """
@@ -64,16 +65,22 @@ class Generator:
                     self.recur_build(depth + 1, node, qualities.append(quality), dictionary[quality], random_number)
         return dictionary
 
-    @staticmethod
-    def parent_dependent_transform(node, qualities, random_number):
+    def parent_dependent_transform(self, node, qualities, random_number):
         if qualities:
             # Get the average parent quality (this may not be what we want)
             average_parent_quality = sum(qualities) / len(node.parents)
             velocity = (10**average_parent_quality) - 1
             return velocity
         else:
-            # If node has no parents
-            return random_number
+            # If node has no parents (i.e., a leaf node)
+            # Check to see if manual override is in place
+            if self.manual_override:
+                if self.check_manual_override() and not self.manual_override[node.id] is None:
+                    return self.manual_override[node.id]
+                else:
+                    return random_number
+            else:
+                return random_number
 
     @staticmethod
     def import_performance_profiles(file_name):
@@ -89,7 +96,8 @@ class Generator:
         """
         Creates a dictionary for one instance of the performance profiles of the DAG using synthetic data
 
-        :param node: A node object
+        :param: manual_override: A float to manually adjust the quality mapping
+        :param: node: A node object
         :return: dictionary
         """
         dictionary = {'instances': {}}
@@ -104,9 +112,10 @@ class Generator:
         dictionary['parents'] = [parent.id for parent in node.parents]
         return dictionary
 
-    def generate_nodes(self):
+    def generate_nodes(self) -> [str]:
         """
         Generates instances using the DAG and number of instances required
+        :param: manual_override: A list of floats to manually adjust the quality mappings
         :return: a list of the file names of the instances stored in JSON files
         """
         nodes = []  # file names of the nodes
@@ -118,6 +127,10 @@ class Generator:
                 json.dump(dictionary_temp, f, indent=2)
                 print("New JSON file created for node_{}".format(i))
         return nodes
+
+    def check_manual_override(self):
+        if len(self.manual_override) != len(self.dag.nodes):
+            raise ValueError("Manual override list must be same length as DAG")
 
     def populate(self, nodes, out_file):
         """
