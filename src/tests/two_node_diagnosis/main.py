@@ -40,11 +40,19 @@ if __name__ == "__main__":
     dag = DirectedAcyclicGraph(nodes, root)
 
     # Used to create the synthetic data as instances and a populous file
-    generate = False
+    generate = True
     if not exists("populous.json") or generate:
         # Initialize a generator
         generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, step_size=STEP_SIZE, uniform_low=.05,
                               uniform_high=.9)
+
+        # Let the root be trivial and not dependent on parents
+        # generator.trivial_root = True
+
+        # Initialize the velocities for the quality mappings in a list
+        # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
+        # TODO: Fix this
+        generator.manual_override = [None, None, None, None, 5]
 
         # Adjust the DAG structure that has conditionals for generation
         generator.dag = generator.adjust_dag_with_conditionals(dag)

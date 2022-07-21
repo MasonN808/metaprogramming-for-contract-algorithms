@@ -11,13 +11,14 @@ class Generator:
     :param dag: the dag to be used for performance profile simulation
     """
 
-    def __init__(self, instances, dag, time_limit, step_size, uniform_low, uniform_high, quality_interval=.05, manual_override=None):
+    def __init__(self, instances, dag, time_limit, step_size, uniform_low, uniform_high, trivial_root=False, quality_interval=.05, manual_override=None):
         self.instances = instances
         self.dag = dag
         self.time_limit = time_limit
         self.step_size = step_size
         self.uniform_low = uniform_low
         self.uniform_high = uniform_high
+        self.trivial_root = trivial_root
         self.quality_interval = quality_interval
         self.manual_override = manual_override
 
@@ -66,21 +67,25 @@ class Generator:
         return dictionary
 
     def parent_dependent_transform(self, node, qualities, random_number):
-        if qualities:
-            # Get the average parent quality (this may not be what we want)
-            average_parent_quality = sum(qualities) / len(node.parents)
-            velocity = (10**average_parent_quality) - 1
-            return velocity
+        if self.trivial_root:
+            # positive infinity
+            return float('inf')
         else:
-            # If node has no parents (i.e., a leaf node)
-            # Check to see if manual override is in place
-            if self.manual_override:
-                if self.check_manual_override() and not self.manual_override[node.id] is None:
-                    return self.manual_override[node.id]
+            if qualities:
+                # Get the average parent quality (this may not be what we want)
+                average_parent_quality = sum(qualities) / len(node.parents)
+                velocity = (10**average_parent_quality) - 1
+                return velocity
+            else:
+                # If node has no parents (i.e., a leaf node)
+                # Check to see if manual override is in place
+                if self.manual_override:
+                    if self.check_manual_override() and not self.manual_override[node.id] is None:
+                        return self.manual_override[node.id]
+                    else:
+                        return random_number
                 else:
                     return random_number
-            else:
-                return random_number
 
     @staticmethod
     def import_performance_profiles(file_name):

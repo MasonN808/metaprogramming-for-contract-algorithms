@@ -290,6 +290,8 @@ class ContractProgram(PerformanceProfile):
         # Search for conditional branches and append a neighbor since we removed it prior to using Dirichlet
         index = 0
         while index < len(allocations_list):
+            print(index)
+            # TODO: FIX THIS
             if self.child_of_conditional(self.find_node(index)):
                 # Append the neighbor branch with same time allocation
                 allocations_list.insert(index, allocations_list[index])
@@ -385,16 +387,6 @@ class ContractProgram(PerformanceProfile):
         for child in conditional_node.children:
             if child != node:
                 return child
-
-    @staticmethod
-    def print_allocations(allocations) -> None:
-        """
-        Prints the time allocations in a list of TimeAllocation objects
-
-        :param allocations: TimeAllocations[]
-        :return: None
-        """
-        print([i.time for i in allocations])
 
     def count_conditionals(self) -> int:
         """

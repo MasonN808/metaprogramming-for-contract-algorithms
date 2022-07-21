@@ -54,6 +54,7 @@ class Test:
         # This is a list of TimeAllocation objects
         allocations = self.contract_program.allocations
         initial_time_allocations = [i.time for i in allocations]
+        print(initial_time_allocations)
         eu_initial = self.contract_program.global_expected_utility(
             self.contract_program.allocations) * self.contract_program.scale
         if self.contract_program.decimals is not None:
@@ -128,3 +129,13 @@ class Test:
             self.contract_program.allocations = self.contract_program.dirichlet_budget()
         elif initial_allocation == "uniform with noise":
             self.contract_program.allocations = self.contract_program.uniform_budget_with_noise()
+
+    @staticmethod
+    def print_allocations(allocations) -> None:
+        """
+        Prints the time allocations in a list of TimeAllocation objects
+
+        :param allocations: TimeAllocations[]
+        :return: None
+        """
+        print([i.time for i in allocations])
