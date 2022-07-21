@@ -64,5 +64,5 @@ if __name__ == "__main__":
     # print(test.test_initial_allocations(iterations=20, initial_is_random=False, verbose=False))
 
     # Test initial vs optimal expected utility and allocations
-    test.find_utility_and_allocations(allocation_type="initial", initial_allocation="uniform with noise")
-    test.find_utility_and_allocations(allocation_type="optimal", initial_allocation="uniform with noise", verbose=False)
+    test.find_utility_and_allocations(initial_allocation="uniform with noise", verbose=False)
+    test.find_utility_and_allocations(initial_allocation="uniform with noise", verbose=False)

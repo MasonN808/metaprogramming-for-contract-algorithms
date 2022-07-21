@@ -150,37 +150,6 @@ class ContractProgram(PerformanceProfile):
         self.reset_traversed()
         return expected_utility
 
-    # For conditional expressions
-    # -------------------------------------------------
-
-    @staticmethod
-    def child_of_conditional(node) -> bool:
-        for parent in node.parents:
-            if parent.expr_type == "conditional":
-                return True
-        return False
-
-    @staticmethod
-    def parent_of_conditional(node) -> bool:
-        for child in node.children:
-            if child.expr_type == "conditional":
-                return True
-        return False
-
-    # -------------------------------------------------
-
-    def find_node(self, node_id) -> Node:
-        """
-        Finds the node in the node list given the id
-
-        :param node_id: The id of the node
-        :return: Node object
-        """
-        for node in self.dag.nodes:
-            if node.id == node_id:
-                return node
-        raise IndexError("Node not found with given id")
-
     def naive_hill_climbing(self, decay=1.1, threshold=.0001, verbose=False):
         """
         Does naive hill climbing search by randomly replacing a set amount of time s between two different contract
@@ -384,11 +353,21 @@ class ContractProgram(PerformanceProfile):
 
     # -------------------------------------------------
 
-    def reset_traversed(self):
+    def reset_traversed(self) -> None:
+        """
+        Resets the traversed pointers to Node objects
+        :return: None
+        """
         for node in self.dag.nodes:
             node.traversed = False
 
     def find_uniform_allocation(self, budget) -> float:
+        """
+        Finds the allocation that can uniformly be distributed given the budget
+
+        :param budget: float
+        :return: uniformed allocation
+        """
         number_of_conditionals = self.count_conditionals()
         # multiply by two since the branches get an equivalent time allocation
         allocation = budget / (self.dag.order - (2 * number_of_conditionals))
@@ -399,7 +378,6 @@ class ContractProgram(PerformanceProfile):
         """
         Find the neighbor branch of the child node of a conditional node
         Assumption: the input node is the child of a conditional node
-
         :param node: Node object
         :return: Node object
         """
@@ -409,12 +387,54 @@ class ContractProgram(PerformanceProfile):
                 return child
 
     @staticmethod
-    def print_allocations(allocations):
+    def print_allocations(allocations) -> None:
+        """
+        Prints the time allocations in a list of TimeAllocation objects
+
+        :param allocations: TimeAllocations[]
+        :return: None
+        """
         print([i.time for i in allocations])
 
-    def count_conditionals(self):
+    def count_conditionals(self) -> int:
+        """
+        Counts the number of conditionals in the contract program
+
+        :return number of conditionals:
+        """
         number_of_conditionals = 0
         for node_id in range(0, self.dag.order):
             if self.find_node(node_id).expr_type == "conditional":
                 number_of_conditionals += 1
         return number_of_conditionals
+
+    def find_node(self, node_id) -> Node:
+        """
+        Finds the node in the node list given the id
+
+        :param node_id: The id of the node
+        :return: Node object
+        """
+        for node in self.dag.nodes:
+            if node.id == node_id:
+                return node
+        raise IndexError("Node not found with given id")
+
+    # For conditional expressions
+    # -------------------------------------------------
+
+    @staticmethod
+    def child_of_conditional(node) -> bool:
+        for parent in node.parents:
+            if parent.expr_type == "conditional":
+                return True
+        return False
+
+    @staticmethod
+    def parent_of_conditional(node) -> bool:
+        for child in node.children:
+            if child.expr_type == "conditional":
+                return True
+        return False
+
+    # -------------------------------------------------
