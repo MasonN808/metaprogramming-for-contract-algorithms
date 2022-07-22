@@ -150,7 +150,8 @@ class Generator:
         nodes = []  # file names of the nodes
 
         # Create a finite number of unique nodes and create JSON files for each
-        for (i, node) in enumerate(self.generator_dag.nodes):
+        i = 0
+        for node in self.generator_dag.nodes:
             dictionary_temp = self.create_dictionary(node)
 
             # Compare the generator dag with the program dag to see if conditional is encountered
@@ -162,6 +163,8 @@ class Generator:
                 nodes.append('node_{}.json'.format(i))
                 json.dump(dictionary_temp, f, indent=2)
                 print("New JSON file created for node_{}".format(i))
+
+            i += 1
 
         return nodes
 
@@ -184,15 +187,16 @@ class Generator:
 
         with open('{}'.format(out_file), 'w') as f:
             bundle = {}
-            for (i, node) in enumerate(nodes):
-                j = i
+
+            i = 0
+            for node in nodes:
 
                 if PerformanceProfile.is_conditional_node(self.program_dag.nodes[i]):
-                    j = i + 1
+                    i += 1
 
-                bundle["node_{}".format(j)] = {}
-                bundle["node_{}".format(j)]['qualities'] = {}
-                bundle["node_{}".format(j)]['parents'] = {}
+                bundle["node_{}".format(i)] = {}
+                bundle["node_{}".format(i)]['qualities'] = {}
+                bundle["node_{}".format(i)]['parents'] = {}
 
                 # Convert the JSON file into a dictionary
                 temp_dictionary = self.import_performance_profiles(node)
@@ -200,11 +204,12 @@ class Generator:
                 for instance in temp_dictionary['instances']:
                     # Loop through all the time steps
                     recursion_dictionary = temp_dictionary['instances'][instance]
-                    populate_dictionary = bundle["node_{}".format(j)]['qualities']
-                    self.recur_traverse(0, self.generator_dag.nodes[i], [], recursion_dictionary, populate_dictionary)
+                    populate_dictionary = bundle["node_{}".format(i)]['qualities']
+                    self.recur_traverse(0, self.generator_dag.nodes[i - 1], [], recursion_dictionary, populate_dictionary)
 
-                bundle["node_{}".format(j)]['parents'] = temp_dictionary['parents']
+                bundle["node_{}".format(i)]['parents'] = temp_dictionary['parents']
 
+                i += 1
             json.dump(bundle, f, indent=2)
 
         print("Finished populating JSON file using nodes JSON files")
