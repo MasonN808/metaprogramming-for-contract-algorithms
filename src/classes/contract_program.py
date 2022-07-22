@@ -122,9 +122,9 @@ class ContractProgram:
 
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
                     qualities_true = self.performance_profile.query_quality_list_on_interval(time.time, node.children[0].id,
-                                                                         parent_qualities=parent_qualities_true)
+                                                                                             parent_qualities=parent_qualities_true)
                     qualities_false = self.performance_profile.query_quality_list_on_interval(time.time, node.children[1].id,
-                                                                          parent_qualities=parent_qualities_false)
+                                                                                              parent_qualities=parent_qualities_false)
                     qualities = [qualities_true, qualities_false]
 
                     # Calculates the average quality on the list of qualities for querying
