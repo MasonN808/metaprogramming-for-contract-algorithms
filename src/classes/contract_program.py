@@ -33,13 +33,12 @@ class ContractProgram:
     :param: time_interval : float, required
         The interval used to help calculate the performance profiles (probabilities)
     """
-    STEP_SIZE = 0.1
     POPULOUS_FILE_NAME = "populous.json"
 
-    def __init__(self, dag, budget, scale, decimals, quality_interval=0.05, time_interval=1.0):
+    def __init__(self, dag, budget, scale, decimals, quality_interval, time_interval, time_step_size):
         self.performance_profile = PerformanceProfile(program_dag=dag, file_name=self.POPULOUS_FILE_NAME,
                                                       time_interval=time_interval, time_limit=budget,
-                                                      quality_interval=quality_interval, time_step_size=self.STEP_SIZE)
+                                                      quality_interval=quality_interval, time_step_size=time_step_size)
         self.dag = dag
         self.budget = budget
         self.scale = scale

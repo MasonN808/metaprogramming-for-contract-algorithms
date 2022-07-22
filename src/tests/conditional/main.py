@@ -45,7 +45,7 @@ if __name__ == "__main__":
     generate = False
     if not exists("populous.json") or generate:
         # Initialize a generator
-        generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, step_size=STEP_SIZE, uniform_low=.05,
+        generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, time_step_size=STEP_SIZE, uniform_low=.05,
                               uniform_high=.9)
 
         # Adjust the DAG structure that has conditionals for generation

@@ -4,24 +4,22 @@ import numpy as np
 
 class PerformanceProfile:
     """
-    A performance profile attached to a node in the DAG via an id associated with the node
+    A performance profile is attached to a node in the DAG via an id associated with the node.
 
-    :param file_name: the file name of the JSON file of performance profiles to be used
+    :param: file_name: the file name of the JSON file of performance profiles to be used
     :param time_interval: the interval w.r.t. time to query from in the quality mapping
     :param time_limit: the time limit for each quality mapping
     :param time_step_size: the step size for each time step
     :param quality_interval: the interval w.r.t. qualities to query from in the quality mapping
     """
 
-    def __init__(self, program_dag, file_name, time_interval, time_limit, time_step_size=.1, quality_interval=.05,
-                 using_genetic_algorithm=False):
+    def __init__(self, program_dag, file_name, time_interval, time_limit, time_step_size, quality_interval):
+        self.program_dag = program_dag
         self.dictionary = self.import_quality_mappings(file_name)
         self.time_interval = time_interval
-        self.quality_interval = quality_interval
         self.time_limit = time_limit
         self.time_step_size = time_step_size
-        self.using_genetic_algorithm = using_genetic_algorithm
-        self.program_dag = program_dag
+        self.quality_interval = quality_interval
 
     @staticmethod
     def import_quality_mappings(file_name) -> dict:
@@ -58,13 +56,14 @@ class PerformanceProfile:
                     dictionary = dictionary["{:.2f}".format(parent_quality)]
 
             qualities = []
-            # Initialize the start and end of the time interval for descritization of the prior
-            start_step = (time // self.time_interval) * self.time_interval
-            end_step = start_step + self.time_interval
 
+            # Initialize the start and end of the time interval for descritization of the prior
             # Check if time is equal to limit
             if time == self.time_limit:
                 start_step = ((time - self.time_interval) // self.time_interval) * self.time_interval
+                end_step = start_step + self.time_interval
+            else:
+                start_step = (time // self.time_interval) * self.time_interval
                 end_step = start_step + self.time_interval
 
             # Note: interval is [start_step, end_step) or [start_step, end_step] for time at limit

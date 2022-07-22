@@ -31,7 +31,7 @@ if __name__ == "__main__":
     if not exists("populous.json"):
         # Initialize a generator
         generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT,
-                              step_size=STEP_SIZE, uniform_low=.05, uniform_high=.9)
+                              time_step_size=STEP_SIZE, uniform_low=.05, uniform_high=.9)
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes

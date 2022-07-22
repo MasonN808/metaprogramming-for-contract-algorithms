@@ -46,7 +46,7 @@ if __name__ == "__main__":
     generate = False
     if not exists("populous.json") or generate:
         # Initialize a generator
-        generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, step_size=STEP_SIZE, uniform_low=.05,
+        generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, time_step_size=STEP_SIZE, uniform_low=.05,
                               uniform_high=.9)
 
         # Generate the nodes' quality mappings
@@ -56,13 +56,11 @@ if __name__ == "__main__":
         generator.populate(nodes, "populous.json")
 
     # Create the program with some budget
-    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, time_interval=1)
+    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.1)
 
     test = Test(program)
 
-    # Test a random distribution on the initial allocations
-    # print(test.test_initial_allocations(iterations=20, initial_is_random=False, verbose=False))
-
     # Test initial vs optimal expected utility and allocations
+    test.find_utility_and_allocations(initial_allocation="uniform", verbose=False)
     test.find_utility_and_allocations(initial_allocation="uniform with noise", verbose=False)
-    test.find_utility_and_allocations(initial_allocation="uniform with noise", verbose=False)
+    test.find_utility_and_allocations(initial_allocation="Dirichlet", verbose=False)

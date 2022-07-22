@@ -6,11 +6,19 @@ from src.tests.test import Test
 from os.path import exists
 
 if __name__ == "__main__":
+    # Total budget for the DAG
     BUDGET = 10
+    # Number of instances/simulations
     INSTANCES = 5
+    # The time upper-bound for each quality mapping
     TIME_LIMIT = BUDGET
-    STEP_SIZE = 0.1
+    # The step size when producing the quality mapping
+    TIME_STEP_SIZE = 0.1
+    # The time interval when querying for the performance profile
+    TIME_INTERVAL = .01
+    # The quality interval when querying for the performance profile
     QUALITY_INTERVAL = .05
+    # For debugging
     VERBOSE = False
 
     # Create a DAG manually for testing
@@ -43,8 +51,8 @@ if __name__ == "__main__":
     generate = True
     if not exists("populous.json") or generate:
         # Initialize a generator
-        generator = Generator(INSTANCES, program_dag=dag, time_limit=TIME_LIMIT, step_size=STEP_SIZE, uniform_low=.05,
-                              uniform_high=.9)
+        generator = Generator(INSTANCES, program_dag=dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE, uniform_low=0.05,
+                              uniform_high=0.9)
 
         # Let the root be trivial and not dependent on parents
         # generator.trivial_root = True
@@ -56,7 +64,7 @@ if __name__ == "__main__":
         # Need to initialize it after adjusting dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [.1, .1, .1, "conditional", 10000]
+        generator.manual_override = [0.1, 0.1, 0.1, "conditional", 10000]
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
@@ -66,7 +74,7 @@ if __name__ == "__main__":
 
     # Create the program with some budget
 
-    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, quality_interval=.05, time_interval=1)
+    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE)
 
     # Adjust allocations (hardcode)
     test = Test(program)
