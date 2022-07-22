@@ -17,19 +17,14 @@ class ContractProgram:
 
     :param: budget : non-negative int, required
         The budget of the contract program represented as seconds
-
     :param: dag : DAG, required
         The DAG that the contract program inherits
-
     :param: scale : float, required
         The scale that transforms the printed expected utility for easier interpretation
-
     :param: decimals : int, required
         The number of decimal points that adjusts the printed expected utility and allocations for easier interpretation
-
     :param: quality_interval : float, required
         The interval used to help calculate the performance profiles (probabilities)
-
     :param: time_interval : float, required
         The interval used to help calculate the performance profiles (probabilities)
     """

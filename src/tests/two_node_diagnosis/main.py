@@ -74,7 +74,8 @@ if __name__ == "__main__":
 
     # Create the program with some budget
 
-    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE)
+    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL,
+                              time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE)
 
     # Adjust allocations (hardcode)
     test = Test(program)
