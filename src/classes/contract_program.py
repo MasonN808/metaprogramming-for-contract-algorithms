@@ -10,7 +10,7 @@ from src.classes.performance_profile import PerformanceProfile
 from src.classes.time_allocation import TimeAllocation
 
 
-class ContractProgram(PerformanceProfile):
+class ContractProgram:
     """
     Structures a directed-acyclic graph (DAG) as a contract program by applying a budget on a DAG of
     contract algorithms. The edges are directed from the leaves to the root.
@@ -24,9 +24,12 @@ class ContractProgram(PerformanceProfile):
     STEP_SIZE = 0.1
     POPULOUS_FILE_NAME = "populous.json"
 
-    def __init__(self, dag, budget, scale, decimals, quality_interval=.05, time_interval=1, using_genetic_algorithm=False):
-        PerformanceProfile.__init__(self, program_dag=dag, file_name=self.POPULOUS_FILE_NAME, time_interval=time_interval, time_limit=budget,
-                                    quality_interval=quality_interval, time_step_size=self.STEP_SIZE, using_genetic_algorithm=using_genetic_algorithm)
+    def __init__(self, dag, budget, scale, decimals, quality_interval=.05, time_interval=1,
+                 using_genetic_algorithm=False):
+        self.performance_profile = PerformanceProfile(program_dag=dag, file_name=self.POPULOUS_FILE_NAME,
+                                                      time_interval=time_interval, time_limit=budget,
+                                                      quality_interval=quality_interval, time_step_size=self.STEP_SIZE,
+                                                      using_genetic_algorithm=using_genetic_algorithm)
         self.budget = budget
         self.dag = dag
         self.allocations = self.uniform_budget()
@@ -99,37 +102,39 @@ class ContractProgram(PerformanceProfile):
             node = self.find_node(id)
             if not node.traversed:
                 node.traversed = True
-                if node.expr_type != "conditional":
-                    parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
+                if node.expression_type != "conditional":
+                    parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
+                    qualities = self.performance_profile.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
 
                     # Calculates the average quality on the list of qualities for querying
-                    average_quality = self.average_quality(qualities)
+                    average_quality = self.performance_profile.average_quality(qualities)
 
                     average_qualities.append(average_quality)
 
-                    probability *= self.query_probability_contract_expression(average_quality, qualities)
-                elif node.expr_type == "conditional":
+                    probability *= self.performance_profile.query_probability_contract_expression(average_quality, qualities)
+                elif node.expression_type == "conditional":
                     # Here, we assume that the parents are the same for both conditional branches
-                    parent_qualities_true = self.find_parent_qualities(node.children[0], time_allocations, depth=0)
+                    parent_qualities_true = self.performance_profile.find_parent_qualities(node.children[0], time_allocations, depth=0)
                     node.children[0].traversed = True
-                    parent_qualities_false = self.find_parent_qualities(node.children[1], time_allocations, depth=0)
+                    parent_qualities_false = self.performance_profile.find_parent_qualities(node.children[1], time_allocations, depth=0)
                     node.children[1].traversed = True
 
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities_true = self.query_quality_list_on_interval(time.time, node.children[0].id, parent_qualities=parent_qualities_true)
-                    qualities_false = self.query_quality_list_on_interval(time.time, node.children[1].id, parent_qualities=parent_qualities_false)
+                    qualities_true = self.performance_profile.query_quality_list_on_interval(time.time, node.children[0].id,
+                                                                         parent_qualities=parent_qualities_true)
+                    qualities_false = self.performance_profile.query_quality_list_on_interval(time.time, node.children[1].id,
+                                                                          parent_qualities=parent_qualities_false)
                     qualities = [qualities_true, qualities_false]
 
                     # Calculates the average quality on the list of qualities for querying
-                    average_quality_true = self.average_quality(qualities_true)
-                    average_quality_false = self.average_quality(qualities_false)
+                    average_quality_true = self.performance_profile.average_quality(qualities_true)
+                    average_quality_false = self.performance_profile.average_quality(qualities_false)
                     average_quality_list = [average_quality_true, average_quality_false]
                     # We let the average quality of the conditional to be the average quality of its branches
-                    average_qualities.append(self.average_quality(average_quality_list))
+                    average_qualities.append(self.performance_profile.average_quality(average_quality_list))
 
-                    probability *= self.query_probability_conditional_expression(node, average_quality_list, qualities)
+                    probability *= self.performance_profile.query_probability_conditional_expression(node, average_quality_list, qualities)
                 else:
                     pass
             else:
@@ -161,10 +166,12 @@ class ContractProgram(PerformanceProfile):
                 # Make a deep copy to avoid pointers to the same list
                 adjusted_allocations = copy.deepcopy(self.allocations)
                 # Avoid all permutations that include the conditional node
-                if self.find_node(permutation[0].node_id).expr_type == "conditional" or self.find_node(permutation[1].node_id).expr_type == "conditional":
+                if self.find_node(permutation[0].node_id).expression_type == "conditional" or self.find_node(
+                        permutation[1].node_id).expression_type == "conditional":
                     continue
                 # Avoids exchanging time between two branch nodes of a conditional
-                elif self.child_of_conditional(self.find_node(permutation[0].node_id)) and self.child_of_conditional(self.find_node(permutation[1].node_id)):
+                elif self.child_of_conditional(self.find_node(permutation[0].node_id)) and self.child_of_conditional(
+                        self.find_node(permutation[1].node_id)):
                     continue
                 # Avoids exchanging time with itself
                 elif permutation[0].node_id == permutation[1].node_id:
@@ -195,7 +202,8 @@ class ContractProgram(PerformanceProfile):
                     else:
                         adjusted_allocations[permutation[0].node_id].time -= time_switched
                         adjusted_allocations[permutation[1].node_id].time += time_switched
-                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
+                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
+                            self.allocations):
                         possible_local_max.append(adjusted_allocations)
 
                     temp_time_switched = time_switched
@@ -243,15 +251,15 @@ class ContractProgram(PerformanceProfile):
         # Check for conditionals and adjust the structure of the time allocations
         # If it is a conditional, give the conditional tau constant time
         for node_id in range(0, self.dag.order):
-            if self.find_node(node_id).expr_type == "conditional":
+            if self.find_node(node_id).expression_type == "conditional":
                 # We assume every conditional takes tau time
-                tau = self.calculate_tau()
+                tau = self.performance_profile.calculate_tau()
                 budget -= tau
                 # Add the time allocation at a specified index
                 time_allocations.insert(node_id, TimeAllocation(tau, node_id))
 
         for node_id in range(0, self.dag.order):
-            if self.find_node(node_id).expr_type == "conditional":
+            if self.find_node(node_id).expression_type == "conditional":
                 continue
             allocation = self.find_uniform_allocation(budget)
             time_allocations.insert(node_id, TimeAllocation(allocation, node_id))
@@ -273,7 +281,7 @@ class ContractProgram(PerformanceProfile):
 
         # Multiply all elements by the budget and remove tau times if conditionals exist
         # TODO: Later make this a list, if multiple conditionals exist
-        tau = self.calculate_tau()
+        tau = self.performance_profile.calculate_tau()
         # Transform the list wrt the budget
         allocations_list = [time * (self.budget - (number_of_conditionals * tau)) for time in allocations_list]
 
@@ -308,10 +316,12 @@ class ContractProgram(PerformanceProfile):
             random_index_1 = random.randint(0, self.dag.order - 1)
             # Do some checks to ensure the properties of conditional expressions are held
             # Avoid all exchanges that include the conditional node
-            if self.find_node(random_index_0).expr_type == "conditional" or self.find_node(random_index_1).expr_type == "conditional":
+            if self.find_node(random_index_0).expression_type == "conditional" or self.find_node(
+                    random_index_1).expression_type == "conditional":
                 continue
             # Avoids exchanging time between two branch nodes of a conditional
-            elif self.child_of_conditional(self.find_node(random_index_0)) and self.child_of_conditional(self.find_node(random_index_1)):
+            elif self.child_of_conditional(self.find_node(random_index_0)) and self.child_of_conditional(
+                    self.find_node(random_index_1)):
                 continue
             # Avoids exchanging time with itself
             elif random_index_0 == random_index_1:
@@ -387,7 +397,7 @@ class ContractProgram(PerformanceProfile):
         """
         number_of_conditionals = 0
         for node_id in range(0, self.dag.order):
-            if self.find_node(node_id).expr_type == "conditional":
+            if self.find_node(node_id).expression_type == "conditional":
                 number_of_conditionals += 1
         return number_of_conditionals
 
@@ -406,13 +416,13 @@ class ContractProgram(PerformanceProfile):
     @staticmethod
     def child_of_conditional(node) -> bool:
         for parent in node.parents:
-            if parent.expr_type == "conditional":
+            if parent.expression_type == "conditional":
                 return True
         return False
 
     @staticmethod
     def parent_of_conditional(node) -> bool:
         for child in node.children:
-            if child.expr_type == "conditional":
+            if child.expression_type == "conditional":
                 return True
         return False

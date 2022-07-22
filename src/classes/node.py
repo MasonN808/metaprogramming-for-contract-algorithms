@@ -1,6 +1,6 @@
 class Node:
     """
-    A node in our DAG that represents a contract algorithm with all inherited properties of a contract algorithm
+    A node in our DAG that represents a contract algorithm or conditional.
 
     :param id: non-negative int, required
         A unique index appended to the node
@@ -17,29 +17,13 @@ class Node:
     def __init__(self, id, parents, children, expression_type=None, time=None):
         # id of the node in the tree
         self.id = id
-        # Used in checking for connectedness in the DAG
-        self.traversed_connectedness = False
-        self.expr_type = expression_type
-        self.time = time
         self.parents = parents
         self.children = children
-        self.traversed = False
-
-    def __check_time(self):
-        """
-        Checks that the time allocation is valid
-        :return:
-        """
-        if not self.time >= 0 or self.time is None:
-            raise ValueError("Time allocation must be positive")
-
-    def allocate_time(self, time):
-        """
-        Adjusts the time of the contract algorithm
-        :param time: non-negative int, required
-        :return: None
-        """
+        self.expression_type = expression_type
         self.time = time
+        # Used in checking for connectedness in the DAG
+        self.traversed_connectedness = False
+        self.traversed = False
 
     def local_joint_probability_distribution(self):
         """

@@ -238,7 +238,7 @@ class Generator:
         """
         dag = copy.deepcopy(dag)
         for node in dag.nodes:
-            if node.expr_type == "conditional":
+            if node.expression_type == "conditional":
                 # Append its parents to the children
                 # Then remove the node from the parents and children
                 # Then remove the node from the nodes list

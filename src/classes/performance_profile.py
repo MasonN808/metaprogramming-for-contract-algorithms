@@ -165,7 +165,7 @@ class PerformanceProfile:
         # TODO: For now assume that only two branches exist that are contract expressions
         for child in conditional_node.children:
             # Take into account branched if statements
-            if child.expr_type == "conditional":
+            if child.expression_type == "conditional":
                 found_embedded_if = True
 
         if not found_embedded_if:
@@ -261,17 +261,17 @@ class PerformanceProfile:
     @staticmethod
     def is_conditional_node(node, family_type=None):
         if family_type is None:
-            if node.expr_type == "conditional":
+            if node.expression_type == "conditional":
                 return True
             return False
         if family_type == "parents":
             for parent in node.parents:
-                if parent.expr_type == "conditional":
+                if parent.expression_type == "conditional":
                     return True
             return False
         elif family_type == "children":
             for child in node.parents:
-                if child.expr_type == "conditional":
+                if child.expression_type == "conditional":
                     return True
             return False
         else:
