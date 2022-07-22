@@ -1,6 +1,9 @@
+import copy
 import json
 import math
 import numpy as np
+from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
+from src.classes.performance_profile import PerformanceProfile
 
 
 class Generator:
@@ -8,12 +11,13 @@ class Generator:
     A generator to create synthetic performance profiles
 
     :param instances: the number of instances to be produced
-    :param dag: the dag to be used for performance profile simulation
+    :param generator_dag: the dag to be used for performance profile simulation
     """
 
-    def __init__(self, instances, dag, time_limit, step_size, uniform_low, uniform_high, trivial_root=False, quality_interval=.05, manual_override=None):
+    def __init__(self, instances, program_dag, time_limit, step_size, uniform_low, uniform_high, generator_dag=None, trivial_root=False, quality_interval=.05, manual_override=None):
         self.instances = instances
-        self.dag = dag
+        self.generator_dag = generator_dag
+        self.program_dag = program_dag
         self.time_limit = time_limit
         self.step_size = step_size
         self.uniform_low = uniform_low
@@ -21,6 +25,7 @@ class Generator:
         self.trivial_root = trivial_root
         self.quality_interval = quality_interval
         self.manual_override = manual_override
+        self.manual_override_index = -1
 
     def simulate_performance_profile(self, random_number, node):
         """
@@ -71,20 +76,22 @@ class Generator:
             # positive infinity
             return float('inf')
         else:
-            if qualities:
-                # Get the average parent quality (this may not be what we want)
-                average_parent_quality = sum(qualities) / len(node.parents)
-                velocity = (10**average_parent_quality) - 1
-                return velocity
-            else:
-                # If node has no parents (i.e., a leaf node)
-                # Check to see if manual override is in place
-                if self.manual_override:
-                    if self.check_manual_override() and not self.manual_override[node.id] is None:
-                        return self.manual_override[node.id]
-                    else:
-                        return random_number
+            if self.manual_override and self.valid_manual_override():
+                # self.manual_override_index += 1
+                # print(self.manual_override_index)
+                if not self.manual_override[node.id] is None:
+                    return self.manual_override[node.id]
                 else:
+                    return random_number
+            else:
+                if qualities:
+                    # Get the average parent quality (this may not be what we want)
+                    average_parent_quality = sum(qualities) / len(node.parents)
+                    velocity = (10**average_parent_quality) - 1
+                    return velocity
+                else:
+                    # If node has no parents (i.e., a leaf node)
+                    # Check to see if manual override is in place
                     return random_number
 
     @staticmethod
@@ -125,17 +132,24 @@ class Generator:
         """
         nodes = []  # file names of the nodes
         # Create a finite number of unique nodes and create JSON files for each
-        for (i, node) in enumerate(self.dag.nodes):
+        for (i, node) in enumerate(self.generator_dag.nodes):
             dictionary_temp = self.create_dictionary(node)
+            # Compare the generator dag with the program dag to see if conditional is encountered
+            # If so, go up an index since it's not present in the generator dag
+            if PerformanceProfile.is_conditional_node(self.program_dag.nodes[i]):
+                i += 1
             with open('node_{}.json'.format(i), 'w') as f:
                 nodes.append('node_{}.json'.format(i))
                 json.dump(dictionary_temp, f, indent=2)
                 print("New JSON file created for node_{}".format(i))
         return nodes
 
-    def check_manual_override(self):
-        if len(self.manual_override) != len(self.dag.nodes):
+    def valid_manual_override(self):
+        # print([i.id for i in self.dag.nodes])
+        if len(self.manual_override) != len(self.program_dag.nodes):
             raise ValueError("Manual override list must be same length as DAG")
+        else:
+            return True
 
     def populate(self, nodes, out_file):
         """
@@ -145,20 +159,24 @@ class Generator:
         :param out_file: the file to be populated
         :return: An embedded dictionary
         """
+
         with open('{}'.format(out_file), 'w') as f:
             bundle = {}
             for (i, node) in enumerate(nodes):
-                bundle["node_{}".format(i)] = {}
-                bundle["node_{}".format(i)]['qualities'] = {}
-                bundle["node_{}".format(i)]['parents'] = {}
+                j = i
+                if PerformanceProfile.is_conditional_node(self.program_dag.nodes[i]):
+                    j = i + 1
+                bundle["node_{}".format(j)] = {}
+                bundle["node_{}".format(j)]['qualities'] = {}
+                bundle["node_{}".format(j)]['parents'] = {}
                 # Convert the JSON file into a dictionary
                 temp_dictionary = self.import_performance_profiles(node)
                 for instance in temp_dictionary['instances']:
                     # Loop through all the time steps
                     recursion_dictionary = temp_dictionary['instances'][instance]
-                    populate_dictionary = bundle["node_{}".format(i)]['qualities']
-                    self.recur_traverse(0, self.dag.nodes[i], [], recursion_dictionary, populate_dictionary)
-                bundle["node_{}".format(i)]['parents'] = temp_dictionary['parents']
+                    populate_dictionary = bundle["node_{}".format(j)]['qualities']
+                    self.recur_traverse(0, self.generator_dag.nodes[i], [], recursion_dictionary, populate_dictionary)
+                bundle["node_{}".format(j)]['parents'] = temp_dictionary['parents']
             json.dump(bundle, f, indent=2)
         print("Finished populating JSON file using nodes JSON files")
 
@@ -210,7 +228,7 @@ class Generator:
         return populate_dictionary
 
     @staticmethod
-    def adjust_dag_with_conditionals(dag):
+    def adjust_dag_with_conditionals(dag) -> DirectedAcyclicGraph:
         """
         Changes the structure of the DAG by removing any conditional nodes and appending its parents to its children
         temporarily for generation. Note that the original structure of the DAG remains intact
@@ -218,14 +236,17 @@ class Generator:
         :param dag: directedAcyclicGraph Object, original version
         :return: directedAcyclicGraph Object, a trimmed version
         """
+        dag = copy.deepcopy(dag)
         for node in dag.nodes:
             if node.expr_type == "conditional":
                 # Append its parents to the children
-                # Then remove the node
+                # Then remove the node from the parents and children
+                # Then remove the node from the nodes list
                 for child in node.children:
                     child.parents.extend(node.parents)
                     child.parents.remove(node)
                 for parent in node.parents:
                     parent.children.extend(node.children)
                     parent.children.remove(node)
+                dag.nodes.remove(node)
         return dag

@@ -1,6 +1,6 @@
 class DirectedAcyclicGraph:
     """
-    Creates a DAG from a list of Node objects and a root node
+    A DAG from a list of Node objects and a root node
 
     Parameters
     ----------

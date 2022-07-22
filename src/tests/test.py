@@ -54,7 +54,6 @@ class Test:
         # This is a list of TimeAllocation objects
         allocations = self.contract_program.allocations
         initial_time_allocations = [i.time for i in allocations]
-        print(initial_time_allocations)
         eu_initial = self.contract_program.global_expected_utility(
             self.contract_program.allocations) * self.contract_program.scale
         if self.contract_program.decimals is not None:

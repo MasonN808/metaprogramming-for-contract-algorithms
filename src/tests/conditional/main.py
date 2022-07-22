@@ -49,7 +49,7 @@ if __name__ == "__main__":
                               uniform_high=.9)
 
         # Adjust the DAG structure that has conditionals for generation
-        generator.dag = generator.adjust_dag_with_conditionals(dag)
+        generator.generator_dag = generator.adjust_dag_with_conditionals(dag)
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes

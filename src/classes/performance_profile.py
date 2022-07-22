@@ -13,7 +13,7 @@ class PerformanceProfile:
     :param quality_interval: the interval w.r.t. qualities to query from in the quality mapping
     """
 
-    def __init__(self, file_name, time_interval, time_limit, time_step_size=.1, quality_interval=.05,
+    def __init__(self, program_dag, file_name, time_interval, time_limit, time_step_size=.1, quality_interval=.05,
                  using_genetic_algorithm=False):
         self.dictionary = self.import_quality_mappings(file_name)
         self.time_interval = time_interval
@@ -21,6 +21,7 @@ class PerformanceProfile:
         self.time_limit = time_limit
         self.time_step_size = time_step_size
         self.using_genetic_algorithm = using_genetic_algorithm
+        self.program_dag = program_dag
 
     @staticmethod
     def import_quality_mappings(file_name):
@@ -88,7 +89,7 @@ class PerformanceProfile:
         end_quality = start_quality + self.quality_interval
         # Note: interval of [start_step, end_step)
         for quality in quality_list:
-            if start_quality <= quality < end_quality:
+            if start_quality <= quality <= end_quality:
                 number_in_interval += 1
         probability = number_in_interval / len(quality_list)
         return probability
@@ -102,18 +103,17 @@ class PerformanceProfile:
         :param time: TimeAllocation object, The time allocation to the node
         :return: A quality
         """
+        adjusted_id = id
+        if PerformanceProfile.is_conditional_node(self.program_dag.nodes[id]):
+            adjusted_id = id + 1
         if self.dictionary is None:
             raise ValueError("The quality mapping for this node is null")
         # For leaf nodes
         elif not parent_qualities:
             # ["node_{}".format(id)]: The node
             # ['qualities']: The node's quality mappings
-            dictionary = self.dictionary["node_{}".format(id)]['qualities']
-
-            if not self.using_genetic_algorithm:
-                estimated_time = self.round_nearest(time.time, self.time_interval)
-            else:
-                estimated_time = self.round_nearest(time, self.time_interval)
+            dictionary = self.dictionary["node_{}".format(adjusted_id)]['qualities']
+            estimated_time = self.round_nearest(time.time, self.time_interval)
 
             # Use .1f to add a trailing zero
             qualities = dictionary["{:.1f}".format(estimated_time)]
@@ -121,12 +121,8 @@ class PerformanceProfile:
             return average_quality
         # For intermediate or root nodes
         else:
-            dictionary = self.dictionary["node_{}".format(id)]['qualities']
-
-            if not self.using_genetic_algorithm:
-                estimated_time = self.round_nearest(time.time, self.time_interval)
-            else:
-                estimated_time = self.round_nearest(time, self.time_interval)
+            dictionary = self.dictionary["node_{}".format(adjusted_id)]['qualities']
+            estimated_time = self.round_nearest(time.time, self.time_interval)
 
             for parent_quality in parent_qualities:
                 parent_quality = self.round_nearest(parent_quality, step=self.quality_interval)
@@ -146,8 +142,7 @@ class PerformanceProfile:
         average = sum(qualities) / len(qualities)
         return average
 
-    def query_probability_conditional_expression(self, conditional_node, time_to_conditional,
-                                                 queried_quality_branches, qualities_branches):
+    def query_probability_conditional_expression(self, conditional_node, queried_quality_branches, qualities_branches):
         """
         The performance profile (conditional expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
@@ -221,23 +216,22 @@ class PerformanceProfile:
             else:
                 # Assumption: Node only has one parent (the conditional)
                 # Skip the conditional node since no relevant mapping exists
-                node = node.parents[0]
+                node_conditional = node.parents[0]
                 parent_qualities = []
-                for parent in node.parents:
+                for parent in node_conditional.parents:
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
-                    # Reset the parent qualities for the next node
+                    # Reset the parent qualities for the next node_conditional
                     parent_qualities.append(quality)
                 if depth == 1:
                     return parent_qualities
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
-                    quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
-
+                    quality = self.query_average_quality(node.id, time_allocations[node_conditional.id], parent_qualities)
                     return quality
         # Base Case (Leaf Nodes in a functional expression)
         else:
             # Leaf Node as a trivial functional expression
-            if depth == 1:
+            if depth == 1 or self.is_conditional_node(node):
                 return []
             else:
                 quality = self.query_average_quality(node.id, time_allocations[node.id], [])
@@ -265,7 +259,11 @@ class PerformanceProfile:
         return string_number[::-1].find('.')
 
     @staticmethod
-    def is_conditional_node(node, family_type):
+    def is_conditional_node(node, family_type=None):
+        if family_type is None:
+            if node.expr_type == "conditional":
+                return True
+            return False
         if family_type == "parents":
             for parent in node.parents:
                 if parent.expr_type == "conditional":

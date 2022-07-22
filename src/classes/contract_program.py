@@ -13,8 +13,7 @@ from src.classes.time_allocation import TimeAllocation
 class ContractProgram(PerformanceProfile):
     """
     Structures a directed-acyclic graph (DAG) as a contract program by applying a budget on a DAG of
-    contract algorithms.  The edges are directed from the leaves to the root
-
+    contract algorithms. The edges are directed from the leaves to the root.
 
     :param: budget : non-negative int, required
         The budget of the contract program represented as seconds
@@ -26,7 +25,7 @@ class ContractProgram(PerformanceProfile):
     POPULOUS_FILE_NAME = "populous.json"
 
     def __init__(self, dag, budget, scale, decimals, quality_interval=.05, time_interval=1, using_genetic_algorithm=False):
-        PerformanceProfile.__init__(self, file_name=self.POPULOUS_FILE_NAME, time_interval=time_interval, time_limit=budget,
+        PerformanceProfile.__init__(self, program_dag=dag, file_name=self.POPULOUS_FILE_NAME, time_interval=time_interval, time_limit=budget,
                                     quality_interval=quality_interval, time_step_size=self.STEP_SIZE, using_genetic_algorithm=using_genetic_algorithm)
         self.budget = budget
         self.dag = dag
@@ -43,7 +42,6 @@ class ContractProgram(PerformanceProfile):
                 The qualities that were outputted for each contract algorithm in the DAG
         :return: float
         """
-        # return sum(qualities)
         return math.prod(qualities)
 
     def global_expected_utility_genetic(self, time_allocations):
@@ -74,7 +72,7 @@ class ContractProgram(PerformanceProfile):
                 average_quality = self.average_quality(qualities)
                 average_qualities.append(average_quality)
                 if not self.child_of_conditional(node):
-                    probability = probability * self.query_probability_contract_expression(average_quality, qualities)
+                    probability *= self.query_probability_contract_expression(average_quality, qualities)
                 else:
                     pass
             expected_utility = probability * self.global_utility(average_qualities)
@@ -94,14 +92,14 @@ class ContractProgram(PerformanceProfile):
                 The time allocations for each contract algorithm
         :return: float
         """
-        probability = 1
+        probability = 1.0
         average_qualities = []
         # The for loop should be a breadth-first search given that the time-allocations is ordered correctly
         for (id, time) in enumerate(time_allocations):
             node = self.find_node(id)
             if not node.traversed:
                 node.traversed = True
-                if not self.child_of_conditional(node) or node.expr_type != "conditional":
+                if node.expr_type != "conditional":
                     parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
                     qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
@@ -111,39 +109,32 @@ class ContractProgram(PerformanceProfile):
 
                     average_qualities.append(average_quality)
 
-                    probability = probability * self.query_probability_contract_expression(average_quality, qualities)
-                else:
+                    probability *= self.query_probability_contract_expression(average_quality, qualities)
+                elif node.expr_type == "conditional":
                     # Here, we assume that the parents are the same for both conditional branches
-                    parent_qualities_true = self.find_parent_qualities(node.children[0], time_allocations,
-                                                                       depth=0)
+                    parent_qualities_true = self.find_parent_qualities(node.children[0], time_allocations, depth=0)
                     node.children[0].traversed = True
-                    parent_qualities_false = self.find_parent_qualities(node.children[1], time_allocations,
-                                                                        depth=0)
+                    parent_qualities_false = self.find_parent_qualities(node.children[1], time_allocations, depth=0)
                     node.children[1].traversed = True
 
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities_true = self.query_quality_list_on_interval(time.time, node.children[0].id,
-                                                                         parent_qualities=parent_qualities_true)
-                    qualities_false = self.query_quality_list_on_interval(time.time, node.children[1].id,
-                                                                          parent_qualities=parent_qualities_false)
+                    qualities_true = self.query_quality_list_on_interval(time.time, node.children[0].id, parent_qualities=parent_qualities_true)
+                    qualities_false = self.query_quality_list_on_interval(time.time, node.children[1].id, parent_qualities=parent_qualities_false)
                     qualities = [qualities_true, qualities_false]
 
                     # Calculates the average quality on the list of qualities for querying
                     average_quality_true = self.average_quality(qualities_true)
                     average_quality_false = self.average_quality(qualities_false)
-                    average_quality = [average_quality_true, average_quality_false]
+                    average_quality_list = [average_quality_true, average_quality_false]
+                    # We let the average quality of the conditional to be the average quality of its branches
+                    average_qualities.append(self.average_quality(average_quality_list))
 
-                    average_qualities.append(average_quality)
-                    # TODO: Force tau to be the time allocation on the conditional node instead
-                    # Subtract amount of time to evaluate condition
-                    # tau = self.calculate_tau()
-                    # time_to_children = time.time - tau
-
-                    probability = probability * \
-                        self.query_probability_conditional_expression(
-                            node, time.time, average_quality, qualities)
+                    probability *= self.query_probability_conditional_expression(node, average_quality_list, qualities)
+                else:
+                    pass
             else:
                 pass
+
         expected_utility = probability * self.global_utility(average_qualities)
 
         # Reset the traversed pointers on the nodes
@@ -204,8 +195,7 @@ class ContractProgram(PerformanceProfile):
                     else:
                         adjusted_allocations[permutation[0].node_id].time -= time_switched
                         adjusted_allocations[permutation[1].node_id].time += time_switched
-                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
-                            self.allocations):
+                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
                         possible_local_max.append(adjusted_allocations)
 
                     temp_time_switched = time_switched
@@ -221,9 +211,8 @@ class ContractProgram(PerformanceProfile):
                         self.global_expected_utility(self.allocations) * self.scale
                         temp_time_switched = round(temp_time_switched, self.decimals)
                     if verbose:
-                        print("Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> "
-                              "Allocations: {}".format(
-                                  temp_time_switched, eu_adjusted, eu_original, print_allocations))
+                        message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
+                        print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations))
 
             # arg max here
             if possible_local_max:
@@ -247,8 +236,9 @@ class ContractProgram(PerformanceProfile):
 
         :return: TimeAllocation[]
         """
-        budget = copy.deepcopy(self.budget)
         time_allocations = []
+        budget = float(self.budget)
+
         # Do an initial pass to find the conditionals and subtract tau from the budget
         # Check for conditionals and adjust the structure of the time allocations
         # If it is a conditional, give the conditional tau constant time
@@ -259,12 +249,13 @@ class ContractProgram(PerformanceProfile):
                 budget -= tau
                 # Add the time allocation at a specified index
                 time_allocations.insert(node_id, TimeAllocation(tau, node_id))
+
         for node_id in range(0, self.dag.order):
             if self.find_node(node_id).expr_type == "conditional":
                 continue
-            else:
-                allocation = self.find_uniform_allocation(budget)
-                time_allocations.insert(node_id, TimeAllocation(allocation, node_id))
+            allocation = self.find_uniform_allocation(budget)
+            time_allocations.insert(node_id, TimeAllocation(allocation, node_id))
+
         return time_allocations
 
     def dirichlet_budget(self) -> [TimeAllocation]:
@@ -281,7 +272,7 @@ class ContractProgram(PerformanceProfile):
         allocations_list = allocations_array.tolist()
 
         # Multiply all elements by the budget and remove tau times if conditionals exist
-        # TODO: Later make this a list if multiple conditionals exist
+        # TODO: Later make this a list, if multiple conditionals exist
         tau = self.calculate_tau()
         # Transform the list wrt the budget
         allocations_list = [time * (self.budget - (number_of_conditionals * tau)) for time in allocations_list]
@@ -290,7 +281,6 @@ class ContractProgram(PerformanceProfile):
         # Search for conditional branches and append a neighbor since we removed it prior to using Dirichlet
         index = 0
         while index < len(allocations_list):
-            print(index)
             # TODO: FIX THIS
             if self.child_of_conditional(self.find_node(index)):
                 # Append the neighbor branch with same time allocation
@@ -300,6 +290,7 @@ class ContractProgram(PerformanceProfile):
                 allocations_list.insert(index + 1, tau)
                 # Skip the next loop
             index += 1
+
         return [TimeAllocation(time=time, node_id=id) for (id, time) in enumerate(allocations_list)]
 
     def uniform_budget_with_noise(self, perturbation_bound=.1, iterations=10) -> [TimeAllocation]:
@@ -412,9 +403,6 @@ class ContractProgram(PerformanceProfile):
                 return node
         raise IndexError("Node not found with given id")
 
-    # For conditional expressions
-    # -------------------------------------------------
-
     @staticmethod
     def child_of_conditional(node) -> bool:
         for parent in node.parents:
@@ -428,5 +416,3 @@ class ContractProgram(PerformanceProfile):
             if child.expr_type == "conditional":
                 return True
         return False
-
-    # -------------------------------------------------
