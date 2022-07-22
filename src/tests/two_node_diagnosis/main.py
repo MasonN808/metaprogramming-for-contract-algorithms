@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     # Create the program with some budget
 
-    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, time_interval=1)
+    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, quality_interval=.05, time_interval=1)
 
     # Adjust allocations (hardcode)
     test = Test(program)
@@ -79,4 +79,5 @@ if __name__ == "__main__":
 
     # Test initial vs optimal expected utility and allocations
     test.find_utility_and_allocations(initial_allocation="uniform", verbose=False)
+    test.find_utility_and_allocations(initial_allocation="uniform with noise", verbose=False)
     test.find_utility_and_allocations(initial_allocation="Dirichlet", verbose=False)

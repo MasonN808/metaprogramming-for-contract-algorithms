@@ -60,6 +60,7 @@ class Test:
             initial_time_allocations = [round(i.time, self.contract_program.decimals)
                                         for i in self.contract_program.allocations]
             eu_initial = round(eu_initial, self.contract_program.decimals)
+        print(" {} \n ----------------------".format(initial_allocation))
         # The initial time allocations for each contract algorithm
         print("                   Initial ==> Expected Utility: {:<5} ==> "
               "Time Allocations: {}".format(eu_initial, initial_time_allocations))
@@ -72,7 +73,7 @@ class Test:
                                         self.contract_program.allocations]
             eu_optimal = round(eu_optimal, self.contract_program.decimals)
         print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
-              "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
+              "Time Allocations: {} \n".format(eu_optimal, optimal_time_allocations))
 
     def print_tree(self, root, marker_str="+- ", level_markers=None):
         """
@@ -128,6 +129,8 @@ class Test:
             self.contract_program.allocations = self.contract_program.dirichlet_budget()
         elif initial_allocation == "uniform with noise":
             self.contract_program.allocations = self.contract_program.uniform_budget_with_noise()
+        else:
+            raise ValueError("Invalid initial allocation type")
 
     @staticmethod
     def print_allocations(allocations) -> None:
