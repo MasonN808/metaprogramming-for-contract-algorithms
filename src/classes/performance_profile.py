@@ -24,17 +24,17 @@ class PerformanceProfile:
         self.program_dag = program_dag
 
     @staticmethod
-    def import_quality_mappings(file_name):
+    def import_quality_mappings(file_name) -> dict:
         """
-        Imports the performance profiles as dictionary via an external JSON file.
+        Imports the performance profiles as dictionary via an external JSON file
 
-        :param file_name: the name of the file with quality mappings for each node
-        :return: An embedded dictionary
+        :param: file_name: the name of the file with quality mappings for each node
+        :return An embedded dictionary
         """
         f = open('{}'.format(file_name), "r")
         return json.loads(f.read())
 
-    def query_quality_list_on_interval(self, time, id, parent_qualities):
+    def query_quality_list_on_interval(self, time, id, parent_qualities) -> [float]:
         """
         Queries the quality mapping at a specific time, using some interval to create a distribution over qualities
 
@@ -45,32 +45,39 @@ class PerformanceProfile:
         """
         if self.dictionary is None:
             raise ValueError("The quality mapping for this node is null")
+
         else:
             # ["node_{}".format(id)]: The node
             # ['qualities']: The node's quality mappings
             dictionary = self.dictionary["node_{}".format(id)]['qualities']
+
             # Finding node quality given the parents' qualities
             if parent_qualities:
                 for parent_quality in parent_qualities:
                     parent_quality = self.round_nearest(parent_quality, step=self.quality_interval)
                     dictionary = dictionary["{:.2f}".format(parent_quality)]
+
             qualities = []
             # Initialize the start and end of the time interval for descritization of the prior
             start_step = (time // self.time_interval) * self.time_interval
             end_step = start_step + self.time_interval
+
             # Check if time is equal to limit
             if time == self.time_limit:
                 start_step = ((time - self.time_interval) // self.time_interval) * self.time_interval
                 end_step = start_step + self.time_interval
+
             # Note: interval is [start_step, end_step) or [start_step, end_step] for time at limit
             num_decimals = self.find_number_of_decimals(self.time_step_size)
+
             # Round to get rid of rounding error in division of time
             for t in np.arange(start_step, end_step, self.time_step_size).round(num_decimals):
                 # ["{}".format(t)]: The time allocation
                 qualities += dictionary["{}".format(t)]
+
             return qualities
 
-    def query_probability_contract_expression(self, queried_quality, quality_list):
+    def query_probability_contract_expression(self, queried_quality, quality_list) -> float:
         """
         The performance profile (contract expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
@@ -83,18 +90,23 @@ class PerformanceProfile:
         """
         # Sort in ascending order
         quality_list = sorted(quality_list)
+
         number_in_interval = 0
+
         # Initialize the start and end of the quality interval for the posterior
         start_quality = (queried_quality // self.quality_interval) * self.quality_interval
         end_quality = start_quality + self.quality_interval
+
         # Note: interval of [start_step, end_step)
         for quality in quality_list:
             if start_quality <= quality <= end_quality:
                 number_in_interval += 1
+
         probability = number_in_interval / len(quality_list)
+
         return probability
 
-    def query_average_quality(self, id, time, parent_qualities):
+    def query_average_quality(self, id, time, parent_qualities) -> float:
         """
         Queries a single, estimated quality given a time allocation and possibly has parent qualities
 
@@ -106,8 +118,10 @@ class PerformanceProfile:
         adjusted_id = id
         if PerformanceProfile.is_conditional_node(self.program_dag.nodes[id]):
             adjusted_id = id + 1
+
         if self.dictionary is None:
             raise ValueError("The quality mapping for this node is null")
+
         # For leaf nodes
         elif not parent_qualities:
             # ["node_{}".format(id)]: The node
@@ -117,8 +131,11 @@ class PerformanceProfile:
 
             # Use .1f to add a trailing zero
             qualities = dictionary["{:.1f}".format(estimated_time)]
+
             average_quality = self.average_quality(qualities)
+
             return average_quality
+
         # For intermediate or root nodes
         else:
             dictionary = self.dictionary["node_{}".format(adjusted_id)]['qualities']
@@ -127,12 +144,15 @@ class PerformanceProfile:
             for parent_quality in parent_qualities:
                 parent_quality = self.round_nearest(parent_quality, step=self.quality_interval)
                 dictionary = dictionary["{:.2f}".format(parent_quality)]
+
             qualities = dictionary["{:.1f}".format(estimated_time)]
+
             average_quality = self.average_quality(qualities)
+
             return average_quality
 
     @staticmethod
-    def average_quality(qualities):
+    def average_quality(qualities) -> float:
         """
         Gets the average quality over a list of qualities
 
@@ -142,20 +162,21 @@ class PerformanceProfile:
         average = sum(qualities) / len(qualities)
         return average
 
-    def query_probability_conditional_expression(self, conditional_node, queried_quality_branches, qualities_branches):
+    def query_probability_conditional_expression(self, conditional_node, queried_quality_branches, qualities_branches) -> float:
         """
         The performance profile (conditional expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
 
         :param conditional_node: Node object, the conditional node being evaluated
-        :param quality_list: A list of qualities from query_quality_list_on_interval()
-        :param queried_quality: The conditional probability of obtaining the queried quality
+        :param queried_quality_branches: [float], A list of qualities from query_quality_list_on_interval() for the two branches
+        :param qualities_branches: [float], A list of the queried qualities from the branches given their time allocations
         :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
         allocation
         """
         # Sort in ascending order
         qualities_branches[0] = sorted(qualities_branches[0])
         qualities_branches[1] = sorted(qualities_branches[1])
+
         found_embedded_if = False
 
         # Query the probability of the condition being true
@@ -174,20 +195,28 @@ class PerformanceProfile:
                                                                          qualities_branches[1])
         else:
             # TODO: Finish this later
-            pass
+            raise ValueError("Found an embedded conditional")
         return probability
 
     @staticmethod
-    def estimate_rho():
+    def estimate_rho() -> float:
+        """
+        Returns the probability of the condition in the conditional being true
+        :return: float
+        """
         # Assume it's constant for now
-        return .4
+        return 0.4
 
     @staticmethod
-    def calculate_tau():
+    def calculate_tau() -> float:
+        """
+        Returns the amount of time to obtain rho
+        :return: float
+        """
         # Assume it takes constant time
-        return .1
+        return 0.1
 
-    def find_parent_qualities(self, node, time_allocations, depth):
+    def find_parent_qualities(self, node, time_allocations, depth) -> [float]:
         """
         Returns the parent qualities given the time allocations and node
 
@@ -198,6 +227,7 @@ class PerformanceProfile:
         """
         # Recur down the DAG
         depth += 1
+
         if node.parents:
             # Check that none of the parents are conditional expressions
             if not self.is_conditional_node(node, "parents"):
@@ -206,8 +236,10 @@ class PerformanceProfile:
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
                     # Reset the parent qualities for the next node
                     parent_qualities.append(quality)
+
                 if depth == 1:
                     return parent_qualities
+
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
                     quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
@@ -217,28 +249,34 @@ class PerformanceProfile:
                 # Assumption: Node only has one parent (the conditional)
                 # Skip the conditional node since no relevant mapping exists
                 node_conditional = node.parents[0]
+
                 parent_qualities = []
+
                 for parent in node_conditional.parents:
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
                     # Reset the parent qualities for the next node_conditional
                     parent_qualities.append(quality)
+
                 if depth == 1:
                     return parent_qualities
+
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
                     quality = self.query_average_quality(node.id, time_allocations[node_conditional.id], parent_qualities)
                     return quality
+
         # Base Case (Leaf Nodes in a functional expression)
         else:
             # Leaf Node as a trivial functional expression
             if depth == 1 or self.is_conditional_node(node):
                 return []
+
             else:
                 quality = self.query_average_quality(node.id, time_allocations[node.id], [])
                 return quality
 
     @staticmethod
-    def round_nearest(number, step):
+    def round_nearest(number, step) -> float:
         """
         Finds the nearest element with respect to the step size
 
@@ -249,7 +287,7 @@ class PerformanceProfile:
         return round(number / step) * step
 
     @staticmethod
-    def find_number_of_decimals(number):
+    def find_number_of_decimals(number) -> int:
         """
         Finds the number of decimals in a float
         :param number: float
@@ -259,7 +297,7 @@ class PerformanceProfile:
         return string_number[::-1].find('.')
 
     @staticmethod
-    def is_conditional_node(node, family_type=None):
+    def is_conditional_node(node, family_type=None) -> bool:
         if family_type is None:
             if node.expression_type == "conditional":
                 return True
