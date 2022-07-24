@@ -83,7 +83,7 @@ if __name__ == "__main__":
     # Adjust allocations (hardcode)
     test = Test(program)
 
-    # Print the tree
+    # Print the tree for verification
     # print(test.print_tree(dag.root))
 
     # Test a random distribution on the initial allocations

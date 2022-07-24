@@ -39,15 +39,14 @@ class Test:
                           "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
         return sorted(expected_utilities)
 
-    def find_utility_and_allocations(self, initial_allocation, verbose=False):
+    def find_utility_and_allocations(self, initial_allocation, verbose=False) -> None:
         """
         Finds the expected utility and time allocations for an optimal expected utility or initial expected utility
         given the initial time allocations
 
-        :param allocation_type:
-        :param initial_allocation: string
-        :param verbose:
-        :return:
+        :param initial_allocation: string, the type of initial allocation given for optimization
+        :param verbose: bool, prints the optimization steps
+        :return: None
         """
         # Generate an initial allocation
         self.check_initial_allocation(initial_allocation)
@@ -95,7 +94,7 @@ class Test:
             if draw:
                 return connection_str
             else:
-                empty_str
+                return empty_str
         markers = "".join(map(mapper, level_markers[:-1]))
         markers += marker_str if level > 0 else ""
         print(f"{markers}{root.id}")

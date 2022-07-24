@@ -81,7 +81,6 @@ class PerformanceProfile:
         The performance profile (contract expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
 
-        :param node: Node object, node being evaluated
         :param quality_list: A list of qualities from query_quality_list_on_interval()
         :param queried_quality: The conditional probability of obtaining the queried quality
         :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
