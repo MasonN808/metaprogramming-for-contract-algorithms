@@ -189,6 +189,7 @@ class Generator:
             bundle = {}
 
             i = 0
+            j = 0
             for node in nodes:
 
                 if PerformanceProfile.is_conditional_node(self.program_dag.nodes[i]):
@@ -205,10 +206,11 @@ class Generator:
                     # Loop through all the time steps
                     recursion_dictionary = temp_dictionary['instances'][instance]
                     populate_dictionary = bundle["node_{}".format(i)]['qualities']
-                    self.recur_traverse(0, self.generator_dag.nodes[i - 1], [], recursion_dictionary, populate_dictionary)
+
+                    self.recur_traverse(0, self.generator_dag.nodes[j], [], recursion_dictionary, populate_dictionary)
 
                 bundle["node_{}".format(i)]['parents'] = temp_dictionary['parents']
-
+                j += 1
                 i += 1
             json.dump(bundle, f, indent=2)
 

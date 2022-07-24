@@ -138,7 +138,6 @@ class ContractProgram:
 
         while time_switched > threshold:
             possible_local_max = []
-
             # Go through all permutations of the time allocations
             for permutation in permutations(self.allocations, 2):
 
@@ -245,7 +244,7 @@ class ContractProgram:
                 # Subtract tau from the budget
                 budget -= tau
                 # Add the time allocation at a specified index
-                time_allocations.insert(node_id, TimeAllocation(tau, node_id))
+                time_allocations.insert(node_id, TimeAllocation(node_id, tau))
 
         # Do a second pass to add in the rest of the allocations wrt a uniform allocation
         for node_id in range(0, self.dag.order):
@@ -254,7 +253,7 @@ class ContractProgram:
                 continue
 
             allocation = self.find_uniform_allocation(budget)
-            time_allocations.insert(node_id, TimeAllocation(allocation, node_id))
+            time_allocations.insert(node_id, TimeAllocation(node_id, allocation))
 
         return time_allocations
 
@@ -293,7 +292,7 @@ class ContractProgram:
                 allocations_list.insert(index + 1, tau)
             index += 1
 
-        return [TimeAllocation(time=time, node_id=id) for (id, time) in enumerate(allocations_list)]
+        return [TimeAllocation(node_id=id, time=time) for (id, time) in enumerate(allocations_list)]
 
     def uniform_budget_with_noise(self, perturbation_bound=.1, iterations=10) -> [TimeAllocation]:
         """
