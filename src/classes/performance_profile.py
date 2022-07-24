@@ -188,9 +188,11 @@ class PerformanceProfile:
                 found_embedded_if = True
 
         if not found_embedded_if:
-            probability = rho * self.query_probability_contract_expression(queried_quality_branches[0], qualities_branches[0]) \
-                + (1 - rho) * self.query_probability_contract_expression(queried_quality_branches[1],
-                                                                         qualities_branches[1])
+            performance_profile_true = self.query_probability_contract_expression(queried_quality_branches[0], qualities_branches[0])
+            performance_profile_false = self.query_probability_contract_expression(queried_quality_branches[1], qualities_branches[1])
+
+            probability = rho * performance_profile_true + (1 - rho) * performance_profile_false
+
         else:
             # TODO: Finish this later
             raise ValueError("Found an embedded conditional")
