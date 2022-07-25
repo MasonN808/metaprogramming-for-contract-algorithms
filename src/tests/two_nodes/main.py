@@ -3,7 +3,7 @@ from src.tests.test import Test
 from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
 from src.classes.node import Node
 from src.classes.contract_program import ContractProgram
-from src.profiles.generator import Generator
+from src.classes.generator import Generator
 
 # from os.path import exists
 # import seaborn as sns
