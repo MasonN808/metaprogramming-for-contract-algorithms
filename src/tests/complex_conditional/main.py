@@ -1,5 +1,3 @@
-import copy
-
 from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
 from src.classes.node import Node
 from src.classes.contract_program import ContractProgram
