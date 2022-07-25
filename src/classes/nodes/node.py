@@ -14,14 +14,23 @@ class Node:
         Used directly for contract conditionals
     """
 
-    def __init__(self, id, parents, children, expression_type, subtree=None, time=None):
+    def __init__(self, id, parents, children, expression_type, in_subtree, time=None):
         # id of the node in the tree
         self.id = id
         self.parents = parents
         self.children = children
         self.expression_type = expression_type
+
         # subtree for the conditional expression
-        self.subtree = subtree
+        self.subtree = None
+        # true subtree for the conditional expression
+        self.true_subtree = None
+        # false subtree for the conditional expression
+        self.false_subtree = None
+        self.in_subtree = in_subtree
+        # Used for the subtree that doesn't have access to parents
+        self.parent_qualities = []
+
         self.time = time
         self.trivial = False
         # Used in checking for connectedness in the DAG

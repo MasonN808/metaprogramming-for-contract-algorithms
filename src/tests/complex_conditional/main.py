@@ -1,5 +1,5 @@
 from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
-from src.classes.node import Node
+from src.classes.nodes.node import Node
 from src.classes.contract_program import ContractProgram
 from src.classes.generator import Generator
 from src.tests.test import Test
@@ -21,52 +21,59 @@ if __name__ == "__main__":
     # For debugging
     VERBOSE = False
 
-    # Create a DAG manually for the conditional subtree
-    # Leaf nodes
-    node_inner_7 = Node(7, [], [], expression_type="conditional")
+    # Create a DAG manually for the second-order metareasoning problem (conditional subtree)
+    # Left (True subtree)
 
-    # Conditional branch nodes
-    node_inner_6 = Node(6, [node_inner_7], [], expression_type="contract")
-    node_inner_5 = Node(5, [node_inner_7], [], expression_type="contract")
+    # Leaf node
+    node_inner_true_4 = Node(4, [], [], expression_type="contract", in_subtree=True)
 
-    # Conditional subtrees
-    node_inner_4 = Node(4, [node_inner_5], [], expression_type="contract")
-    node_inner_3 = Node(3, [node_inner_5], [], expression_type="contract")
-    node_inner_2 = Node(2, [node_inner_6], [], expression_type="contract")
-    node_inner_1 = Node(1, [node_inner_3, node_inner_4], [], expression_type="contract")
+    # Intermediate Nodes
+    node_inner_true_3 = Node(3, [node_inner_true_4], [], expression_type="contract", in_subtree=True)
+    node_inner_true_2 = Node(2, [node_inner_true_3], [], expression_type="contract", in_subtree=True)
+    node_inner_true_1 = Node(1, [node_inner_true_3], [], expression_type="contract", in_subtree=True)
 
-    # Root node
-    # Add the evaluation node to compose the two branches together for the expected utility of the contract expression
-    # Note: this node will not be included in the 1st-level metareasoning process
-    root_inner = Node(0, [node_inner_1, node_inner_2], [], expression_type="contract")
-
-    # Assign it as trivial for proper quality mapping generation
-    root_inner.trivial = True
+    # Root Node
+    node_inner_true_root = Node(0, [node_inner_true_1, node_inner_true_2], [], expression_type="contract", in_subtree=True)
 
     # Add the children
-    node_inner_1.children = [root_inner]
-    node_inner_2.children = [root_inner]
-    node_inner_3.children = [node_inner_1]
-    node_inner_4.children = [node_inner_1]
-    node_inner_5.children = [node_inner_3, node_inner_4]
-    node_inner_6.children = [node_inner_2]
-    node_inner_7.children = [node_inner_5, node_inner_6]
+    node_inner_true_4.children = [node_inner_true_3]
+    node_inner_true_3.children = [node_inner_true_2, node_inner_true_1]
+    node_inner_true_2.children = [node_inner_true_root]
+    node_inner_true_1.children = [node_inner_true_root]
 
-    # For a list of nodes for the DAG creation
-    nodes_inner = [root_inner, node_inner_1, node_inner_2, node_inner_3, node_inner_4, node_inner_5, node_inner_6, node_inner_7]
+    # Create a list of the nodes in breadth-first order for the true branch
+    nodes_inner_true = [node_inner_true_root, node_inner_true_1, node_inner_true_2, node_inner_true_3, node_inner_true_4]
+
+    # Create a DAG manually for the second-order metareasoning problem (conditional subtree)
+    # Right (False subtree)
+
+    # Leaf node
+    node_inner_false_2 = Node(2, [], [], expression_type="conditional", in_subtree=True)
+
+    # Conditional branch nodes
+    node_inner_false_1 = Node(1, [node_inner_false_2], [], expression_type="contract", in_subtree=True)
+
+    # Root nodes
+    node_inner_false_root = Node(0, [node_inner_false_1], [], expression_type="contract", in_subtree=True)
+
+    # Create a list of the nodes in breadth-first order for the false branch
+    nodes_inner_false = [node_inner_false_root, node_inner_false_1, node_inner_false_2]
 
     # Create a DAG manually for the first-order metareasoning problem
     # Leaf nodes
-    node_outer_2 = Node(2, [], [], expression_type="contract")
+    node_outer_2 = Node(2, [], [], expression_type="contract", in_subtree=False)
 
     # Conditional Node
-    node_outer_1 = Node(1, [node_outer_2], [], expression_type="conditional")
+    node_outer_1 = Node(1, [node_outer_2], [], expression_type="conditional", in_subtree=False)
 
     # Add the subtree to the conditional node
-    node_outer_1.subtree = DirectedAcyclicGraph(nodes_inner, root=root_inner)
+    # Add the left subtree
+    node_outer_1.true_subtree = DirectedAcyclicGraph(nodes_inner_true, root=node_inner_true_root)
+    # Add the right subtree
+    node_outer_1.false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
 
     # Root node
-    root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract")
+    root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_subtree=False)
 
     # Nodes
     nodes_outer = [root_outer, node_outer_1, node_outer_2]
@@ -76,22 +83,22 @@ if __name__ == "__main__":
 
     # Create a dag with expanded subtrees for quality mapping generation
     # Leaf nodes
-    node_8 = Node(8, [], [], expression_type="contract")
+    node_8 = Node(8, [], [], expression_type="contract", in_subtree=False)
     # Conditional node
-    node_7 = Node(7, [node_8], [], expression_type="conditional")
+    node_7 = Node(7, [node_8], [], expression_type="conditional", in_subtree=False)
 
     # Conditional branch nodes
-    node_6 = Node(6, [node_7], [], expression_type="contract")
-    node_5 = Node(5, [node_7], [], expression_type="contract")
+    node_6 = Node(6, [node_7], [], expression_type="contract", in_subtree=False)
+    node_5 = Node(5, [node_7], [], expression_type="contract", in_subtree=False)
 
     # Conditional subtrees
-    node_4 = Node(4, [node_5], [], expression_type="contract")
-    node_3 = Node(3, [node_5], [], expression_type="contract")
-    node_2 = Node(2, [node_6], [], expression_type="contract")
-    node_1 = Node(1, [node_3, node_4], [], expression_type="contract")
+    node_4 = Node(4, [node_5], [], expression_type="contract", in_subtree=False)
+    node_3 = Node(3, [node_5], [], expression_type="contract", in_subtree=False)
+    node_2 = Node(2, [node_6], [], expression_type="contract", in_subtree=False)
+    node_1 = Node(1, [node_3, node_4], [], expression_type="contract", in_subtree=False)
 
     # Root node
-    root = Node(0, [node_1, node_2], [], expression_type="contract")
+    root = Node(0, [node_1, node_2], [], expression_type="contract", in_subtree=False)
 
     # Add the children
     node_1.children = [root]
@@ -127,7 +134,6 @@ if __name__ == "__main__":
         generator.manual_override = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, "conditional", 10000]
 
         # Generate the nodes' quality mappings
-        # TODO: Finish this 7/25
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
 
         # populate the nodes' quality mappings into one populous file

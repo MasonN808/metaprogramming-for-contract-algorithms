@@ -5,7 +5,7 @@ from itertools import permutations
 
 import numpy as np
 
-from src.classes.node import Node
+from src.classes.nodes.node import Node
 from src.classes.performance_profile import PerformanceProfile
 from src.classes.time_allocation import TimeAllocation
 
@@ -91,6 +91,7 @@ class ContractProgram:
 
                 # Catches node.expression_type == "conditional"
                 else:
+                    # TODO: Allow this to accept arbitrary subtrees and calculate the probability
                     # Here, we assume that the parents are the same for both conditional branches
                     parent_qualities_true = self.performance_profile.find_parent_qualities(node.children[0], time_allocations, depth=0)
                     node.children[0].traversed = True
@@ -103,7 +104,7 @@ class ContractProgram:
                     qualities_false = self.performance_profile.query_quality_list_on_interval(time.time, node.children[1].id,
                                                                                               parent_qualities=parent_qualities_false)
 
-                    qualities = [qualities_true, qualities_false]
+                    qualities_branches = [qualities_true, qualities_false]
 
                     # Calculates the average quality on the list of qualities for querying
                     average_quality_true = self.performance_profile.average_quality(qualities_true)
@@ -114,7 +115,7 @@ class ContractProgram:
                     # We let the average quality of the conditional to be the average quality of its branches
                     average_qualities.append(self.performance_profile.average_quality(average_quality_list))
 
-                    probability *= self.performance_profile.query_probability_conditional_expression(node, average_quality_list, qualities)
+                    probability *= self.performance_profile.query_probability_conditional_expression(node, average_quality_list, qualities_branches)
 
         expected_utility = probability * self.global_utility(average_qualities)
 

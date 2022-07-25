@@ -38,7 +38,7 @@ class PerformanceProfile:
 
         :param parent_qualities: List of qualities of the parent nodes
         :param id: The node id
-        :param time: The time allocation by which the contract algorithm stops
+        :param time: float, The time allocation by which the contract algorithm stops
         :return: A list of qualities for node with self.id
         """
         if self.dictionary is None:
@@ -298,6 +298,13 @@ class PerformanceProfile:
 
     @staticmethod
     def is_conditional_node(node, family_type=None) -> bool:
+        """
+        Checks whether the parents or children are a conditional node
+
+        :param node: Node object
+        :param family_type: The "children" or "parents"
+        :return: bool
+        """
         if family_type is None:
             if node.expression_type == "conditional":
                 return True
