@@ -74,18 +74,52 @@ if __name__ == "__main__":
     # Create and verify the DAG from the node list
     dag = DirectedAcyclicGraph(nodes, root_outer)
 
+    # Create a dag with expanded subtrees for quality mapping generation
+    # Leaf nodes
+    node_8 = Node(8, [], [], expression_type="contract")
+    # Conditional node
+    node_7 = Node(7, [8], [], expression_type="conditional")
+
+    # Conditional branch nodes
+    node_6 = Node(6, [node_7], [], expression_type="contract")
+    node_5 = Node(5, [node_7], [], expression_type="contract")
+
+    # Conditional subtrees
+    node_4 = Node(4, [node_5], [], expression_type="contract")
+    node_3 = Node(3, [node_5], [], expression_type="contract")
+    node_2 = Node(2, [node_6], [], expression_type="contract")
+    node_1 = Node(1, [node_3, node_4], [], expression_type="contract")
+
+    # Root node
+    # Add the evaluation node to compose the two branches together for the expected utility of the contract expression
+    # Note: this node will not be included in the 1st-level metareasoning process
+    root = Node(0, [node_1, node_2], [], expression_type="contract")
+
+    # Add the children
+    node_1.children = [root]
+    node_2.children = [root]
+    node_3.children = [node_1]
+    node_4.children = [node_1]
+    node_5.children = [node_3, node_4]
+    node_6.children = [node_2]
+    node_7.children = [node_5, node_6]
+
+    # For a list of nodes for the DAG creation
+    nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7]
+    program_dag = DirectedAcyclicGraph(nodes, root)
+
     # Used to create the synthetic data as instances and a populous file
     generate = True
     if not exists("populous.json") or generate:
         # Initialize a generator
-        generator = Generator(INSTANCES, program_dag=dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE, uniform_low=0.05,
+        generator = Generator(INSTANCES, program_dag=program_dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE, uniform_low=0.05,
                               uniform_high=0.9)
 
         # Let the root be trivial and not dependent on parents
         # generator.trivial_root = True
 
         # Adjust the DAG structure that has conditionals for generation
-        generator.generator_dag = generator.adjust_dag_with_conditionals(dag)
+        generator.generator_dag = generator.adjust_dag_with_conditionals(program_dag)
 
         # Initialize the velocities for the quality mappings in a list
         # Need to initialize it after adjusting dag
