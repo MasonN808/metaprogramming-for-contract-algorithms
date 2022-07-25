@@ -69,16 +69,16 @@ if __name__ == "__main__":
     root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract")
 
     # Nodes
-    nodes = [root_outer, node_outer_1, node_outer_2]
+    nodes_outer = [root_outer, node_outer_1, node_outer_2]
 
     # Create and verify the DAG from the node list
-    dag = DirectedAcyclicGraph(nodes, root_outer)
+    dag = DirectedAcyclicGraph(nodes_outer, root_outer)
 
     # Create a dag with expanded subtrees for quality mapping generation
     # Leaf nodes
     node_8 = Node(8, [], [], expression_type="contract")
     # Conditional node
-    node_7 = Node(7, [8], [], expression_type="conditional")
+    node_7 = Node(7, [node_8], [], expression_type="conditional")
 
     # Conditional branch nodes
     node_6 = Node(6, [node_7], [], expression_type="contract")
@@ -91,8 +91,6 @@ if __name__ == "__main__":
     node_1 = Node(1, [node_3, node_4], [], expression_type="contract")
 
     # Root node
-    # Add the evaluation node to compose the two branches together for the expected utility of the contract expression
-    # Note: this node will not be included in the 1st-level metareasoning process
     root = Node(0, [node_1, node_2], [], expression_type="contract")
 
     # Add the children
@@ -103,6 +101,7 @@ if __name__ == "__main__":
     node_5.children = [node_3, node_4]
     node_6.children = [node_2]
     node_7.children = [node_5, node_6]
+    node_8.children = [node_7]
 
     # For a list of nodes for the DAG creation
     nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7]
@@ -125,9 +124,10 @@ if __name__ == "__main__":
         # Need to initialize it after adjusting dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, "conditional", 10000]
+        generator.manual_override = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, "conditional", 10000]
 
         # Generate the nodes' quality mappings
+        # TODO: Finish this 7/25
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
 
         # populate the nodes' quality mappings into one populous file
@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
     # Create the program with some budget
 
-    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL,
+    program = ContractProgram(program_dag, BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL,
                               time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE)
 
     # Adjust allocations (hardcode)
