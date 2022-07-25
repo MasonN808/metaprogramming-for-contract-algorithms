@@ -76,34 +76,6 @@ class PerformanceProfile:
 
             return qualities
 
-    def query_probability_contract_expression(self, queried_quality, quality_list) -> float:
-        """
-        The performance profile (contract expression): Queries the quality mapping at a specific time given the
-        previous qualities of the contract algorithm's parents
-
-        :param quality_list: A list of qualities from query_quality_list_on_interval()
-        :param queried_quality: The conditional probability of obtaining the queried quality
-        :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
-        allocation
-        """
-        # Sort in ascending order
-        quality_list = sorted(quality_list)
-
-        number_in_interval = 0
-
-        # Initialize the start and end of the quality interval for the posterior
-        start_quality = (queried_quality // self.quality_interval) * self.quality_interval
-        end_quality = start_quality + self.quality_interval
-
-        # Note: interval of [start_step, end_step)
-        for quality in quality_list:
-            if start_quality <= quality <= end_quality:
-                number_in_interval += 1
-
-        probability = number_in_interval / len(quality_list)
-
-        return probability
-
     def query_average_quality(self, id, time, parent_qualities) -> float:
         """
         Queries a single, estimated quality given a time allocation and possibly has parent qualities
@@ -160,6 +132,34 @@ class PerformanceProfile:
         average = sum(qualities) / len(qualities)
         return average
 
+    def query_probability_contract_expression(self, queried_quality, quality_list) -> float:
+        """
+        The performance profile (contract expression): Queries the quality mapping at a specific time given the
+        previous qualities of the contract algorithm's parents
+
+        :param quality_list: A list of qualities from query_quality_list_on_interval()
+        :param queried_quality: The conditional probability of obtaining the queried quality
+        :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
+        allocation
+        """
+        # Sort in ascending order
+        quality_list = sorted(quality_list)
+
+        number_in_interval = 0
+
+        # Initialize the start and end of the quality interval for the posterior
+        start_quality = (queried_quality // self.quality_interval) * self.quality_interval
+        end_quality = start_quality + self.quality_interval
+
+        # Note: interval of [start_step, end_step)
+        for quality in quality_list:
+            if start_quality <= quality <= end_quality:
+                number_in_interval += 1
+
+        probability = number_in_interval / len(quality_list)
+
+        return probability
+
     def query_probability_conditional_expression(self, conditional_node, queried_quality_branches, qualities_branches) -> float:
         """
         The performance profile (conditional expression): Queries the quality mapping at a specific time given the
@@ -172,8 +172,8 @@ class PerformanceProfile:
         allocation
         """
         # Sort in ascending order
-        qualities_branches[0] = sorted(qualities_branches[0])
-        qualities_branches[1] = sorted(qualities_branches[1])
+        qualities_true_branch = sorted(qualities_branches[0])
+        qualities_false_branch = sorted(qualities_branches[1])
 
         found_embedded_if = False
 
@@ -188,13 +188,13 @@ class PerformanceProfile:
                 found_embedded_if = True
 
         if not found_embedded_if:
-            performance_profile_true = self.query_probability_contract_expression(queried_quality_branches[0], qualities_branches[0])
-            performance_profile_false = self.query_probability_contract_expression(queried_quality_branches[1], qualities_branches[1])
+            performance_profile_true = self.query_probability_contract_expression(queried_quality_branches[0], qualities_true_branch)
+            performance_profile_false = self.query_probability_contract_expression(queried_quality_branches[1], qualities_false_branch)
 
             probability = rho * performance_profile_true + (1 - rho) * performance_profile_false
 
         else:
-            # TODO: Finish this later
+            # TODO: Finish this later (likely some recursion)
             raise ValueError("Found an embedded conditional")
         return probability
 

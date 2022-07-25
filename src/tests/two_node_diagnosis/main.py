@@ -21,35 +21,69 @@ if __name__ == "__main__":
     # For debugging
     VERBOSE = False
 
+    # # Create a DAG manually for testing
+    #
+    # # Leaf nodes
+    # node_6 = Node(6, [], [], expression_type="contract")
+    # node_4 = Node(4, [], [], expression_type="contract")
+    #
+    # # Intermediate Nodes
+    # node_5 = Node(5, [node_6], [], expression_type="contract")
+    #
+    # # Conditional Node
+    # node_3 = Node(3, [node_4, node_5], [], expression_type="conditional")
+    #
+    # # Conditional branch nodes
+    # node_1 = Node(1, [node_3], [], expression_type="contract")
+    # node_2 = Node(2, [node_3], [], expression_type="contract")
+    #
+    # # Root node
+    # root = Node(0, [node_1, node_2], [], expression_type="contract")
+    #
+    # # Add the children
+    # node_1.children = [root]
+    # node_2.children = [root]
+    # node_3.children = [node_1, node_2]
+    # node_4.children = [node_3]
+    # node_5.children = [node_3]
+    # node_6.children = [node_5]
+    #
+    # # Nodes
+    # nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6]
+
     # Create a DAG manually for testing
 
     # Leaf nodes
-    node_6 = Node(6, [], [], expression_type="contract")
-    node_4 = Node(4, [], [], expression_type="contract")
-
-    # Intermediate Nodes
-    node_5 = Node(5, [node_6], [], expression_type="contract")
+    node_8 = Node(8, [], [], expression_type="contract")
 
     # Conditional Node
-    node_3 = Node(3, [node_4, node_5], [], expression_type="conditional")
+    node_7 = Node(7, [node_8], [], expression_type="conditional")
 
     # Conditional branch nodes
-    node_1 = Node(1, [node_3], [], expression_type="contract")
-    node_2 = Node(2, [node_3], [], expression_type="contract")
+    node_6 = Node(6, [node_7], [], expression_type="contract")
+    node_5 = Node(5, [node_7], [], expression_type="contract")
+
+    # Conditional subtrees
+    node_4 = Node(4, [node_6], [], expression_type="contract")
+    node_3 = Node(3, [node_5], [], expression_type="contract")
+    node_2 = Node(2, [node_5], [], expression_type="contract")
+    node_1 = Node(1, [node_2, node_3], [], expression_type="contract")
 
     # Root node
-    root = Node(0, [node_1, node_2], [], expression_type="contract")
+    root = Node(0, [node_1, node_4], [], expression_type="contract")
 
     # Add the children
     node_1.children = [root]
-    node_2.children = [root]
-    node_3.children = [node_1, node_2]
-    node_4.children = [node_3]
-    node_5.children = [node_3]
-    node_6.children = [node_5]
+    node_4.children = [root]
+    node_2.children = [node_1]
+    node_3.children = [node_1]
+    node_5.children = [node_2, node_3]
+    node_6.children = [node_4]
+    node_7.children = [node_5, node_6]
+    node_8.children = [node_7]
 
     # Nodes
-    nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6]
+    nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8]
 
     # Create and verify the DAG from the node list
     dag = DirectedAcyclicGraph(nodes, root)
@@ -71,7 +105,7 @@ if __name__ == "__main__":
         # Need to initialize it after adjusting dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [0.1, 0.1, 0.1, "conditional", 10000, 10000, 10000]
+        generator.manual_override = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, "conditional", 10000]
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes

@@ -150,6 +150,7 @@ class ContractProgram:
                     continue
 
                 # Avoids exchanging time between two branch nodes of a conditional
+                # TODO: Needs to be changed to avoid exchanging time between two arbitrary subtrees instead of the immediate children
                 elif self.child_of_conditional(self.find_node(permutation[0].node_id)) and self.child_of_conditional(
                         self.find_node(permutation[1].node_id)):
                     continue
