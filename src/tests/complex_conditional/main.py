@@ -104,7 +104,7 @@ if __name__ == "__main__":
     node_8.children = [node_7]
 
     # For a list of nodes for the DAG creation
-    nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7]
+    nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8]
     program_dag = DirectedAcyclicGraph(nodes, root)
 
     # Used to create the synthetic data as instances and a populous file
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         # Need to initialize it after adjusting dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, "conditional", 10000]
+        generator.manual_override = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, "conditional", 10000]
 
         # Generate the nodes' quality mappings
         # TODO: Finish this 7/25

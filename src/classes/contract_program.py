@@ -78,6 +78,7 @@ class ContractProgram:
 
                 if node.expression_type != "conditional":
                     parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
+
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
                     qualities = self.performance_profile.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
 
