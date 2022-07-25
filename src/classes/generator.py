@@ -50,36 +50,29 @@ class Generator:
         """
         potential_parent_qualities = [format(i, '.2f') for i in np.arange(0, 1 + self.quality_interval, self.quality_interval).round(2)]
 
-        # Check if the node is an evaluation node
-        if node.trivial:
+        if not node.parents:
+            velocity = self.parent_dependent_transform(node, qualities, random_number)
             for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(self.find_number_decimals(self.time_step_size)):
                 # Use this function to approximate the performance profile
-                dictionary[t] = 1
+                dictionary[t] = 1 - math.e ** (-velocity * t)
 
         else:
-            if not node.parents:
-                velocity = self.parent_dependent_transform(node, qualities, random_number)
-                for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(self.find_number_decimals(self.time_step_size)):
-                    # Use this function to approximate the performance profile
-                    dictionary[t] = 1 - math.e ** (-velocity * t)
+            for quality in potential_parent_qualities:
+                dictionary[quality] = {quality: {}}
 
-            else:
-                for quality in potential_parent_qualities:
-                    dictionary[quality] = {quality: {}}
+                # Base Case
+                if depth == len(node.parents) - 1:
+                    dictionary[quality] = {}
 
-                    # Base Case
-                    if depth == len(node.parents) - 1:
-                        dictionary[quality] = {}
+                    # To change the quality mapping with respect to the parent qualities
+                    velocity = self.parent_dependent_transform(node, qualities, random_number)
 
-                        # To change the quality mapping with respect to the parent qualities
-                        velocity = self.parent_dependent_transform(node, qualities, random_number)
+                    for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(self.find_number_decimals(self.time_step_size)):
+                        # Use this function to approximate the performance profile
+                        dictionary[quality][t] = 1 - math.e ** (-velocity * t)
 
-                        for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(self.find_number_decimals(self.time_step_size)):
-                            # Use this function to approximate the performance profile
-                            dictionary[quality][t] = 1 - math.e ** (-velocity * t)
-
-                    else:
-                        self.recur_build(depth + 1, node, qualities.append(quality), dictionary[quality], random_number)
+                else:
+                    self.recur_build(depth + 1, node, qualities.append(quality), dictionary[quality], random_number)
 
         return dictionary
 

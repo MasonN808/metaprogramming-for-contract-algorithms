@@ -231,7 +231,9 @@ class PerformanceProfile:
         if node.parents:
             # Check that none of the parents are conditional expressions
             if not self.is_conditional_node(node, "parents"):
+
                 parent_qualities = []
+
                 for parent in node.parents:
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
                     # Reset the parent qualities for the next node
@@ -263,6 +265,7 @@ class PerformanceProfile:
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
                     quality = self.query_average_quality(node.id, time_allocations[node_conditional.id], parent_qualities)
+
                     return quality
 
         # Base Case (Leaf Nodes in a functional expression)
@@ -273,6 +276,7 @@ class PerformanceProfile:
 
             else:
                 quality = self.query_average_quality(node.id, time_allocations[node.id], [])
+
                 return quality
 
     @staticmethod

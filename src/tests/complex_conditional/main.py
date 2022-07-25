@@ -79,7 +79,7 @@ if __name__ == "__main__":
     nodes_outer = [root_outer, node_outer_1, node_outer_2]
 
     # Create and verify the DAG from the node list
-    dag = DirectedAcyclicGraph(nodes_outer, root_outer)
+    dag_outer = DirectedAcyclicGraph(nodes_outer, root_outer)
 
     # Create a dag with expanded subtrees for quality mapping generation
     # Leaf nodes
@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
     # Create the program with some budget
 
-    program = ContractProgram(program_dag, BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL,
+    program = ContractProgram(dag_outer, BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL,
                               time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE)
 
     # Adjust allocations (hardcode)

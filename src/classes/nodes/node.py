@@ -32,7 +32,6 @@ class Node:
         self.parent_qualities = []
 
         self.time = time
-        self.trivial = False
         # Used in checking for connectedness in the DAG
         self.traversed_connectedness = False
         self.traversed = False
