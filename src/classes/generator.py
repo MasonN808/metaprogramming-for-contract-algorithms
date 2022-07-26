@@ -11,7 +11,7 @@ class Generator:
     A generator to create synthetic performance profiles
 
     :param instances: the number of instances to be produced
-    :param generator_dag: the dag to be used for performance profile simulation
+    :param generator_dag: the program_dag to be used for performance profile simulation
     """
 
     def __init__(self, instances, program_dag, time_limit, time_step_size, uniform_low, uniform_high, generator_dag=None, quality_interval=.05, manual_override=None):
@@ -148,8 +148,8 @@ class Generator:
         for node in self.generator_dag.nodes:
             dictionary_temp = self.create_dictionary(node)
 
-            # Compare the generator dag with the program dag to see if conditional is encountered
-            # If so, go up an index since it's not present in the generator dag
+            # Compare the generator program_dag with the program program_dag to see if conditional is encountered
+            # If so, go up an index since it's not present in the generator program_dag
             if PerformanceProfile.is_conditional_node(self.program_dag.nodes[i]):
                 i += 1
 
@@ -163,7 +163,7 @@ class Generator:
         return nodes
 
     def valid_manual_override(self):
-        # print([i.id for i in self.dag.nodes])
+        # print([i.id for i in self.program_dag.nodes])
         if len(self.manual_override) != len(self.program_dag.nodes):
             raise ValueError("Manual override list must be same length as DAG")
 

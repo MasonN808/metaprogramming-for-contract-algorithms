@@ -68,7 +68,7 @@ if __name__ == "__main__":
         generator.generator_dag = generator.adjust_dag_with_conditionals(dag)
 
         # Initialize the velocities for the quality mappings in a list
-        # Need to initialize it after adjusting dag
+        # Need to initialize it after adjusting program_dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
         generator.manual_override = [0.1, 0.1, 0.1, "conditional", 10000, 10000, 10]
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     test = Test(program)
 
     # Print the tree for verification
-    # print(test.print_tree(dag.root))
+    # print(test.print_tree(program_dag.root))
 
     # Test a random distribution on the initial allocations
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))

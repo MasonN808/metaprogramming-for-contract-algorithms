@@ -1,6 +1,8 @@
 import json
 import numpy as np
 
+from src.classes.nodes.node import Node
+
 
 class PerformanceProfile:
     """
@@ -160,7 +162,46 @@ class PerformanceProfile:
 
         return probability
 
-    def query_probability_conditional_expression(self, conditional_node, queried_quality_branches, qualities_branches) -> float:
+    # def query_probability_conditional_expression(self, conditional_node, queried_quality_branches, qualities_branches) -> float:
+    #     """
+    #     The performance profile (conditional expression): Queries the quality mapping at a specific time given the
+    #     previous qualities of the contract algorithm's parents
+    #
+    #     :param conditional_node: Node object, the conditional node being evaluated
+    #     :param queried_quality_branches: [float], A list of qualities from query_quality_list_on_interval() for the two branches
+    #     :param qualities_branches: [float], A list of the queried qualities from the branches given their time allocations
+    #     :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
+    #     allocation
+    #     """
+    #     # Sort in ascending order
+    #     qualities_true_branch = sorted(qualities_branches[0])
+    #     qualities_false_branch = sorted(qualities_branches[1])
+    #
+    #     found_embedded_if = False
+    #
+    #     # Query the probability of the condition being true
+    #     rho = self.estimate_rho()
+    #
+    #     # TODO: implement recursion for embedded if statements
+    #     # TODO: For now assume that only two branches exist that are contract expressions
+    #     for child in conditional_node.children:
+    #         # Take into account branched if statements
+    #         if child.expression_type == "conditional":
+    #             found_embedded_if = True
+    #
+    #     if not found_embedded_if:
+    #         performance_profile_true = self.query_probability_contract_expression(queried_quality_branches[0], qualities_true_branch)
+    #         performance_profile_false = self.query_probability_contract_expression(queried_quality_branches[1], qualities_false_branch)
+    #
+    #         probability = rho * performance_profile_true + (1 - rho) * performance_profile_false
+    #
+    #     else:
+    #         # TODO: Finish this later (likely some recursion)
+    #         raise ValueError("Found an embedded conditional")
+    #     return probability
+
+    def query_probability_conditional_expression(self, conditional_node, queried_quality_branches,
+                                                 qualities_branches) -> float:
         """
         The performance profile (conditional expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
@@ -172,31 +213,69 @@ class PerformanceProfile:
         allocation
         """
         # Sort in ascending order
-        qualities_true_branch = sorted(qualities_branches[0])
-        qualities_false_branch = sorted(qualities_branches[1])
+        # qualities_true_branch = sorted(qualities_branches[0])
+        # qualities_false_branch = sorted(qualities_branches[1])
 
         found_embedded_if = False
 
-        # Query the probability of the condition being true
+        # Query the probability of the condition being true offline
         rho = self.estimate_rho()
 
-        # TODO: implement recursion for embedded if statements
-        # TODO: For now assume that only two branches exist that are contract expressions
         for child in conditional_node.children:
             # Take into account branched if statements
             if child.expression_type == "conditional":
                 found_embedded_if = True
 
         if not found_embedded_if:
-            performance_profile_true = self.query_probability_contract_expression(queried_quality_branches[0], qualities_true_branch)
-            performance_profile_false = self.query_probability_contract_expression(queried_quality_branches[1], qualities_false_branch)
+            # Create a list with the joint probability distribution of the conditional branch and the last quality of the branch
+            true_probability_quality = self.conditional_contract_program_probability_quality(conditional_node.true_subprogram)
+            false_probability_quality = self.conditional_contract_program_probability_quality(conditional_node.false_subprogram)
+
+            performance_profile_true = true_probability_quality[0]
+            performance_profile_false = false_probability_quality[0]
+
+            # true_quality = true_probability_quality[1]
+            # false_quality = false_probability_quality[1]
 
             probability = rho * performance_profile_true + (1 - rho) * performance_profile_false
 
         else:
-            # TODO: Finish this later (likely some recursion)
             raise ValueError("Found an embedded conditional")
         return probability
+
+    def conditional_contract_program_probability_quality(self, contract_program):
+        # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
+        # Assume for now that a contract_program is a conditional contract program
+        probability = 1.0
+        last_quality = []
+
+        time_allocations = contract_program.time_allocations
+        for (id, time) in enumerate(time_allocations):
+            node = self.find_node(id)
+
+            if node.traversed:
+                pass
+
+            else:
+                node.traversed = True
+
+                if node.expression_type != "conditional":
+                    # Get the parents' qualities given their time allocations
+                    parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
+
+                    # Outputs a list of qualities from the instances at the specified time given a quality mapping
+                    qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
+
+                    # Calculates the average quality on the list of qualities for querying
+                    average_quality = self.average_quality(qualities)
+
+                    # Keep only the average quality of the last node in the program
+                    if id == len(time_allocations) - 1:
+                        last_quality.append(average_quality)
+
+                    probability *= self.query_probability_contract_expression(average_quality, qualities)
+
+        return [probability, last_quality]
 
     @staticmethod
     def estimate_rho() -> float:
@@ -264,7 +343,8 @@ class PerformanceProfile:
 
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
-                    quality = self.query_average_quality(node.id, time_allocations[node_conditional.id], parent_qualities)
+                    quality = self.query_average_quality(node.id, time_allocations[node_conditional.id],
+                                                         parent_qualities)
 
                     return quality
 
@@ -325,3 +405,15 @@ class PerformanceProfile:
             return False
         else:
             raise ValueError("Invalid family_type")
+
+    def find_node(self, node_id) -> Node:
+        """
+        Finds the node in the node list given the id
+
+        :param: node_id: The id of the node
+        :return Node object
+        """
+        for node in self.program_dag.nodes:
+            if node.id == node_id:
+                return node
+        raise IndexError("Node not found with given id")

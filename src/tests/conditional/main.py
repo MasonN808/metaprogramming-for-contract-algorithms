@@ -64,7 +64,7 @@ if __name__ == "__main__":
     test = Test(program)
 
     # Print the tree
-    # print(test.print_tree(dag.root))
+    # print(test.print_tree(program_dag.root))
 
     # Test a random distribution on the initial allocations
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))

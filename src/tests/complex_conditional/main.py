@@ -26,14 +26,19 @@ if __name__ == "__main__":
 
     # Leaf node
     node_inner_true_4 = Node(4, [], [], expression_type="contract", in_subtree=True)
+    node_inner_true_4.in_true = True
 
     # Intermediate Nodes
     node_inner_true_3 = Node(3, [node_inner_true_4], [], expression_type="contract", in_subtree=True)
+    node_inner_true_3.in_true = True
     node_inner_true_2 = Node(2, [node_inner_true_3], [], expression_type="contract", in_subtree=True)
+    node_inner_true_2.in_true = True
     node_inner_true_1 = Node(1, [node_inner_true_3], [], expression_type="contract", in_subtree=True)
+    node_inner_true_1.in_true = True
 
     # Root Node
-    node_inner_true_root = Node(0, [node_inner_true_1, node_inner_true_2], [], expression_type="contract", in_subtree=True)
+    node_inner_true_root = Node(0, [node_inner_true_1, node_inner_true_2], [], expression_type="contract",
+                                in_subtree=True)
 
     # Add the children
     node_inner_true_4.children = [node_inner_true_3]
@@ -42,19 +47,23 @@ if __name__ == "__main__":
     node_inner_true_1.children = [node_inner_true_root]
 
     # Create a list of the nodes in breadth-first order for the true branch
-    nodes_inner_true = [node_inner_true_root, node_inner_true_1, node_inner_true_2, node_inner_true_3, node_inner_true_4]
+    nodes_inner_true = [node_inner_true_root, node_inner_true_1, node_inner_true_2, node_inner_true_3,
+                        node_inner_true_4]
 
     # Create a DAG manually for the second-order metareasoning problem (conditional subtree)
     # Right (False subtree)
 
     # Leaf node
     node_inner_false_2 = Node(2, [], [], expression_type="conditional", in_subtree=True)
+    node_inner_false_2.in_false = True
 
     # Conditional branch nodes
     node_inner_false_1 = Node(1, [node_inner_false_2], [], expression_type="contract", in_subtree=True)
+    node_inner_false_1.in_false = True
 
     # Root nodes
     node_inner_false_root = Node(0, [node_inner_false_1], [], expression_type="contract", in_subtree=True)
+    node_inner_false_root.in_false = True
 
     # Create a list of the nodes in breadth-first order for the false branch
     nodes_inner_false = [node_inner_false_root, node_inner_false_1, node_inner_false_2]
@@ -66,11 +75,20 @@ if __name__ == "__main__":
     # Conditional Node
     node_outer_1 = Node(1, [node_outer_2], [], expression_type="conditional", in_subtree=False)
 
-    # Add the subtree to the conditional node
+    # Add the subtree contract programs to the conditional node
     # Add the left subtree
-    node_outer_1.true_subtree = DirectedAcyclicGraph(nodes_inner_true, root=node_inner_true_root)
+    true_subtree = DirectedAcyclicGraph(nodes_inner_true, root=node_inner_true_root)
+    # Convert to a contract program
+    node_outer_1.true_subprogram = ContractProgram(program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
+                                                   quality_interval=QUALITY_INTERVAL,
+                                                   time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE)
+
     # Add the right subtree
-    node_outer_1.false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
+    false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
+    # Convert to a contract program
+    node_outer_1.false_subprogram = ContractProgram(program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
+                                                    quality_interval=QUALITY_INTERVAL,
+                                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE)
 
     # Root node
     root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_subtree=False)
@@ -81,7 +99,7 @@ if __name__ == "__main__":
     # Create and verify the DAG from the node list
     dag_outer = DirectedAcyclicGraph(nodes_outer, root_outer)
 
-    # Create a dag with expanded subtrees for quality mapping generation
+    # Create a program_dag with expanded subtrees for quality mapping generation
     # Leaf nodes
     node_8 = Node(8, [], [], expression_type="contract", in_subtree=False)
     # Conditional node
@@ -118,7 +136,8 @@ if __name__ == "__main__":
     generate = True
     if not exists("populous.json") or generate:
         # Initialize a generator
-        generator = Generator(INSTANCES, program_dag=program_dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE, uniform_low=0.05,
+        generator = Generator(INSTANCES, program_dag=program_dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE,
+                              uniform_low=0.05,
                               uniform_high=0.9)
 
         # Let the root be trivial and not dependent on parents
@@ -128,7 +147,7 @@ if __name__ == "__main__":
         generator.generator_dag = generator.adjust_dag_with_conditionals(program_dag)
 
         # Initialize the velocities for the quality mappings in a list
-        # Need to initialize it after adjusting dag
+        # Need to initialize it after adjusting program_dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
         generator.manual_override = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, "conditional", 10000]
@@ -141,14 +160,14 @@ if __name__ == "__main__":
 
     # Create the program with some budget
 
-    program = ContractProgram(dag_outer, BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL,
-                              time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE)
+    program_outer = ContractProgram(dag_outer, BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
+                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE)
 
     # Adjust allocations (hardcode)
-    test = Test(program)
+    test = Test(program_outer)
 
     # Print the tree for verification
-    # print(test.print_tree(dag.root))
+    # print(test.print_tree(program_dag.root))
 
     # Test a random distribution on the initial allocations
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))

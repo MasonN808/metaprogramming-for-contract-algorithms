@@ -21,13 +21,13 @@ class Node:
         self.children = children
         self.expression_type = expression_type
 
-        # subtree for the conditional expression
-        self.subtree = None
         # true subtree for the conditional expression
-        self.true_subtree = None
+        self.true_subprogram = None
         # false subtree for the conditional expression
-        self.false_subtree = None
+        self.false_subprogram = None
         self.in_subtree = in_subtree
+        self.in_true = None
+        self.in_false = None
         # Used for the subtree that doesn't have access to parents
         self.parent_qualities = []
 
