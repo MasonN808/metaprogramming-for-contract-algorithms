@@ -30,7 +30,7 @@ class ContractProgram:
     """
     POPULOUS_FILE_NAME = "populous.json"
 
-    def __init__(self, program_dag, budget, scale, decimals, quality_interval, time_interval, time_step_size):
+    def __init__(self, program_dag, budget, scale, decimals, quality_interval, time_interval, time_step_size, in_subtree, generator_dag):
         self.performance_profile = PerformanceProfile(program_dag=program_dag, file_name=self.POPULOUS_FILE_NAME,
                                                       time_interval=time_interval, time_limit=budget,
                                                       quality_interval=quality_interval, time_step_size=time_step_size)
@@ -42,6 +42,8 @@ class ContractProgram:
         self.time_interval = time_interval
         self.time_step_size = time_step_size
         self.allocations = None
+        self.in_subtree = in_subtree
+        self.generator_dag = generator_dag
 
     @staticmethod
     def global_utility(qualities) -> float:
@@ -264,28 +266,33 @@ class ContractProgram:
 
         :return: TimeAllocation[]
         """
+        # Initialize a list of time allocations of the entire dag that includes the subdags from the conditionals
         time_allocations = []
+        for i in range(self.generator_dag.order):
+            time_allocations.append(TimeAllocation(i, None))
         budget = float(self.budget)
 
+        # Initialize a list to properly loop through the nodes given that the node ids are not sequenced
+        list_of_ordered_ids = [node.id for node in self.program_dag.nodes]
+
         # Do an initial pass to find the conditionals to adjust the budget
-        # TODO: This for loop needs to be adjusted since the breadth first approach won't work (it should traverse the dag instead)
-        for node_id in range(0, self.program_dag.order):
+        for node_id in list_of_ordered_ids:
             if self.find_node(node_id).expression_type == "conditional":
                 # Assume every conditional takes tau time
                 tau = self.performance_profile.calculate_tau()
                 # Subtract tau from the budget
                 budget -= tau
                 # Add the time allocation at a specified index
-                time_allocations.insert(node_id, TimeAllocation(node_id, tau))
+                time_allocations[node_id] = TimeAllocation(node_id, tau)
 
         # Do a second pass to add in the rest of the allocations wrt a uniform allocation
-        for node_id in range(0, self.program_dag.order):
+        for node_id in list_of_ordered_ids:
             # Continue since we already did the initial pass
             if self.find_node(node_id).expression_type == "conditional":
                 continue
 
             allocation = self.find_uniform_allocation(budget)
-            time_allocations.insert(node_id, TimeAllocation(node_id, allocation))
+            time_allocations[node_id] = TimeAllocation(node_id, allocation)
 
         return time_allocations
 
@@ -414,7 +421,8 @@ class ContractProgram:
         """
         number_of_conditionals = self.count_conditionals()
         # multiply by two since the branches get an equivalent time allocation
-        allocation = budget / (self.program_dag.order - (2 * number_of_conditionals))
+
+        allocation = budget / (self.program_dag.order - number_of_conditionals)
         return allocation
 
     @staticmethod
@@ -437,11 +445,15 @@ class ContractProgram:
 
         :return: number of conditionals:
         """
-        number_of_conditionals = 0
-        for node_id in range(0, self.program_dag.order):
-            if self.find_node(node_id).expression_type == "conditional":
-                number_of_conditionals += 1
-        return number_of_conditionals
+        if self.in_subtree:
+            number_of_conditionals = 0
+            for node_id in range(0, self.program_dag.order):
+                if self.find_node(node_id).expression_type == "conditional":
+                    number_of_conditionals += 1
+            return number_of_conditionals
+        else:
+            # Since the conditionals don't affect the outer metareasoning allocations
+            return 0
 
     def find_node(self, node_id) -> Node:
         """
@@ -450,9 +462,7 @@ class ContractProgram:
         :param: node_id: The id of the node
         :return Node object
         """
-        print("target: {}".format(node_id))
         for node in self.program_dag.nodes:
-            print(node.id)
             if node.id == node_id:
                 return node
         raise IndexError("Node not found with given id")

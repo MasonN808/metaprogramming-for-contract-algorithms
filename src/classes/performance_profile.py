@@ -2,6 +2,7 @@ import json
 import numpy as np
 
 from src.classes.nodes.node import Node
+import src.classes.utils as utils
 
 
 class PerformanceProfile:
@@ -88,6 +89,8 @@ class PerformanceProfile:
         :return: A quality
         """
         adjusted_id = id
+        print([i.id for i in self.program_dag.nodes])
+        print(id)
         if PerformanceProfile.is_conditional_node(self.program_dag.nodes[id]):
             adjusted_id = id + 1
 
@@ -192,8 +195,10 @@ class PerformanceProfile:
 
         if not found_embedded_if:
             # Create a list with the joint probability distribution of the conditional branch and the last quality of the branch
-            true_probability_quality = self.conditional_contract_program_probability_quality(conditional_node.true_subprogram)
-            false_probability_quality = self.conditional_contract_program_probability_quality(conditional_node.false_subprogram)
+            true_probability_quality = self.conditional_contract_program_probability_quality(
+                conditional_node.true_subprogram)
+            false_probability_quality = self.conditional_contract_program_probability_quality(
+                conditional_node.false_subprogram)
 
             performance_profile_true = true_probability_quality[0]
             performance_profile_false = false_probability_quality[0]
