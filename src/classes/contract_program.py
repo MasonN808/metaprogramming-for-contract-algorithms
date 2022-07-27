@@ -127,7 +127,7 @@ class ContractProgram:
     #
     #     return expected_utility
 
-    def global_expected_utility(self, time_allocations, inner=False) -> float:
+    def global_expected_utility(self, time_allocations) -> float:
         """
         Gives the expected utility of the contract program given the performance profiles of the nodes
         (i.e., the probability distribution of each contract program's conditional performance profile) and the
@@ -169,25 +169,37 @@ class ContractProgram:
                     probability *= self.performance_profile.query_probability_contract_expression(average_quality,
                                                                                                   qualities)
 
+                # Assuming we created the DAGs properly, this should be the first node in the allocations
+                # TODO: while we traverse the time allocations we're are also traversing the program_dag to find the parents of the
+                # TODO: conditional when we need it
                 elif node.expression_type == "conditional" and node.in_subtree is True:
-                    pass
-                    # TODO: Allow this to accept arbitrary subtrees and calculate the probability
-                    # Here, we assume that the node only has one child
-                    # We skip the conditional node since no relevant information is useful for the performance profile
+                    # Get the parents' qualities given their time allocations
+                    parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
+
+                    # Outputs a list of qualities from the instances at the specified time given a quality mapping
+                    qualities = self.performance_profile.query_quality_list_on_interval(time.time, id,
+                                                                                        parent_qualities=parent_qualities)
+
+                    # Calculates the average quality on the list of qualities for querying
+                    average_quality = self.performance_profile.average_quality(qualities)
+
+                    average_qualities.append(average_quality)
+
+                    probability *= self.performance_profile.query_probability_contract_expression(average_quality,
+                                                                                                  qualities)
 
                 # TODO: make sure that when allocating time during initialization that this node is given time ≠ tau
                 # node.expression_type == "conditional" and node.in_subtree is False
                 else:
                     # Since in conditional, but not in subtree, we use recursion to evaluate the inner probability of the subtree
-                    # probability *= self.performance_profile.query_probability_conditional_expression(true_contract_program.allocations)
+                    out_probability_qualities = self.performance_profile.query_probability_conditional_expression(node)[0]
 
-                    rho = self.performance_profile.estimate_rho()
+                    # Multiply the current probability by the performance profile of the conditional node
+                    probability *= out_probability_qualities[0]
 
-                    if node.in_true:
-                        probability *= rho
+                    root_qualities = out_probability_qualities[1]
 
-                    elif node.in_false:
-                        probability *= (1 - rho)
+                    average_qualities.extend(root_qualities)
 
         expected_utility = probability * self.global_utility(average_qualities)
 

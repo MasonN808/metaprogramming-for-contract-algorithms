@@ -200,8 +200,7 @@ class PerformanceProfile:
     #         raise ValueError("Found an embedded conditional")
     #     return probability
 
-    def query_probability_conditional_expression(self, conditional_node, queried_quality_branches,
-                                                 qualities_branches) -> float:
+    def query_probability_conditional_expression(self, conditional_node) -> [float, [float]]:
         """
         The performance profile (conditional expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
@@ -217,6 +216,9 @@ class PerformanceProfile:
         # qualities_false_branch = sorted(qualities_branches[1])
 
         found_embedded_if = False
+
+        # A list of the root qualities from the branches
+        root_qualities = []
 
         # Query the probability of the condition being true offline
         rho = self.estimate_rho()
@@ -234,14 +236,16 @@ class PerformanceProfile:
             performance_profile_true = true_probability_quality[0]
             performance_profile_false = false_probability_quality[0]
 
-            # true_quality = true_probability_quality[1]
-            # false_quality = false_probability_quality[1]
+            true_quality = true_probability_quality[1]
+            false_quality = false_probability_quality[1]
+
+            root_qualities.extend([true_quality, false_quality])
 
             probability = rho * performance_profile_true + (1 - rho) * performance_profile_false
 
         else:
             raise ValueError("Found an embedded conditional")
-        return probability
+        return [probability, root_qualities]
 
     def conditional_contract_program_probability_quality(self, contract_program):
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
