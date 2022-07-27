@@ -2,7 +2,6 @@ import json
 import numpy as np
 
 from src.classes.nodes.node import Node
-import src.classes.utils as utils
 
 
 class PerformanceProfile:
@@ -16,8 +15,9 @@ class PerformanceProfile:
     :param quality_interval: the interval w.r.t. qualities to query from in the quality mapping
     """
 
-    def __init__(self, program_dag, file_name, time_interval, time_limit, time_step_size, quality_interval):
+    def __init__(self, program_dag, generator_dag, file_name, time_interval, time_limit, time_step_size, quality_interval):
         self.program_dag = program_dag
+        self.generator_dag = generator_dag
         self.dictionary = self.import_quality_mappings(file_name)
         self.time_interval = time_interval
         self.time_limit = time_limit
@@ -89,9 +89,7 @@ class PerformanceProfile:
         :return: A quality
         """
         adjusted_id = id
-        print([i.id for i in self.program_dag.nodes])
-        print(id)
-        if PerformanceProfile.is_conditional_node(self.program_dag.nodes[id]):
+        if PerformanceProfile.is_conditional_node(self.generator_dag.nodes[id]):
             adjusted_id = id + 1
 
         if self.dictionary is None:

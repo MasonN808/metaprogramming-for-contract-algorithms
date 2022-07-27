@@ -31,7 +31,7 @@ class ContractProgram:
     POPULOUS_FILE_NAME = "populous.json"
 
     def __init__(self, program_dag, budget, scale, decimals, quality_interval, time_interval, time_step_size, in_subtree, generator_dag):
-        self.performance_profile = PerformanceProfile(program_dag=program_dag, file_name=self.POPULOUS_FILE_NAME,
+        self.performance_profile = PerformanceProfile(program_dag=program_dag, generator_dag=generator_dag, file_name=self.POPULOUS_FILE_NAME,
                                                       time_interval=time_interval, time_limit=budget,
                                                       quality_interval=quality_interval, time_step_size=time_step_size)
         self.program_dag = program_dag
