@@ -162,44 +162,6 @@ class PerformanceProfile:
 
         return probability
 
-    # def query_probability_conditional_expression(self, conditional_node, queried_quality_branches, qualities_branches) -> float:
-    #     """
-    #     The performance profile (conditional expression): Queries the quality mapping at a specific time given the
-    #     previous qualities of the contract algorithm's parents
-    #
-    #     :param conditional_node: Node object, the conditional node being evaluated
-    #     :param queried_quality_branches: [float], A list of qualities from query_quality_list_on_interval() for the two branches
-    #     :param qualities_branches: [float], A list of the queried qualities from the branches given their time allocations
-    #     :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
-    #     allocation
-    #     """
-    #     # Sort in ascending order
-    #     qualities_true_branch = sorted(qualities_branches[0])
-    #     qualities_false_branch = sorted(qualities_branches[1])
-    #
-    #     found_embedded_if = False
-    #
-    #     # Query the probability of the condition being true
-    #     rho = self.estimate_rho()
-    #
-    #     # TODO: implement recursion for embedded if statements
-    #     # TODO: For now assume that only two branches exist that are contract expressions
-    #     for child in conditional_node.children:
-    #         # Take into account branched if statements
-    #         if child.expression_type == "conditional":
-    #             found_embedded_if = True
-    #
-    #     if not found_embedded_if:
-    #         performance_profile_true = self.query_probability_contract_expression(queried_quality_branches[0], qualities_true_branch)
-    #         performance_profile_false = self.query_probability_contract_expression(queried_quality_branches[1], qualities_false_branch)
-    #
-    #         probability = rho * performance_profile_true + (1 - rho) * performance_profile_false
-    #
-    #     else:
-    #         # TODO: Finish this later (likely some recursion)
-    #         raise ValueError("Found an embedded conditional")
-    #     return probability
-
     def query_probability_conditional_expression(self, conditional_node) -> [float, [float]]:
         """
         The performance profile (conditional expression): Queries the quality mapping at a specific time given the
@@ -334,6 +296,10 @@ class PerformanceProfile:
                 # Assumption: Node only has one parent (the conditional)
                 # Skip the conditional node since no relevant mapping exists
                 node_conditional = node.parents[0]
+
+                # Add a reference to the outer program to pull the qualities of the parents of the conditional
+                if node.in_subtree:
+                    node_conditional = node.parent_program.find_node(node_conditional.id)
 
                 parent_qualities = []
 

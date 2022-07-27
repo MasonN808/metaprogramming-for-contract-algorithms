@@ -54,79 +54,6 @@ class ContractProgram:
         """
         return math.prod(qualities)
 
-    # def global_expected_utility(self, time_allocations) -> float:
-    #     """
-    #     Gives the expected utility of the contract program given the performance profiles of the nodes
-    #     (i.e., the probability distribution of each contract program's conditional performance profile) and the
-    #     global utility
-    #
-    #     Assumption: A time-allocation is given to each node in the contract program
-    #
-    #     :param time_allocations: float[], required
-    #             The time allocations for each contract algorithm
-    #     :return: float
-    #     """
-    #     probability = 1.0
-    #     average_qualities = []
-    #
-    #     # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
-    #     for (id, time) in enumerate(time_allocations):
-    #         node = self.find_node(id)
-    #
-    #         if node.traversed:
-    #             pass
-    #
-    #         else:
-    #             node.traversed = True
-    #
-    #             if node.expression_type != "conditional":
-    #                 parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
-    #
-    #                 # Outputs a list of qualities from the instances at the specified time given a quality mapping
-    #                 qualities = self.performance_profile.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
-    #
-    #                 # Calculates the average quality on the list of qualities for querying
-    #                 average_quality = self.performance_profile.average_quality(qualities)
-    #
-    #                 average_qualities.append(average_quality)
-    #
-    #                 probability *= self.performance_profile.query_probability_contract_expression(average_quality, qualities)
-    #
-    #             # Catches node.expression_type == "conditional"
-    #             else:
-    #                 # TODO: Allow this to accept arbitrary subtrees and calculate the probability
-    #                 # Here, we assume that the parents are the same for both conditional branches
-    #                 parent_qualities_true = self.performance_profile.find_parent_qualities(node.children[0], time_allocations, depth=0)
-    #                 node.children[0].traversed = True
-    #                 parent_qualities_false = self.performance_profile.find_parent_qualities(node.children[1], time_allocations, depth=0)
-    #                 node.children[1].traversed = True
-    #
-    #                 # Outputs a list of qualities from the instances at the specified time given a quality mapping
-    #                 qualities_true = self.performance_profile.query_quality_list_on_interval(time.time, node.children[0].id,
-    #                                                                                          parent_qualities=parent_qualities_true)
-    #                 qualities_false = self.performance_profile.query_quality_list_on_interval(time.time, node.children[1].id,
-    #                                                                                           parent_qualities=parent_qualities_false)
-    #
-    #                 qualities_branches = [qualities_true, qualities_false]
-    #
-    #                 # Calculates the average quality on the list of qualities for querying
-    #                 average_quality_true = self.performance_profile.average_quality(qualities_true)
-    #                 average_quality_false = self.performance_profile.average_quality(qualities_false)
-    #
-    #                 average_quality_list = [average_quality_true, average_quality_false]
-    #
-    #                 # We let the average quality of the conditional to be the average quality of its branches
-    #                 average_qualities.append(self.performance_profile.average_quality(average_quality_list))
-    #
-    #                 probability *= self.performance_profile.query_probability_conditional_expression(node, average_quality_list, qualities_branches)
-    #
-    #     expected_utility = probability * self.global_utility(average_qualities)
-    #
-    #     # Reset the traversed pointers on the nodes
-    #     self.reset_traversed()
-    #
-    #     return expected_utility
-
     def global_expected_utility(self, time_allocations) -> float:
         """
         Gives the expected utility of the contract program given the performance profiles of the nodes
@@ -170,8 +97,6 @@ class ContractProgram:
                                                                                                   qualities)
 
                 # Assuming we created the DAGs properly, this should be the first node in the allocations
-                # TODO: while we traverse the time allocations we're are also traversing the program_dag to find the parents of the
-                # TODO: conditional when we need it
                 elif node.expression_type == "conditional" and node.in_subtree is True:
                     # Get the parents' qualities given their time allocations
                     parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
@@ -188,11 +113,11 @@ class ContractProgram:
                     probability *= self.performance_profile.query_probability_contract_expression(average_quality,
                                                                                                   qualities)
 
-                # TODO: make sure that when allocating time during initialization that this node is given time ≠ tau
                 # node.expression_type == "conditional" and node.in_subtree is False
                 else:
-                    # Since in conditional, but not in subtree, we use recursion to evaluate the inner probability of the subtree
-                    out_probability_qualities = self.performance_profile.query_probability_conditional_expression(node)[0]
+                    # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
+                    out_probability_qualities = self.performance_profile.query_probability_conditional_expression(node)[
+                        0]
 
                     # Multiply the current probability by the performance profile of the conditional node
                     probability *= out_probability_qualities[0]
@@ -208,7 +133,7 @@ class ContractProgram:
 
         return expected_utility
 
-    def naive_hill_climbing(self, decay=1.1, threshold=.0001, verbose=False) -> [float]:
+    def naive_hill_climbing(self, decay=1.1, threshold=.0001, verbose=False, inner=False) -> [float]:
         """
         Does naive hill climbing search by randomly replacing a set amount of time s between two different contract
         algorithms. If the expected value of the root node of the contract algorithm increases, we commit to the
@@ -221,29 +146,46 @@ class ContractProgram:
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
         time_switched = self.find_uniform_allocation(self.budget)
-
+        true_allocations = []
+        false_allocations = []
         while time_switched > threshold:
             possible_local_max = []
             # Go through all permutations of the time allocations
             for permutation in permutations(self.allocations, 2):
-
+                node_0 = self.find_node(permutation[0].node_id)
+                node_1 = self.find_node(permutation[1].node_id)
                 # Makes a deep copy to avoid pointers to the same list
                 adjusted_allocations = copy.deepcopy(self.allocations)
 
-                # Avoids all permutations that include the conditional node
-                if self.find_node(permutation[0].node_id).expression_type == "conditional" or self.find_node(
-                        permutation[1].node_id).expression_type == "conditional":
-                    continue
-
-                # Avoids exchanging time between two branch nodes of a conditional
-                # TODO: Needs to be changed to avoid exchanging time between two arbitrary subtrees instead of the immediate children
-                elif self.child_of_conditional(self.find_node(permutation[0].node_id)) and self.child_of_conditional(
-                        self.find_node(permutation[1].node_id)):
-                    continue
-
                 # Avoids exchanging time with itself
-                elif permutation[0].node_id == permutation[1].node_id:
+                if permutation[0].node_id == permutation[1].node_id:
                     continue
+
+                # Avoids all permutations that include the conditional node in the inner metareasoning problem
+                elif ((node_0.expression_type == "conditional" and node_0.in_subtree is True)
+                      or (node_1.expression_type == "conditional" and node_1.in_subtree is True)):
+                    continue
+
+                # Does hill climbing on the outer metareasoning problem that is a conditional
+                elif ((node_0.expression_type == "conditional" and node_0.in_subtree is False)
+                      or (node_1.expression_type == "conditional" and node_1.in_subtree is False)):
+                    if node_0.expression_type == "conditional" and node_0.in_subtree is False:
+                        # Reallocate the budgets for the inner metareasoning problems
+                        node_0.true_subprogram.budget = self.allocations[node_0.id]
+                        node_0.false_subprogram.budget = self.allocations[node_0.id]
+
+                        # Do naive hill climbing on the branches
+                        true_allocations = node_0.true_subprogram.naive_hill_climbing(inner=True)
+                        false_allocations = node_0.false_subprogram.naive_hill_climbing(inner=True)
+
+                    else:
+                        # Reallocate the budgets for the inner metareasoning problems
+                        node_1.true_subprogram.budget = self.allocations[node_1.id]
+                        node_1.false_subprogram.budget = self.allocations[node_1.id]
+
+                        # Do naive hill climbing on the branches
+                        true_allocations = node_1.true_subprogram.naive_hill_climbing(inner=True)
+                        false_allocations = node_1.false_subprogram.naive_hill_climbing(inner=True)
 
                 # Avoids negative time allocation
                 elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
@@ -311,11 +253,12 @@ class ContractProgram:
             # if local max wasn't found
             else:
                 time_switched = time_switched / decay
-
-        return self.allocations
+        if inner:
+            return self.allocations
+        else:
+            return [self.allocations, true_allocations, false_allocations]
 
     def uniform_budget(self) -> [TimeAllocation]:
-        # TODO: take into account embedded conditionals later
         """
         Partitions the budget into equal partitions relative to the order of the DAG
 
@@ -325,6 +268,7 @@ class ContractProgram:
         budget = float(self.budget)
 
         # Do an initial pass to find the conditionals to adjust the budget
+        # TODO: This for loop needs to be adjusted since the breadth first approach won't work (it should traverse the dag instead)
         for node_id in range(0, self.program_dag.order):
             if self.find_node(node_id).expression_type == "conditional":
                 # Assume every conditional takes tau time
@@ -506,7 +450,9 @@ class ContractProgram:
         :param: node_id: The id of the node
         :return Node object
         """
+        print("target: {}".format(node_id))
         for node in self.program_dag.nodes:
+            print(node.id)
             if node.id == node_id:
                 return node
         raise IndexError("Node not found with given id")

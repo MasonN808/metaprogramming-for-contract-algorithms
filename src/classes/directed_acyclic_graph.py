@@ -11,17 +11,18 @@ class DirectedAcyclicGraph:
         The list of nodes in the DAG, including the root
     """
 
-    def __init__(self, nodes, root):
+    def __init__(self, nodes, root, do_checks=False):
         self.nodes = nodes
         self.order = len(self.nodes)
         self.root = root
-        # Checks if the input root is valid
-        if self.__find_root() != self.root:
-            raise ValueError("Input root node is not the root node of the DAG")
-        # Checks that all nodes have a unique id
-        self.__unique_id("list")
-        # Checks that the structure of the DAG is valid
-        self.check_structure()
+        if do_checks:
+            # Checks if the input root is valid
+            if self.__find_root() != self.root:
+                raise ValueError("Input root node is not the root node of the DAG")
+            # Checks that all nodes have a unique id
+            self.__unique_id("list")
+            # Checks that the structure of the DAG is valid
+            self.check_structure()
 
     def check_structure(self) -> None:
         """
