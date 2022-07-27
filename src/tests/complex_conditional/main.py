@@ -179,11 +179,9 @@ if __name__ == "__main__":
     node_outer_1.true_subprogram.parent_program = program_outer
     node_outer_1.false_subprogram.parent_program = program_outer
 
-
     # Add the pointers from the generator dag to the subprograms
     node_outer_1.true_subprogram.generator_dag = program_dag
     node_outer_1.false_subprogram.generator_dag = program_dag
-
 
     # Adjust allocations (hardcode)
     test = Test(program_outer)
