@@ -51,10 +51,8 @@ class PerformanceProfile:
             # ["node_{}".format(id)]: The node
             # ['qualities']: The node's quality mappings
             dictionary = self.dictionary["node_{}".format(id)]['qualities']
-            print(id)
             # Finding node quality given the parents' qualities
             if parent_qualities:
-                print(parent_qualities)
                 for parent_quality in parent_qualities:
                     parent_quality = self.round_nearest(parent_quality, step=self.quality_interval)
                     dictionary = dictionary["{:.2f}".format(parent_quality)]

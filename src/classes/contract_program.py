@@ -74,12 +74,15 @@ class ContractProgram:
         average_qualities = []
 
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
-        print([i.node_id for i in time_allocations])
+        # print([i.node_id for i in time_allocations])
         for (id, time) in enumerate(time_allocations):
+            if time is None:
+                continue
+
             node = self.find_node(id)
 
             if node.traversed:
-                pass
+                continue
 
             else:
                 node.traversed = True
@@ -462,8 +465,8 @@ class ContractProgram:
         :param: node_id: The id of the node
         :return Node object
         """
-        # print([i.id for i in self.program_dag.nodes])
-        # print(node_id)
+        print([i.id for i in self.program_dag.nodes])
+        print(node_id)
         for node in self.program_dag.nodes:
             if node.id == node_id:
                 return node

@@ -3,6 +3,8 @@ from geneticalgorithm import geneticalgorithm as ga
 from time import sleep
 from progress.bar import ChargingBar
 
+from src.classes import utils
+
 
 class Test:
     def __init__(self, contract_program):
@@ -50,27 +52,33 @@ class Test:
         """
         # Generate an initial allocation
         self.initialize_allocations(initial_allocation)
+
         # This is a list of TimeAllocation objects
         allocations = self.contract_program.allocations
         initial_time_allocations = [i.time for i in allocations]
-        eu_initial = self.contract_program.global_expected_utility(
-            self.contract_program.allocations) * self.contract_program.scale
+
+        eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
+
         if self.contract_program.decimals is not None:
-            initial_time_allocations = [round(i.time, self.contract_program.decimals)
-                                        for i in self.contract_program.allocations]
+            initial_time_allocations = [round(i.time, self.contract_program.decimals) for i in self.contract_program.allocations]
             eu_initial = round(eu_initial, self.contract_program.decimals)
+
         print(" {} \n ----------------------".format(initial_allocation))
         # The initial time allocations for each contract algorithm
         print("                   Initial ==> Expected Utility: {:<5} ==> "
               "Time Allocations: {}".format(eu_initial, initial_time_allocations))
+
         # This is a list of TimeAllocation objects
         allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
         optimal_time_allocations = [i.time for i in allocations]
+
         eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
+
         if self.contract_program.decimals is not None:
             optimal_time_allocations = [round(i.time, self.contract_program.decimals) for i in
                                         self.contract_program.allocations]
             eu_optimal = round(eu_optimal, self.contract_program.decimals)
+
         print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
               "Time Allocations: {} \n".format(eu_optimal, optimal_time_allocations))
 
