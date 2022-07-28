@@ -21,7 +21,7 @@ class Test:
             expected_utilities = []
             for i in range(0, iterations):
                 # Generate an initial allocation
-                self.check_initial_allocation(initial_allocation)
+                self.initialize_allocations(initial_allocation)
                 optimal_allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
                 optimal_time_allocations = [i.time for i in optimal_allocations]
                 eu_optimal = self.contract_program.global_expected_utility(
@@ -49,7 +49,7 @@ class Test:
         :return: None
         """
         # Generate an initial allocation
-        self.check_initial_allocation(initial_allocation)
+        self.initialize_allocations(initial_allocation)
         # This is a list of TimeAllocation objects
         allocations = self.contract_program.allocations
         initial_time_allocations = [i.time for i in allocations]
@@ -121,7 +121,7 @@ class Test:
 
         model.run()
 
-    def check_initial_allocation(self, initial_allocation):
+    def initialize_allocations(self, initial_allocation):
         if initial_allocation == "uniform":
             self.contract_program.allocations = self.contract_program.uniform_budget()
         elif initial_allocation == "Dirichlet":

@@ -5,6 +5,7 @@ from itertools import permutations
 
 import numpy as np
 
+# from src.classes import utils
 from src.classes.nodes.node import Node
 from src.classes.performance_profile import PerformanceProfile
 from src.classes.time_allocation import TimeAllocation
@@ -73,6 +74,7 @@ class ContractProgram:
         average_qualities = []
 
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
+        print([i.node_id for i in time_allocations])
         for (id, time) in enumerate(time_allocations):
             node = self.find_node(id)
 
@@ -275,7 +277,7 @@ class ContractProgram:
 
         # Do an initial pass to find the conditionals to adjust the budget
         for node_id in list_of_ordered_ids:
-            if self.find_node(node_id).expression_type == "conditional":
+            if self.find_node(node_id).expression_type == "conditional" and self.find_node(node_id).in_subtree:
                 # Assume every conditional takes tau time
                 tau = self.performance_profile.calculate_tau()
                 # Subtract tau from the budget
@@ -286,7 +288,7 @@ class ContractProgram:
         # Do a second pass to add in the rest of the allocations wrt a uniform allocation
         for node_id in list_of_ordered_ids:
             # Continue since we already did the initial pass
-            if self.find_node(node_id).expression_type == "conditional":
+            if self.find_node(node_id).expression_type == "conditional" and self.find_node(node_id).in_subtree:
                 continue
 
             allocation = self.find_uniform_allocation(budget)
