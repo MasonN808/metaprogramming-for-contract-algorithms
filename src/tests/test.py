@@ -3,7 +3,7 @@ from geneticalgorithm import geneticalgorithm as ga
 from time import sleep
 from progress.bar import ChargingBar
 
-from src.classes import utils
+# from src.classes import utils
 
 
 class Test:
