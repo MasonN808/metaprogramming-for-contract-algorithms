@@ -1,6 +1,7 @@
 import json
 import numpy as np
 
+from src.classes import utils
 from src.classes.nodes.node import Node
 
 
@@ -79,13 +80,13 @@ class PerformanceProfile:
 
             return qualities
 
-    def query_average_quality(self, id, time, parent_qualities) -> float:
+    def query_average_quality(self, id, time_allocation, parent_qualities) -> float:
         """
         Queries a single, estimated quality given a time allocation and possibly has parent qualities
 
         :param parent_qualities: float[] (order matters), the qualities of the parents given their time allocations
         :param id: non-negative int: the id of the Node object
-        :param time: TimeAllocation object, The time allocation to the node
+        :param time_allocation: TimeAllocation object, The time allocation to the node
         :return: A quality
         """
         adjusted_id = id
@@ -100,7 +101,7 @@ class PerformanceProfile:
             # ["node_{}".format(id)]: The node
             # ['qualities']: The node's quality mappings
             dictionary = self.dictionary["node_{}".format(adjusted_id)]['qualities']
-            estimated_time = self.round_nearest(time.time, self.time_interval)
+            estimated_time = self.round_nearest(time_allocation.time, self.time_interval)
 
             # Use .1f to add a trailing zero
             qualities = dictionary["{:.1f}".format(estimated_time)]
@@ -112,7 +113,7 @@ class PerformanceProfile:
         # For intermediate or root nodes
         else:
             dictionary = self.dictionary["node_{}".format(adjusted_id)]['qualities']
-            estimated_time = self.round_nearest(time.time, self.time_interval)
+            estimated_time = self.round_nearest(time_allocation.time, self.time_interval)
 
             for parent_quality in parent_qualities:
                 parent_quality = self.round_nearest(parent_quality, step=self.quality_interval)
@@ -218,9 +219,15 @@ class PerformanceProfile:
         probability = 1.0
         last_quality = []
 
-        time_allocations = contract_program.time_allocations
-        for (id, time) in enumerate(time_allocations):
-            node = self.find_node(id)
+        time_allocations = contract_program.allocations
+        for (id, time_allocation) in enumerate(time_allocations):
+            # print(utils.print_allocations(time_allocations))
+            # Skip the time allocation with None time since it is present in a different DAG
+            if time_allocation.time is None:
+                continue
+
+            print("id {}".format(contract_program.program_id))
+            node = self.find_node(id, contract_program.program_dag)
 
             if node.traversed:
                 pass
@@ -233,7 +240,7 @@ class PerformanceProfile:
                     parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
 
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities = self.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
+                    qualities = self.query_quality_list_on_interval(time_allocation.time, id, parent_qualities=parent_qualities)
 
                     # Calculates the average quality on the list of qualities for querying
                     average_quality = self.average_quality(qualities)
@@ -302,7 +309,7 @@ class PerformanceProfile:
 
                 # Add a reference to the outer program to pull the qualities of the parents of the conditional
                 if node.in_subtree:
-                    node_conditional = node.parent_program.find_node(node_conditional.id)
+                    node_conditional = node.current_program.parent_program.find_node(node_conditional.id, node.current_program.parent_program.program_dag)
 
                 parent_qualities = []
 
@@ -353,14 +360,20 @@ class PerformanceProfile:
         string_number = str(number)
         return string_number[::-1].find('.')
 
-    def find_node(self, node_id) -> Node:
+    @staticmethod
+    def find_node(node_id, dag) -> Node:
         """
         Finds the node in the node list given the id
 
         :param: node_id: The id of the node
         :return Node object
         """
-        for node in self.program_dag.nodes:
+        print()
+        print([i.id for i in dag.nodes])
+        print(node_id)
+        nodes = dag.nodes
+        for node in nodes:
             if node.id == node_id:
                 return node
         raise IndexError("Node not found with given id")
+

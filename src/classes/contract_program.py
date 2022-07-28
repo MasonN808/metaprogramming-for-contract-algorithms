@@ -6,6 +6,7 @@ from itertools import permutations
 import numpy as np
 
 # from src.classes import utils
+from src.classes import utils
 from src.classes.nodes.node import Node
 from src.classes.performance_profile import PerformanceProfile
 from src.classes.time_allocation import TimeAllocation
@@ -31,7 +32,8 @@ class ContractProgram:
     """
     POPULOUS_FILE_NAME = "populous.json"
 
-    def __init__(self, program_dag, budget, scale, decimals, quality_interval, time_interval, time_step_size, in_subtree, generator_dag):
+    def __init__(self, program_id, parent_program, program_dag, budget, scale, decimals, quality_interval, time_interval, time_step_size, in_subtree, generator_dag):
+        self.program_id = program_id
         self.performance_profile = PerformanceProfile(program_dag=program_dag, generator_dag=generator_dag, file_name=self.POPULOUS_FILE_NAME,
                                                       time_interval=time_interval, time_limit=budget,
                                                       quality_interval=quality_interval, time_step_size=time_step_size)
@@ -43,7 +45,11 @@ class ContractProgram:
         self.time_interval = time_interval
         self.time_step_size = time_step_size
         self.allocations = None
+
         self.in_subtree = in_subtree
+        # Pointer to the parent program that the subprogram is an induced subgraph of
+        self.parent_program = parent_program
+
         self.generator_dag = generator_dag
 
     @staticmethod
@@ -75,11 +81,13 @@ class ContractProgram:
 
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
         # print([i.node_id for i in time_allocations])
-        for (id, time) in enumerate(time_allocations):
-            if time is None:
+        for (id, time_allocation) in enumerate(time_allocations):
+
+            # Skips this iteration if no time is associated with the ID, since it exists in a subprogram
+            if time_allocation.time is None:
                 continue
 
-            node = self.find_node(id)
+            node = self.find_node(id, self.program_dag)
 
             if node.traversed:
                 continue
@@ -92,7 +100,7 @@ class ContractProgram:
                     parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
 
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities = self.performance_profile.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
+                    qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time, id, parent_qualities=parent_qualities)
 
                     # Calculates the average quality on the list of qualities for querying
                     average_quality = self.performance_profile.average_quality(qualities)
@@ -107,7 +115,7 @@ class ContractProgram:
                     parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
 
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities = self.performance_profile.query_quality_list_on_interval(time.time, id,
+                    qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time, id,
                                                                                         parent_qualities=parent_qualities)
 
                     # Calculates the average quality on the list of qualities for querying
@@ -174,6 +182,7 @@ class ContractProgram:
                 # Does hill climbing on the outer metareasoning problem that is a conditional
                 elif ((node_0.expression_type == "conditional" and node_0.in_subtree is False)
                       or (node_1.expression_type == "conditional" and node_1.in_subtree is False)):
+
                     if node_0.expression_type == "conditional" and node_0.in_subtree is False:
                         # Reallocate the budgets for the inner metareasoning problems
                         node_0.true_subprogram.budget = self.allocations[node_0.id]
@@ -273,6 +282,8 @@ class ContractProgram:
         time_allocations = []
         for i in range(self.generator_dag.order):
             time_allocations.append(TimeAllocation(i, None))
+
+        #
         budget = float(self.budget)
 
         # Initialize a list to properly loop through the nodes given that the node ids are not sequenced
@@ -280,7 +291,7 @@ class ContractProgram:
 
         # Do an initial pass to find the conditionals to adjust the budget
         for node_id in list_of_ordered_ids:
-            if self.find_node(node_id).expression_type == "conditional" and self.find_node(node_id).in_subtree:
+            if self.find_node(node_id, self.program_dag).expression_type == "conditional" and self.find_node(node_id, self.program_dag).in_subtree:
                 # Assume every conditional takes tau time
                 tau = self.performance_profile.calculate_tau()
                 # Subtract tau from the budget
@@ -290,13 +301,15 @@ class ContractProgram:
 
         # Do a second pass to add in the rest of the allocations wrt a uniform allocation
         for node_id in list_of_ordered_ids:
+
             # Continue since we already did the initial pass
-            if self.find_node(node_id).expression_type == "conditional" and self.find_node(node_id).in_subtree:
+            if self.find_node(node_id, self.program_dag).expression_type == "conditional" and self.find_node(node_id, self.program_dag).in_subtree:
                 continue
 
             allocation = self.find_uniform_allocation(budget)
             time_allocations[node_id] = TimeAllocation(node_id, allocation)
 
+        print("DEBUG-ALLOCATIONS-{}".format(utils.print_allocations(time_allocations)))
         return time_allocations
 
     def dirichlet_budget(self) -> [TimeAllocation]:
@@ -450,24 +463,30 @@ class ContractProgram:
         """
         if self.in_subtree:
             number_of_conditionals = 0
-            for node_id in range(0, self.program_dag.order):
-                if self.find_node(node_id).expression_type == "conditional":
+
+            # Initialize a list to properly loop through the nodes given that the node ids are not sequenced
+            list_of_ordered_ids = [node.id for node in self.program_dag.nodes]
+
+            for node_id in list_of_ordered_ids:
+                if self.find_node(node_id, self.program_dag).expression_type == "conditional":
                     number_of_conditionals += 1
             return number_of_conditionals
         else:
             # Since the conditionals don't affect the outer metareasoning allocations
             return 0
 
-    def find_node(self, node_id) -> Node:
+    @staticmethod
+    def find_node(node_id, dag) -> Node:
         """
         Finds the node in the node list given the id
 
         :param: node_id: The id of the node
         :return Node object
         """
-        print([i.id for i in self.program_dag.nodes])
-        print(node_id)
-        for node in self.program_dag.nodes:
+        # print([i.id for i in dag.nodes])
+        # print(node_id)
+        nodes = dag.nodes
+        for node in nodes:
             if node.id == node_id:
                 return node
         raise IndexError("Node not found with given id")

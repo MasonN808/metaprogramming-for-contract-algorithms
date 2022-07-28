@@ -21,8 +21,9 @@ class Node:
         self.children = children
         self.expression_type = expression_type
 
-        # Pointer to the parent program that the subprogram is an induced subgraph of
-        self.parent_program = None
+        # pointer to the contract program that it's in (This should be initialized after creating the contract program
+        self.current_program = None
+
         # true subtree for the conditional expression
         self.true_subprogram = None
         # false subtree for the conditional expression

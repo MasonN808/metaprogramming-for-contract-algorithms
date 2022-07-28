@@ -5,6 +5,12 @@ from src.classes.generator import Generator
 from src.tests.test import Test
 from os.path import exists
 
+
+def initialize_node_pointers_current_program(contract_program):
+    for node in contract_program.program_dag.nodes:
+        node.current_program = contract_program
+
+
 if __name__ == "__main__":
     # Total budget for the DAG
     BUDGET = 10
@@ -157,23 +163,32 @@ if __name__ == "__main__":
 
     # Create the program with some budget
 
-    program_outer = ContractProgram(dag_outer, BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
+    program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag)
+
+    # Initialize the pointers of the nodes to the program it is in
+    initialize_node_pointers_current_program(program_outer)
 
     # Add the subtree contract programs to the conditional node
     # Add the left subtree
     true_subtree = DirectedAcyclicGraph(nodes_inner_true, root=node_inner_true_root)
     # Convert to a contract program
-    node_outer_1.true_subprogram = ContractProgram(program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
+    node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
                                                    quality_interval=QUALITY_INTERVAL,
                                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=None)
+
+    # Initialize the pointers of the nodes to the program it is in
+    initialize_node_pointers_current_program(node_outer_1.true_subprogram)
 
     # Add the right subtree
     false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
     # Convert to a contract program
-    node_outer_1.false_subprogram = ContractProgram(program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
+    node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
                                                     quality_interval=QUALITY_INTERVAL,
                                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=None)
+
+    # Initialize the pointers of the nodes to the program it is in
+    initialize_node_pointers_current_program(node_outer_1.true_subprogram)
 
     # Add the pointers from the parent program to the subprograms
     node_outer_1.true_subprogram.parent_program = program_outer
@@ -183,7 +198,7 @@ if __name__ == "__main__":
     node_outer_1.true_subprogram.generator_dag = program_dag
     node_outer_1.false_subprogram.generator_dag = program_dag
 
-    # Adjust allocations (hardcode)
+    # The input should be the outermost program
     test = Test(program_outer)
 
     # Print the tree for verification
@@ -193,6 +208,6 @@ if __name__ == "__main__":
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))
 
     # Test initial vs optimal expected utility and allocations
-    test.find_utility_and_allocations(initial_allocation="uniform", verbose=False)
-    test.find_utility_and_allocations(initial_allocation="uniform with noise", verbose=False)
-    test.find_utility_and_allocations(initial_allocation="Dirichlet", verbose=False)
+    test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
+    test.find_utility_and_allocations(initial_allocation="uniform with noise", outer_program=program_outer, verbose=False)
+    test.find_utility_and_allocations(initial_allocation="Dirichlet", outer_program=program_outer, verbose=False)

@@ -4,6 +4,7 @@ from time import sleep
 from progress.bar import ChargingBar
 
 # from src.classes import utils
+from src.classes.nodes.node import Node
 
 
 class Test:
@@ -41,19 +42,20 @@ class Test:
                           "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
         return sorted(expected_utilities)
 
-    def find_utility_and_allocations(self, initial_allocation, verbose=False) -> None:
+    def find_utility_and_allocations(self, initial_allocation, outer_program, verbose=False) -> None:
         """
         Finds the expected utility and time allocations for an optimal expected utility or initial expected utility
         given the initial time allocations
 
+        :param outer_program:
         :param initial_allocation: string, the type of initial allocation given for optimization
         :param verbose: bool, prints the optimization steps
         :return: None
         """
-        # Generate an initial allocation
-        self.initialize_allocations(initial_allocation)
+        # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
+        self.initialize_allocations(initial_allocation=initial_allocation, contract_program=outer_program)
 
-        # This is a list of TimeAllocation objects
+        # Initialize a copy of the time allocations that will get modified
         allocations = self.contract_program.allocations
         initial_time_allocations = [i.time for i in allocations]
 
@@ -129,12 +131,41 @@ class Test:
 
         model.run()
 
-    def initialize_allocations(self, initial_allocation):
+    def initialize_allocations(self, initial_allocation, contract_program):
         if initial_allocation == "uniform":
-            self.contract_program.allocations = self.contract_program.uniform_budget()
+            contract_program.allocations = contract_program.uniform_budget()
+
+            # Find inner contract programs
+            inner_contract_programs = self.find_inner_programs(contract_program)
+
+            for inner_contract_program in inner_contract_programs:
+
+                # initialize the allocations to the inner contract programs with the time allocation of the outer conditonal node
+                inner_contract_program.budget = contract_program.allocations[self.find_node_id_of_conditional(contract_program)].time
+
+                self.initialize_allocations(initial_allocation, inner_contract_program)
+
         elif initial_allocation == "Dirichlet":
-            self.contract_program.allocations = self.contract_program.dirichlet_budget()
+            contract_program.allocations = contract_program.dirichlet_budget()
         elif initial_allocation == "uniform with noise":
-            self.contract_program.allocations = self.contract_program.uniform_budget_with_noise()
+            contract_program.allocations = contract_program.uniform_budget_with_noise()
         else:
             raise ValueError("Invalid initial allocation type")
+
+    @staticmethod
+    def find_inner_programs(outer_program):
+        inner_programs = []
+
+        for outer_node in outer_program.program_dag.nodes:
+            if Node.is_conditional_node(outer_node) and not outer_node.in_subtree:
+                # Append its subprograms to the list
+                inner_programs.extend([outer_node.true_subprogram, outer_node.false_subprogram])
+
+        return inner_programs
+
+    @staticmethod
+    def find_node_id_of_conditional(outer_program):
+        for outer_node in outer_program.program_dag.nodes:
+            if Node.is_conditional_node(outer_node):
+                return outer_node.id
+        raise Exception("Didn't find a conditional Node")
