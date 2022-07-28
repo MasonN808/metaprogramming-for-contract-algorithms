@@ -14,7 +14,7 @@ class Node:
         Used directly for contract conditionals
     """
 
-    def __init__(self, id, parents, children, expression_type, in_subtree, time=None):
+    def __init__(self, id, parents, children, expression_type, in_subtree, is_conditional_root=False, time=None):
         # id of the node in the tree
         self.id = id
         self.parents = parents
@@ -32,6 +32,7 @@ class Node:
         self.in_false = None
         # Used for the subtree that doesn't have access to parents
         self.parent_qualities = []
+        self.is_conditional_root = is_conditional_root
 
         self.time = time
         # Used in checking for connectedness in the DAG
@@ -46,3 +47,29 @@ class Node:
         """
         if self.time is None:
             raise ValueError("Node has no time allocation")
+
+    @staticmethod
+    def is_conditional_node(node, family_type=None) -> bool:
+        """
+        Checks whether the parents or children are a conditional node
+
+        :param node: Node object
+        :param family_type: The "children" or "parents"
+        :return: bool
+        """
+        if family_type is None:
+            if node.expression_type == "conditional":
+                return True
+            return False
+        if family_type == "parents":
+            for parent in node.parents:
+                if parent.expression_type == "conditional":
+                    return True
+            return False
+        elif family_type == "children":
+            for child in node.parents:
+                if child.expression_type == "conditional":
+                    return True
+            return False
+        else:
+            raise ValueError("Invalid family_type")

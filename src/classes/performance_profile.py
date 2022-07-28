@@ -51,9 +51,10 @@ class PerformanceProfile:
             # ["node_{}".format(id)]: The node
             # ['qualities']: The node's quality mappings
             dictionary = self.dictionary["node_{}".format(id)]['qualities']
-
+            print(id)
             # Finding node quality given the parents' qualities
             if parent_qualities:
+                print(parent_qualities)
                 for parent_quality in parent_qualities:
                     parent_quality = self.round_nearest(parent_quality, step=self.quality_interval)
                     dictionary = dictionary["{:.2f}".format(parent_quality)]
@@ -75,6 +76,7 @@ class PerformanceProfile:
             # Round to get rid of rounding error in division of time
             for t in np.arange(start_step, end_step, self.time_step_size).round(num_decimals):
                 # ["{}".format(t)]: The time allocation
+                # print(dictionary)
                 qualities += dictionary["{}".format(t)]
 
             return qualities
@@ -89,7 +91,7 @@ class PerformanceProfile:
         :return: A quality
         """
         adjusted_id = id
-        if PerformanceProfile.is_conditional_node(self.generator_dag.nodes[id]):
+        if Node.is_conditional_node(self.generator_dag.nodes[id]):
             adjusted_id = id + 1
 
         if self.dictionary is None:
@@ -278,7 +280,7 @@ class PerformanceProfile:
 
         if node.parents:
             # Check that none of the parents are conditional expressions
-            if not self.is_conditional_node(node, "parents"):
+            if not Node.is_conditional_node(node, "parents"):
 
                 parent_qualities = []
 
@@ -324,7 +326,7 @@ class PerformanceProfile:
         # Base Case (Leaf Nodes in a functional expression)
         else:
             # Leaf Node as a trivial functional expression
-            if depth == 1 or self.is_conditional_node(node):
+            if depth == 1 or Node.is_conditional_node(node):
                 return []
 
             else:
@@ -352,32 +354,6 @@ class PerformanceProfile:
         """
         string_number = str(number)
         return string_number[::-1].find('.')
-
-    @staticmethod
-    def is_conditional_node(node, family_type=None) -> bool:
-        """
-        Checks whether the parents or children are a conditional node
-
-        :param node: Node object
-        :param family_type: The "children" or "parents"
-        :return: bool
-        """
-        if family_type is None:
-            if node.expression_type == "conditional":
-                return True
-            return False
-        if family_type == "parents":
-            for parent in node.parents:
-                if parent.expression_type == "conditional":
-                    return True
-            return False
-        elif family_type == "children":
-            for child in node.parents:
-                if child.expression_type == "conditional":
-                    return True
-            return False
-        else:
-            raise ValueError("Invalid family_type")
 
     def find_node(self, node_id) -> Node:
         """

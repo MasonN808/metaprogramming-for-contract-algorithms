@@ -87,16 +87,14 @@ class ContractProgram:
                     parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
 
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities = self.performance_profile.query_quality_list_on_interval(time.time, id,
-                                                                                        parent_qualities=parent_qualities)
+                    qualities = self.performance_profile.query_quality_list_on_interval(time.time, id, parent_qualities=parent_qualities)
 
                     # Calculates the average quality on the list of qualities for querying
                     average_quality = self.performance_profile.average_quality(qualities)
 
                     average_qualities.append(average_quality)
 
-                    probability *= self.performance_profile.query_probability_contract_expression(average_quality,
-                                                                                                  qualities)
+                    probability *= self.performance_profile.query_probability_contract_expression(average_quality, qualities)
 
                 # Assuming we created the DAGs properly, this should be the first node in the allocations
                 elif node.expression_type == "conditional" and node.in_subtree is True:
@@ -462,6 +460,8 @@ class ContractProgram:
         :param: node_id: The id of the node
         :return Node object
         """
+        # print([i.id for i in self.program_dag.nodes])
+        # print(node_id)
         for node in self.program_dag.nodes:
             if node.id == node_id:
                 return node

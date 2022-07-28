@@ -84,21 +84,6 @@ if __name__ == "__main__":
     # Conditional Node
     node_outer_1 = Node(7, [node_outer_2], [], expression_type="conditional", in_subtree=False)
 
-    # Add the subtree contract programs to the conditional node
-    # Add the left subtree
-    true_subtree = DirectedAcyclicGraph(nodes_inner_true, root=node_inner_true_root)
-    # Convert to a contract program
-    node_outer_1.true_subprogram = ContractProgram(program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
-                                                   quality_interval=QUALITY_INTERVAL,
-                                                   time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=None)
-
-    # Add the right subtree
-    false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
-    # Convert to a contract program
-    node_outer_1.false_subprogram = ContractProgram(program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
-                                                    quality_interval=QUALITY_INTERVAL,
-                                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=None)
-
     # Root node
     root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_subtree=False)
 
@@ -124,8 +109,8 @@ if __name__ == "__main__":
     # Conditional subtrees
     node_4 = Node(4, [node_5], [], expression_type="contract", in_subtree=False)
     node_3 = Node(3, [node_5], [], expression_type="contract", in_subtree=False)
-    node_2 = Node(2, [node_6], [], expression_type="contract", in_subtree=False)
-    node_1 = Node(1, [node_3, node_4], [], expression_type="contract", in_subtree=False)
+    node_2 = Node(2, [node_6], [], expression_type="contract", in_subtree=False, is_conditional_root=True)
+    node_1 = Node(1, [node_3, node_4], [], expression_type="contract", in_subtree=False, is_conditional_root=True)
 
     # Root node
     root = Node(0, [node_1, node_2], [], expression_type="contract", in_subtree=False)
@@ -174,6 +159,21 @@ if __name__ == "__main__":
 
     program_outer = ContractProgram(dag_outer, BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag)
+
+    # Add the subtree contract programs to the conditional node
+    # Add the left subtree
+    true_subtree = DirectedAcyclicGraph(nodes_inner_true, root=node_inner_true_root)
+    # Convert to a contract program
+    node_outer_1.true_subprogram = ContractProgram(program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
+                                                   quality_interval=QUALITY_INTERVAL,
+                                                   time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=None)
+
+    # Add the right subtree
+    false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
+    # Convert to a contract program
+    node_outer_1.false_subprogram = ContractProgram(program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
+                                                    quality_interval=QUALITY_INTERVAL,
+                                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=None)
 
     # Add the pointers from the parent program to the subprograms
     node_outer_1.true_subprogram.parent_program = program_outer

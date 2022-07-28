@@ -3,6 +3,7 @@ import json
 import math
 import numpy as np
 from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
+from src.classes.nodes.node import Node
 from src.classes.performance_profile import PerformanceProfile
 
 
@@ -57,11 +58,16 @@ class Generator:
                 dictionary[t] = 1 - math.e ** (-velocity * t)
 
         else:
+            parents_length = len(node.parents)
+
+            if self.has_conditional_roots_as_parents(node):
+                parents_length -= 1
+
             for quality in potential_parent_qualities:
                 dictionary[quality] = {quality: {}}
 
                 # Base Case
-                if depth == len(node.parents) - 1:
+                if depth == parents_length - 1:
                     dictionary[quality] = {}
 
                     # To change the quality mapping with respect to the parent qualities
@@ -150,7 +156,7 @@ class Generator:
 
             # Compare the generator program_dag with the program program_dag to see if conditional is encountered
             # If so, go up an index since it's not present in the generator program_dag
-            if PerformanceProfile.is_conditional_node(self.program_dag.nodes[i]):
+            if Node.is_conditional_node(self.program_dag.nodes[i]):
                 i += 1
 
             with open('node_{}.json'.format(i), 'w') as f:
@@ -186,7 +192,7 @@ class Generator:
             j = 0
             for node in nodes:
 
-                if PerformanceProfile.is_conditional_node(self.program_dag.nodes[i]):
+                if Node.is_conditional_node(self.program_dag.nodes[i]):
                     i += 1
 
                 bundle["node_{}".format(i)] = {}
@@ -237,6 +243,11 @@ class Generator:
                 populate_dictionary["{}".format(t)].append(dictionary[t])
         # Node with parents
         else:
+            parents_length = len(node.parents)
+
+            if self.has_conditional_roots_as_parents(node):
+                parents_length -= 1
+
             # Loop through layer of the parent qualities
             for parent_quality in dictionary:
 
@@ -247,7 +258,7 @@ class Generator:
                     populate_dictionary[parent_quality] = {"{}".format(parent_quality): {}}
 
                 # Base Case
-                if depth == len(node.parents) - 1:
+                if depth == parents_length - 1:
                     # populate_dictionary[parent_quality] = {}
                     # To change the parent_quality mapping with respect to the parent qualities
                     for t in dictionary[parent_quality]:
@@ -295,3 +306,16 @@ class Generator:
     @staticmethod
     def find_number_decimals(number):
         return len(str(number).split(".")[1])
+
+    @staticmethod
+    def has_conditional_roots_as_parents(node):
+        num = 0
+        for parent in node.parents:
+            if parent.is_conditional_root:
+                num += 1
+        if num == 1 or num > 2:
+            raise ValueError("Invalid root pointers from conditionals")
+        elif num == 2:
+            return True
+        else:
+            return False

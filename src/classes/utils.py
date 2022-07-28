@@ -7,3 +7,5 @@ def print_allocations(allocations) -> None:
     :return: None
     """
     print([i.time for i in allocations])
+
+
