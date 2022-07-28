@@ -308,7 +308,8 @@ class PerformanceProfile:
 
                 # Add a reference to the outer program to pull the qualities of the parents of the conditional
                 if node.in_subtree:
-                    node_conditional = node.current_program.parent_program.find_node(node_conditional.id, node.current_program.parent_program.program_dag)
+                    node_conditional = node.current_program.parent_program.find_node(
+                        node_conditional.id, node.current_program.parent_program.program_dag)
 
                 parent_qualities = []
 
