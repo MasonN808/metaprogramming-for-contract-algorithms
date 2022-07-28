@@ -4,7 +4,6 @@ import math
 import numpy as np
 from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
 from src.classes.nodes.node import Node
-from src.classes.performance_profile import PerformanceProfile
 
 
 class Generator:
