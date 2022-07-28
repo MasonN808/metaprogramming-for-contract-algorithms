@@ -1,7 +1,6 @@
 import json
 import numpy as np
 
-from src.classes import utils
 from src.classes.nodes.node import Node
 
 
@@ -376,4 +375,3 @@ class PerformanceProfile:
             if node.id == node_id:
                 return node
         raise IndexError("Node not found with given id")
-
