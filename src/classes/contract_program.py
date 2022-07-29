@@ -61,6 +61,11 @@ class ContractProgram:
                 The qualities that were outputted for each contract algorithm in the DAG
         :return: float
         """
+
+        # Flatten the list of qualities
+        qualities = utils.flatten(qualities)
+        print(qualities)
+
         return math.prod(qualities)
 
     def global_expected_utility(self, time_allocations) -> float:
@@ -115,22 +120,19 @@ class ContractProgram:
                     parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
 
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time, id,
-                                                                                        parent_qualities=parent_qualities)
+                    qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time, id, parent_qualities=parent_qualities)
 
                     # Calculates the average quality on the list of qualities for querying
                     average_quality = self.performance_profile.average_quality(qualities)
 
                     average_qualities.append(average_quality)
 
-                    probability *= self.performance_profile.query_probability_contract_expression(average_quality,
-                                                                                                  qualities)
+                    probability *= self.performance_profile.query_probability_contract_expression(average_quality, qualities)
 
                 # node.expression_type == "conditional" and node.in_subtree is False
                 else:
                     # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
-                    out_probability_qualities = self.performance_profile.query_probability_conditional_expression(node)[
-                        0]
+                    out_probability_qualities = self.performance_profile.query_probability_conditional_expression(node)
 
                     # Multiply the current probability by the performance profile of the conditional node
                     probability *= out_probability_qualities[0]

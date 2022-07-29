@@ -188,7 +188,7 @@ if __name__ == "__main__":
                                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=None)
 
     # Initialize the pointers of the nodes to the program it is in
-    initialize_node_pointers_current_program(node_outer_1.true_subprogram)
+    initialize_node_pointers_current_program(node_outer_1.false_subprogram)
 
     # Add the pointers from the parent program to the subprograms
     node_outer_1.true_subprogram.parent_program = program_outer

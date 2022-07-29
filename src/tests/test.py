@@ -4,6 +4,7 @@ from time import sleep
 from progress.bar import ChargingBar
 
 # from src.classes import utils
+from src.classes import utils
 from src.classes.nodes.node import Node
 
 
@@ -62,6 +63,8 @@ class Test:
         eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
 
         if self.contract_program.decimals is not None:
+            initial_time_allocations = []
+            # for i in self.contract_program.allocations:
             initial_time_allocations = [round(i.time, self.contract_program.decimals) for i in self.contract_program.allocations]
             eu_initial = round(eu_initial, self.contract_program.decimals)
 

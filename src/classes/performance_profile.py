@@ -1,6 +1,7 @@
 import json
 import numpy as np
 
+from src.classes import utils
 from src.classes.nodes.node import Node
 
 
@@ -15,7 +16,8 @@ class PerformanceProfile:
     :param quality_interval: the interval w.r.t. qualities to query from in the quality mapping
     """
 
-    def __init__(self, program_dag, generator_dag, file_name, time_interval, time_limit, time_step_size, quality_interval):
+    def __init__(self, program_dag, generator_dag, file_name, time_interval, time_limit, time_step_size,
+                 quality_interval):
         self.program_dag = program_dag
         self.generator_dag = generator_dag
         self.dictionary = self.import_quality_mappings(file_name)
@@ -219,13 +221,23 @@ class PerformanceProfile:
         last_quality = []
 
         time_allocations = contract_program.allocations
+
+        conditional_root_index = None
+
+        # Do an initial pass to find the root of the conditional subbranch for outputting the last quality
+        for time_allocation in time_allocations:
+            if time_allocation.time is not None:
+                conditional_root_index = time_allocation.node_id
+                # break, since we found the first index
+                break
+
         for (id, time_allocation) in enumerate(time_allocations):
             # print(utils.print_allocations(time_allocations))
             # Skip the time allocation with None time since it is present in a different DAG
             if time_allocation.time is None:
                 continue
 
-            print("id {}".format(contract_program.program_id))
+            # print("id {}".format(contract_program.program_id))
             node = self.find_node(id, contract_program.program_dag)
 
             if node.traversed:
@@ -239,13 +251,15 @@ class PerformanceProfile:
                     parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
 
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities = self.query_quality_list_on_interval(time_allocation.time, id, parent_qualities=parent_qualities)
+                    qualities = self.query_quality_list_on_interval(time_allocation.time, id,
+                                                                    parent_qualities=parent_qualities)
 
                     # Calculates the average quality on the list of qualities for querying
                     average_quality = self.average_quality(qualities)
 
                     # Keep only the average quality of the last node in the program
-                    if id == len(time_allocations) - 1:
+                    # print("id:{}-{}".format(node.id, node.is_conditional_root))
+                    if node.id == conditional_root_index:
                         last_quality.append(average_quality)
 
                     probability *= self.query_probability_contract_expression(average_quality, qualities)
@@ -289,6 +303,8 @@ class PerformanceProfile:
                 parent_qualities = []
 
                 for parent in node.parents:
+                    utils.print_allocations(time_allocations)
+                    # print([i.id for i in node.parents])
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
                     # Reset the parent qualities for the next node
                     parent_qualities.append(quality)
@@ -308,8 +324,14 @@ class PerformanceProfile:
 
                 # Add a reference to the outer program to pull the qualities of the parents of the conditional
                 if node.in_subtree:
-                    node_conditional = node.current_program.parent_program.find_node(
-                        node_conditional.id, node.current_program.parent_program.program_dag)
+                    # Initialize the parent program since we need to query the qualities from here
+                    # print(node.id)
+                    parent_program = node.current_program.parent_program
+
+                    # Repoint the allocations as well
+                    time_allocations = parent_program.allocations
+
+                    node_conditional = parent_program.find_node(node_conditional.id, parent_program.program_dag)
 
                 parent_qualities = []
 
@@ -335,6 +357,8 @@ class PerformanceProfile:
                 return []
 
             else:
+                utils.print_allocations(time_allocations)
+                # print(node.current_program.program_id)
                 quality = self.query_average_quality(node.id, time_allocations[node.id], [])
 
                 return quality
