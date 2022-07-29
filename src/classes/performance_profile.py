@@ -1,7 +1,6 @@
 import json
 import numpy as np
 
-from src.classes import utils
 from src.classes.nodes.node import Node
 
 

@@ -524,4 +524,3 @@ class ContractProgram:
             if child.expression_type == "conditional":
                 return True
         return False
-
