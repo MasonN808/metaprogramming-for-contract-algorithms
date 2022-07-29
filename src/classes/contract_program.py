@@ -32,9 +32,11 @@ class ContractProgram:
     """
     POPULOUS_FILE_NAME = "populous.json"
 
-    def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals, quality_interval, time_interval, time_step_size, in_subtree, generator_dag):
+    def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals,
+                 quality_interval, time_interval, time_step_size, in_subtree, generator_dag):
         self.program_id = program_id
-        self.performance_profile = PerformanceProfile(program_dag=program_dag, generator_dag=generator_dag, file_name=self.POPULOUS_FILE_NAME,
+        self.performance_profile = PerformanceProfile(program_dag=program_dag, generator_dag=generator_dag,
+                                                      file_name=self.POPULOUS_FILE_NAME,
                                                       time_interval=time_interval, time_limit=budget,
                                                       quality_interval=quality_interval, time_step_size=time_step_size)
         self.program_dag = program_dag
@@ -106,14 +108,16 @@ class ContractProgram:
                     parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
 
                     # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time, id, parent_qualities=parent_qualities)
+                    qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time, id,
+                                                                                        parent_qualities=parent_qualities)
 
                     # Calculates the average quality on the list of qualities for querying
                     average_quality = self.performance_profile.average_quality(qualities)
 
                     average_qualities.append(average_quality)
 
-                    probability *= self.performance_profile.query_probability_contract_expression(average_quality, qualities)
+                    probability *= self.performance_profile.query_probability_contract_expression(average_quality,
+                                                                                                  qualities)
 
                 # Assuming we created the DAGs properly, this should be the first node in the allocations
                 elif node.expression_type == "conditional" and node.in_subtree is True:
@@ -145,6 +149,7 @@ class ContractProgram:
         replacement; else, we divide s by a decay rate and repeat the above until s reaches some threshold by which we
         terminate.
 
+        :param inner:
         :param verbose: Verbose mode
         :param threshold: float, the threshold of the temperature decay during annealing
         :param decay: float, the decay rate of the temperature during annealing
@@ -160,7 +165,6 @@ class ContractProgram:
 
             possible_local_max = []
 
-            # utils.print_allocations(self.allocations)
             refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
 
             # Go through all permutations of the time allocations
@@ -183,62 +187,35 @@ class ContractProgram:
                       or (node_1.expression_type == "conditional" and node_1.in_subtree is True)):
                     continue
 
-                # Does hill climbing on the outer metareasoning problem that is a conditional
-                elif ((node_0.expression_type == "conditional" and node_0.in_subtree is False)
-                      or (node_1.expression_type == "conditional" and node_1.in_subtree is False)):
-
-                    if node_0.expression_type == "conditional" and node_0.in_subtree is False:
-                        # Reallocate the budgets for the inner metareasoning problems
-                        node_0.true_subprogram.budget = self.allocations[node_0.id].time
-                        node_0.false_subprogram.budget = self.allocations[node_0.id].time
-
-                        # Do naive hill climbing on the branches
-                        true_allocations = node_0.true_subprogram.naive_hill_climbing(inner=True)
-                        false_allocations = node_0.false_subprogram.naive_hill_climbing(inner=True)
-
-                    else:
-                        # Reallocate the budgets for the inner metareasoning problems
-                        node_1.true_subprogram.budget = self.allocations[node_1.id].time
-                        node_1.false_subprogram.budget = self.allocations[node_1.id].time
-
-                        # Do naive hill climbing on the branches
-                        true_allocations = node_1.true_subprogram.naive_hill_climbing(inner=True)
-                        false_allocations = node_1.false_subprogram.naive_hill_climbing(inner=True)
-
                 # Avoids negative time allocation
                 elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
                     continue
 
                 else:
-                    # # Check if node is child of conditional so that both children of the conditional are allocated same time
-                    # if self.child_of_conditional(self.find_node(permutation[0].node_id, self.program_dag)):
-                    #     # find the neighbor node
-                    #     neighbor = self.find_neighbor_branch(self.find_node(permutation[0].node_id, self.program_dag))
-                    #
-                    #     # Adjust the allocation to the traversed node under the conditional
-                    #     adjusted_allocations[permutation[0].node_id].time -= time_switched
-                    #     # Adjust allocation to the neighbor in parallel
-                    #     adjusted_allocations[neighbor.id].time -= time_switched
-                    #
-                    #     # Adjust allocation to then non-child of a conditional
-                    #     adjusted_allocations[permutation[1].node_id].time += time_switched
-
-                    # # Check if node is child of conditional so that both children of the conditional are allocated same time
-                    # elif self.child_of_conditional(self.find_node(permutation[1].node_id, self.program_dag)):
-                    #     # find the neighbor node
-                    #     neighbor = self.find_neighbor_branch(self.find_node(permutation[1].node_id, self.program_dag))
-                    #
-                    #     # Adjust the allocation to the traversed node under the conditional
-                    #     adjusted_allocations[permutation[1].node_id].time += time_switched
-                    #     # Adjust allocation to the neighbor in parallel
-                    #     adjusted_allocations[neighbor.id].time += time_switched
-                    #
-                    #     # Adjust allocation to then non-child of a conditional
-                    #     adjusted_allocations[permutation[0].node_id].time -= time_switched
-
-                    # else:
                     adjusted_allocations[permutation[0].node_id].time -= time_switched
                     adjusted_allocations[permutation[1].node_id].time += time_switched
+
+                    # Does hill climbing on the outer metareasoning problem that is a conditional
+                    if ((node_0.expression_type == "conditional" and node_0.in_subtree is False)
+                            or (node_1.expression_type == "conditional" and node_1.in_subtree is False)):
+
+                        if node_0.expression_type == "conditional" and node_0.in_subtree is False:
+                            # Reallocate the budgets for the inner metareasoning problems
+                            node_0.true_subprogram.budget = self.allocations[node_0.id].time
+                            node_0.false_subprogram.budget = self.allocations[node_0.id].time
+
+                            # Do naive hill climbing on the branches
+                            true_allocations = node_0.true_subprogram.naive_hill_climbing(inner=True)
+                            false_allocations = node_0.false_subprogram.naive_hill_climbing(inner=True)
+
+                        else:
+                            # Reallocate the budgets for the inner metareasoning problems
+                            node_1.true_subprogram.budget = self.allocations[node_1.id].time
+                            node_1.false_subprogram.budget = self.allocations[node_1.id].time
+
+                            # Do naive hill climbing on the branches
+                            true_allocations = node_1.true_subprogram.naive_hill_climbing(inner=True)
+                            false_allocations = node_1.false_subprogram.naive_hill_climbing(inner=True)
 
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations):
@@ -249,13 +226,13 @@ class ContractProgram:
 
                     adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
 
-                    print_allocations = [i.time for i in adjusted_allocations]
+                    print_allocations_outer = [i.time for i in adjusted_allocations]
                     temp_time_switched = time_switched
 
                     # Check for rounding
                     if self.decimals is not None:
                         # utils.print_allocations(adjusted_allocations)
-                        print_allocations = [round(i.time, self.decimals) for i in adjusted_allocations]
+                        print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
                         eu_adjusted = round(eu_adjusted, self.decimals)
                         eu_original = round(eu_original, self.decimals)
                         self.global_expected_utility(self.allocations) * self.scale
@@ -263,7 +240,7 @@ class ContractProgram:
 
                     if verbose:
                         message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
-                        print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations))
+                        print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations_outer))
 
             # arg max here
             if possible_local_max:
@@ -277,6 +254,7 @@ class ContractProgram:
                 time_switched = time_switched / decay
         if inner:
             return self.allocations
+
         else:
             return [self.allocations, true_allocations, false_allocations]
 
@@ -299,7 +277,8 @@ class ContractProgram:
 
         # Do an initial pass to find the conditionals to adjust the budget
         for node_id in list_of_ordered_ids:
-            if self.find_node(node_id, self.program_dag).expression_type == "conditional" and self.find_node(node_id, self.program_dag).in_subtree:
+            if self.find_node(node_id, self.program_dag).expression_type == "conditional" and self.find_node(node_id,
+                                                                                                             self.program_dag).in_subtree:
                 # Assume every conditional takes tau time
                 tau = self.performance_profile.calculate_tau()
                 # Subtract tau from the budget
@@ -311,7 +290,8 @@ class ContractProgram:
         for node_id in list_of_ordered_ids:
 
             # Continue since we already did the initial pass
-            if self.find_node(node_id, self.program_dag).expression_type == "conditional" and self.find_node(node_id, self.program_dag).in_subtree:
+            if self.find_node(node_id, self.program_dag).expression_type == "conditional" and self.find_node(node_id,
+                                                                                                             self.program_dag).in_subtree:
                 continue
 
             allocation = self.find_uniform_allocation(budget)

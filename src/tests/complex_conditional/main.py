@@ -210,6 +210,6 @@ if __name__ == "__main__":
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))
 
     # Test initial vs optimal expected utility and allocations
-    test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
-    test.find_utility_and_allocations(initial_allocation="uniform with noise", outer_program=program_outer, verbose=False)
-    test.find_utility_and_allocations(initial_allocation="Dirichlet", outer_program=program_outer, verbose=False)
+    test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
+    # test.find_utility_and_allocations(initial_allocation="uniform with noise", outer_program=program_outer, verbose=False)
+    # test.find_utility_and_allocations(initial_allocation="Dirichlet", outer_program=program_outer, verbose=False)
