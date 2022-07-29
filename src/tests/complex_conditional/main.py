@@ -153,7 +153,7 @@ if __name__ == "__main__":
         # Need to initialize it after adjusting program_dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, "conditional", 10000]
+        generator.manual_override = [0.1, 0.1, 1000, 0.1, 0.1, 0.1, 0.1, "conditional", 10000]
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
@@ -210,6 +210,6 @@ if __name__ == "__main__":
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))
 
     # Test initial vs optimal expected utility and allocations
-    test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
+    test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
     # test.find_utility_and_allocations(initial_allocation="uniform with noise", outer_program=program_outer, verbose=False)
     # test.find_utility_and_allocations(initial_allocation="Dirichlet", outer_program=program_outer, verbose=False)

@@ -2,6 +2,7 @@ import numpy as np
 from geneticalgorithm import geneticalgorithm as ga
 from time import sleep
 from progress.bar import ChargingBar
+from timeit import default_timer as timer
 
 # from src.classes import utils
 from src.classes import utils
@@ -53,6 +54,8 @@ class Test:
         :param verbose: bool, prints the optimization steps
         :return: None
         """
+        start = timer()
+
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initialize_allocations(initial_allocation=initial_allocation, contract_program=outer_program)
 
@@ -129,12 +132,17 @@ class Test:
 
             eu_optimal = round(eu_optimal, self.contract_program.decimals)
 
+        # End the timer
+        end = timer()
+
         print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
               "Time Allocations (outer): {}".format(eu_optimal, optimal_time_allocations_outer))
 
         print("{:<62}Time Allocations (inner-true): {}".format("", optimal_time_allocations_inner_true))
 
         print("{:<62}Time Allocations (inner-false): {} \n".format("", optimal_time_allocations_inner_false))
+
+        print("{:<62}Execution Time (seconds): {}".format("", end - start))
 
     def print_tree(self, root, marker_str="+- ", level_markers=None):
         """
