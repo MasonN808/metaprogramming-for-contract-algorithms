@@ -32,7 +32,7 @@ class ContractProgram:
     """
     POPULOUS_FILE_NAME = "populous.json"
 
-    def __init__(self, program_id, parent_program, program_dag, budget, scale, decimals, quality_interval, time_interval, time_step_size, in_subtree, generator_dag):
+    def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals, quality_interval, time_interval, time_step_size, in_subtree, generator_dag):
         self.program_id = program_id
         self.performance_profile = PerformanceProfile(program_dag=program_dag, generator_dag=generator_dag, file_name=self.POPULOUS_FILE_NAME,
                                                       time_interval=time_interval, time_limit=budget,
@@ -49,6 +49,7 @@ class ContractProgram:
         self.in_subtree = in_subtree
         # Pointer to the parent program that the subprogram is an induced subgraph of
         self.parent_program = parent_program
+        self.child_programs = child_programs
 
         self.generator_dag = generator_dag
 
@@ -164,11 +165,15 @@ class ContractProgram:
         true_allocations = []
         false_allocations = []
         while time_switched > threshold:
+
             possible_local_max = []
+
             # Go through all permutations of the time allocations
             for permutation in permutations(self.allocations, 2):
-                node_0 = self.find_node(permutation[0].node_id)
-                node_1 = self.find_node(permutation[1].node_id)
+
+                node_0 = self.find_node(permutation[0].node_id, self.program_dag)
+                node_1 = self.find_node(permutation[1].node_id, self.program_dag)
+
                 # Makes a deep copy to avoid pointers to the same list
                 adjusted_allocations = copy.deepcopy(self.allocations)
 
@@ -209,9 +214,9 @@ class ContractProgram:
 
                 else:
                     # Check if node is child of conditional so that both children of the conditional are allocated same time
-                    if self.child_of_conditional(self.find_node(permutation[0].node_id)):
+                    if self.child_of_conditional(self.find_node(permutation[0].node_id, self.program_dag)):
                         # find the neighbor node
-                        neighbor = self.find_neighbor_branch(self.find_node(permutation[0].node_id))
+                        neighbor = self.find_neighbor_branch(self.find_node(permutation[0].node_id, self.program_dag))
 
                         # Adjust the allocation to the traversed node under the conditional
                         adjusted_allocations[permutation[0].node_id].time -= time_switched
@@ -222,9 +227,9 @@ class ContractProgram:
                         adjusted_allocations[permutation[1].node_id].time += time_switched
 
                     # Check if node is child of conditional so that both children of the conditional are allocated same time
-                    elif self.child_of_conditional(self.find_node(permutation[1].node_id)):
+                    elif self.child_of_conditional(self.find_node(permutation[1].node_id, self.program_dag)):
                         # find the neighbor node
-                        neighbor = self.find_neighbor_branch(self.find_node(permutation[1].node_id))
+                        neighbor = self.find_neighbor_branch(self.find_node(permutation[1].node_id, self.program_dag))
 
                         # Adjust the allocation to the traversed node under the conditional
                         adjusted_allocations[permutation[1].node_id].time += time_switched

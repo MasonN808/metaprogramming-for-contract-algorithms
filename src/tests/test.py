@@ -4,7 +4,6 @@ from time import sleep
 from progress.bar import ChargingBar
 
 # from src.classes import utils
-from src.classes import utils
 from src.classes.nodes.node import Node
 
 
@@ -56,31 +55,62 @@ class Test:
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initialize_allocations(initial_allocation=initial_allocation, contract_program=outer_program)
 
-        # Initialize a copy of the time allocations that will get modified
-        allocations = self.contract_program.allocations
-        initial_time_allocations = [i.time for i in allocations]
-
         eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
 
         if self.contract_program.decimals is not None:
-            initial_time_allocations = []
-            # for i in self.contract_program.allocations:
-            initial_time_allocations = [round(i.time, self.contract_program.decimals) for i in self.contract_program.allocations]
+
+            initial_time_allocations_outer = []
+            initial_time_allocations_inner_true = []
+            initial_time_allocations_inner_false = []
+
+            for time_allocation in self.contract_program.allocations:
+
+                # Check that it's not None
+                if time_allocation.time is None:
+                    continue
+
+                initial_time_allocations_outer.append(round(time_allocation.time, self.contract_program.decimals))
+
+            for time_allocation in self.contract_program.child_programs[0].allocations:
+
+                # Check that it's not None
+                if time_allocation.time is None:
+                    continue
+
+                initial_time_allocations_inner_true.append(round(time_allocation.time, self.contract_program.decimals))
+
+            for time_allocation in self.contract_program.child_programs[1].allocations:
+
+                # Check that it's not None
+                if time_allocation.time is None:
+                    continue
+
+                initial_time_allocations_inner_false.append(round(time_allocation.time, self.contract_program.decimals))
+
             eu_initial = round(eu_initial, self.contract_program.decimals)
+
+        else:
+            initial_time_allocations_outer = [time_allocation.time for time_allocation in self.contract_program.allocations]
+            initial_time_allocations_inner_true = [time_allocation.time for time_allocation in self.contract_program.child_programs[0].allocations]
+            initial_time_allocations_inner_false = [time_allocation.time for time_allocation in self.contract_program.child_programs[1].allocations]
 
         print(" {} \n ----------------------".format(initial_allocation))
         # The initial time allocations for each contract algorithm
         print("                   Initial ==> Expected Utility: {:<5} ==> "
-              "Time Allocations: {}".format(eu_initial, initial_time_allocations))
+              "Time Allocations (outer): {}".format(eu_initial, initial_time_allocations_outer))
+
+        print("{:<62}Time Allocations (inner-true): {}".format("", initial_time_allocations_inner_true))
+
+        print("{:<62}Time Allocations (inner-false): {}".format("", initial_time_allocations_inner_false))
 
         # This is a list of TimeAllocation objects
         allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
-        optimal_time_allocations = [i.time for i in allocations]
+        optimal_time_allocations = [time_allocation.time for time_allocation in allocations]
 
         eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
 
         if self.contract_program.decimals is not None:
-            optimal_time_allocations = [round(i.time, self.contract_program.decimals) for i in
+            optimal_time_allocations = [round(time_allocation.time, self.contract_program.decimals) for time_allocation in
                                         self.contract_program.allocations]
             eu_optimal = round(eu_optimal, self.contract_program.decimals)
 

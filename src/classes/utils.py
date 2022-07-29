@@ -8,9 +8,9 @@ def print_allocations(allocations) -> None:
     print([i.time for i in allocations])
 
 
-def flatten(l):
+def flatten(arr):
     flattened_list = []
-    for sublist in l:
+    for sublist in arr:
         if isinstance(sublist, list):
             for item in sublist:
                 flattened_list.append(item)

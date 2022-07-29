@@ -163,7 +163,7 @@ if __name__ == "__main__":
 
     # Create the program with some budget
 
-    program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
+    program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag)
 
     # Initialize the pointers of the nodes to the program it is in
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     # Add the left subtree
     true_subtree = DirectedAcyclicGraph(nodes_inner_true, root=node_inner_true_root)
     # Convert to a contract program
-    node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
+    node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
                                                    quality_interval=QUALITY_INTERVAL,
                                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=None)
 
@@ -183,9 +183,11 @@ if __name__ == "__main__":
     # Add the right subtree
     false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
     # Convert to a contract program
-    node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
+    node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, child_programs=None, program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
                                                     quality_interval=QUALITY_INTERVAL,
                                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=None)
+
+    program_outer.child_programs = [node_outer_1.true_subprogram, node_outer_1.false_subprogram]
 
     # Initialize the pointers of the nodes to the program it is in
     initialize_node_pointers_current_program(node_outer_1.false_subprogram)
