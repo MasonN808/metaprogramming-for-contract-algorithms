@@ -65,7 +65,7 @@ class ContractProgram:
 
         # Flatten the list of qualities
         qualities = utils.flatten(qualities)
-        print(qualities)
+        # print(qualities)
 
         return math.prod(qualities)
 
@@ -117,18 +117,7 @@ class ContractProgram:
 
                 # Assuming we created the DAGs properly, this should be the first node in the allocations
                 elif node.expression_type == "conditional" and node.in_subtree is True:
-                    # Get the parents' qualities given their time allocations
-                    parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
-
-                    # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time, id, parent_qualities=parent_qualities)
-
-                    # Calculates the average quality on the list of qualities for querying
-                    average_quality = self.performance_profile.average_quality(qualities)
-
-                    average_qualities.append(average_quality)
-
-                    probability *= self.performance_profile.query_probability_contract_expression(average_quality, qualities)
+                    continue
 
                 # node.expression_type == "conditional" and node.in_subtree is False
                 else:
@@ -149,7 +138,7 @@ class ContractProgram:
 
         return expected_utility
 
-    def naive_hill_climbing(self, decay=1.1, threshold=.0001, verbose=False, inner=False) -> [float]:
+    def naive_hill_climbing(self, decay=1.1, threshold=.01, verbose=False, inner=False) -> [float]:
         """
         Does naive hill climbing search by randomly replacing a set amount of time s between two different contract
         algorithms. If the expected value of the root node of the contract algorithm increases, we commit to the
@@ -161,15 +150,23 @@ class ContractProgram:
         :param decay: float, the decay rate of the temperature during annealing
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
+        # print(self.budget)
         time_switched = self.find_uniform_allocation(self.budget)
+
         true_allocations = []
         false_allocations = []
+
         while time_switched > threshold:
 
             possible_local_max = []
 
+            # utils.print_allocations(self.allocations)
+            refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
+
             # Go through all permutations of the time allocations
-            for permutation in permutations(self.allocations, 2):
+            for permutation in permutations(refactored_allocations, 2):
+
+                # print([permutation[0].node_id, permutation[1].node_id])
 
                 node_0 = self.find_node(permutation[0].node_id, self.program_dag)
                 node_1 = self.find_node(permutation[1].node_id, self.program_dag)
@@ -192,8 +189,8 @@ class ContractProgram:
 
                     if node_0.expression_type == "conditional" and node_0.in_subtree is False:
                         # Reallocate the budgets for the inner metareasoning problems
-                        node_0.true_subprogram.budget = self.allocations[node_0.id]
-                        node_0.false_subprogram.budget = self.allocations[node_0.id]
+                        node_0.true_subprogram.budget = self.allocations[node_0.id].time
+                        node_0.false_subprogram.budget = self.allocations[node_0.id].time
 
                         # Do naive hill climbing on the branches
                         true_allocations = node_0.true_subprogram.naive_hill_climbing(inner=True)
@@ -201,8 +198,8 @@ class ContractProgram:
 
                     else:
                         # Reallocate the budgets for the inner metareasoning problems
-                        node_1.true_subprogram.budget = self.allocations[node_1.id]
-                        node_1.false_subprogram.budget = self.allocations[node_1.id]
+                        node_1.true_subprogram.budget = self.allocations[node_1.id].time
+                        node_1.false_subprogram.budget = self.allocations[node_1.id].time
 
                         # Do naive hill climbing on the branches
                         true_allocations = node_1.true_subprogram.naive_hill_climbing(inner=True)
@@ -213,35 +210,35 @@ class ContractProgram:
                     continue
 
                 else:
-                    # Check if node is child of conditional so that both children of the conditional are allocated same time
-                    if self.child_of_conditional(self.find_node(permutation[0].node_id, self.program_dag)):
-                        # find the neighbor node
-                        neighbor = self.find_neighbor_branch(self.find_node(permutation[0].node_id, self.program_dag))
+                    # # Check if node is child of conditional so that both children of the conditional are allocated same time
+                    # if self.child_of_conditional(self.find_node(permutation[0].node_id, self.program_dag)):
+                    #     # find the neighbor node
+                    #     neighbor = self.find_neighbor_branch(self.find_node(permutation[0].node_id, self.program_dag))
+                    #
+                    #     # Adjust the allocation to the traversed node under the conditional
+                    #     adjusted_allocations[permutation[0].node_id].time -= time_switched
+                    #     # Adjust allocation to the neighbor in parallel
+                    #     adjusted_allocations[neighbor.id].time -= time_switched
+                    #
+                    #     # Adjust allocation to then non-child of a conditional
+                    #     adjusted_allocations[permutation[1].node_id].time += time_switched
 
-                        # Adjust the allocation to the traversed node under the conditional
-                        adjusted_allocations[permutation[0].node_id].time -= time_switched
-                        # Adjust allocation to the neighbor in parallel
-                        adjusted_allocations[neighbor.id].time -= time_switched
+                    # # Check if node is child of conditional so that both children of the conditional are allocated same time
+                    # elif self.child_of_conditional(self.find_node(permutation[1].node_id, self.program_dag)):
+                    #     # find the neighbor node
+                    #     neighbor = self.find_neighbor_branch(self.find_node(permutation[1].node_id, self.program_dag))
+                    #
+                    #     # Adjust the allocation to the traversed node under the conditional
+                    #     adjusted_allocations[permutation[1].node_id].time += time_switched
+                    #     # Adjust allocation to the neighbor in parallel
+                    #     adjusted_allocations[neighbor.id].time += time_switched
+                    #
+                    #     # Adjust allocation to then non-child of a conditional
+                    #     adjusted_allocations[permutation[0].node_id].time -= time_switched
 
-                        # Adjust allocation to then non-child of a conditional
-                        adjusted_allocations[permutation[1].node_id].time += time_switched
-
-                    # Check if node is child of conditional so that both children of the conditional are allocated same time
-                    elif self.child_of_conditional(self.find_node(permutation[1].node_id, self.program_dag)):
-                        # find the neighbor node
-                        neighbor = self.find_neighbor_branch(self.find_node(permutation[1].node_id, self.program_dag))
-
-                        # Adjust the allocation to the traversed node under the conditional
-                        adjusted_allocations[permutation[1].node_id].time += time_switched
-                        # Adjust allocation to the neighbor in parallel
-                        adjusted_allocations[neighbor.id].time += time_switched
-
-                        # Adjust allocation to then non-child of a conditional
-                        adjusted_allocations[permutation[0].node_id].time -= time_switched
-
-                    else:
-                        adjusted_allocations[permutation[0].node_id].time -= time_switched
-                        adjusted_allocations[permutation[1].node_id].time += time_switched
+                    # else:
+                    adjusted_allocations[permutation[0].node_id].time -= time_switched
+                    adjusted_allocations[permutation[1].node_id].time += time_switched
 
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations):
@@ -249,11 +246,15 @@ class ContractProgram:
 
                     eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
                     eu_original = self.global_expected_utility(self.allocations) * self.scale
+
+                    adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
+
                     print_allocations = [i.time for i in adjusted_allocations]
                     temp_time_switched = time_switched
 
                     # Check for rounding
                     if self.decimals is not None:
+                        # utils.print_allocations(adjusted_allocations)
                         print_allocations = [round(i.time, self.decimals) for i in adjusted_allocations]
                         eu_adjusted = round(eu_adjusted, self.decimals)
                         eu_original = round(eu_original, self.decimals)
@@ -316,7 +317,7 @@ class ContractProgram:
             allocation = self.find_uniform_allocation(budget)
             time_allocations[node_id] = TimeAllocation(node_id, allocation)
 
-        print("DEBUG-ALLOCATIONS-{}".format(utils.print_allocations(time_allocations)))
+        # print("DEBUG-ALLOCATIONS-{}".format(utils.print_allocations(time_allocations)))
         return time_allocations
 
     def dirichlet_budget(self) -> [TimeAllocation]:
@@ -523,3 +524,4 @@ class ContractProgram:
             if child.expression_type == "conditional":
                 return True
         return False
+

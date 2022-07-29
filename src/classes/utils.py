@@ -18,3 +18,11 @@ def flatten(arr):
             flattened_list.append(sublist)
 
     return flattened_list
+
+
+def remove_nones_time_allocations(allocations):
+    return [time_allocation for time_allocation in allocations if time_allocation.time is not None]
+
+
+def remove_nones_times(allocations):
+    return [time for time in allocations if time is not None]

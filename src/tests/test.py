@@ -4,6 +4,7 @@ from time import sleep
 from progress.bar import ChargingBar
 
 # from src.classes import utils
+from src.classes import utils
 from src.classes.nodes.node import Node
 
 
@@ -55,7 +56,8 @@ class Test:
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initialize_allocations(initial_allocation=initial_allocation, contract_program=outer_program)
 
-        eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
+        eu_initial = self.contract_program.global_expected_utility(
+            self.contract_program.allocations) * self.contract_program.scale
 
         if self.contract_program.decimals is not None:
 
@@ -90,9 +92,12 @@ class Test:
             eu_initial = round(eu_initial, self.contract_program.decimals)
 
         else:
-            initial_time_allocations_outer = [time_allocation.time for time_allocation in self.contract_program.allocations]
-            initial_time_allocations_inner_true = [time_allocation.time for time_allocation in self.contract_program.child_programs[0].allocations]
-            initial_time_allocations_inner_false = [time_allocation.time for time_allocation in self.contract_program.child_programs[1].allocations]
+            initial_time_allocations_outer = [time_allocation.time for time_allocation in
+                                              self.contract_program.allocations]
+            initial_time_allocations_inner_true = [time_allocation.time for time_allocation in
+                                                   self.contract_program.child_programs[0].allocations]
+            initial_time_allocations_inner_false = [time_allocation.time for time_allocation in
+                                                    self.contract_program.child_programs[1].allocations]
 
         print(" {} \n ----------------------".format(initial_allocation))
         # The initial time allocations for each contract algorithm
@@ -103,19 +108,33 @@ class Test:
 
         print("{:<62}Time Allocations (inner-false): {}".format("", initial_time_allocations_inner_false))
 
-        # This is a list of TimeAllocation objects
+        # Should output a list of lists of optimal time allocations
         allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
-        optimal_time_allocations = [time_allocation.time for time_allocation in allocations]
 
-        eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
+        optimal_time_allocations_outer = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[0]])
+        optimal_time_allocations_inner_true = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
+        optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])
+
+        eu_optimal = self.contract_program.global_expected_utility(allocations[0]) * self.contract_program.scale
 
         if self.contract_program.decimals is not None:
-            optimal_time_allocations = [round(time_allocation.time, self.contract_program.decimals) for time_allocation in
-                                        self.contract_program.allocations]
+            optimal_time_allocations_outer = [round(time, self.contract_program.decimals) for
+                                              time in optimal_time_allocations_outer]
+
+            optimal_time_allocations_inner_true = [round(time, self.contract_program.decimals) for
+                                                   time in optimal_time_allocations_inner_true]
+
+            optimal_time_allocations_inner_false = [round(time, self.contract_program.decimals) for
+                                                    time in optimal_time_allocations_inner_false]
+
             eu_optimal = round(eu_optimal, self.contract_program.decimals)
 
         print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
-              "Time Allocations: {} \n".format(eu_optimal, optimal_time_allocations))
+              "Time Allocations (outer): {}".format(eu_optimal, optimal_time_allocations_outer))
+
+        print("{:<62}Time Allocations (inner-true): {}".format("", optimal_time_allocations_inner_true))
+
+        print("{:<62}Time Allocations (inner-false): {} \n".format("", optimal_time_allocations_inner_false))
 
     def print_tree(self, root, marker_str="+- ", level_markers=None):
         """
@@ -138,6 +157,7 @@ class Test:
                 return connection_str
             else:
                 return empty_str
+
         markers = "".join(map(mapper, level_markers[:-1]))
         markers += marker_str if level > 0 else ""
         print(f"{markers}{root.id}")
@@ -172,9 +192,9 @@ class Test:
             inner_contract_programs = self.find_inner_programs(contract_program)
 
             for inner_contract_program in inner_contract_programs:
-
                 # initialize the allocations to the inner contract programs with the time allocation of the outer conditonal node
-                inner_contract_program.budget = contract_program.allocations[self.find_node_id_of_conditional(contract_program)].time
+                inner_contract_program.budget = contract_program.allocations[
+                    self.find_node_id_of_conditional(contract_program)].time
 
                 self.initialize_allocations(initial_allocation, inner_contract_program)
 

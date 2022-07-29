@@ -303,7 +303,7 @@ class PerformanceProfile:
                 parent_qualities = []
 
                 for parent in node.parents:
-                    utils.print_allocations(time_allocations)
+                    # utils.print_allocations(time_allocations)
                     # print([i.id for i in node.parents])
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
                     # Reset the parent qualities for the next node
@@ -357,7 +357,7 @@ class PerformanceProfile:
                 return []
 
             else:
-                utils.print_allocations(time_allocations)
+                # utils.print_allocations(time_allocations)
                 # print(node.current_program.program_id)
                 quality = self.query_average_quality(node.id, time_allocations[node.id], [])
 
@@ -392,9 +392,8 @@ class PerformanceProfile:
         :param: node_id: The id of the node
         :return Node object
         """
-        print()
-        print([i.id for i in dag.nodes])
-        print(node_id)
+        # print([i.id for i in dag.nodes])
+        # print(node_id)
         nodes = dag.nodes
         for node in nodes:
             if node.id == node_id:
