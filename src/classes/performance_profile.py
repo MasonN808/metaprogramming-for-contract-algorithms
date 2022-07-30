@@ -1,6 +1,7 @@
 import json
 import numpy as np
 
+from src.classes import utils
 from src.classes.nodes.node import Node
 
 
@@ -164,14 +165,12 @@ class PerformanceProfile:
 
         return probability
 
-    def query_probability_conditional_expression(self, conditional_node) -> [float, [float]]:
+    def query_probability_and_quality_from_conditional_expression(self, conditional_node) -> [float, [float]]:
         """
         The performance profile (conditional expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
 
         :param conditional_node: Node object, the conditional node being evaluated
-        :param queried_quality_branches: [float], A list of qualities from query_quality_list_on_interval() for the two branches
-        :param qualities_branches: [float], A list of the queried qualities from the branches given their time allocations
         :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
         allocation
         """
@@ -193,11 +192,10 @@ class PerformanceProfile:
                 found_embedded_if = True
 
         if not found_embedded_if:
+
             # Create a list with the joint probability distribution of the conditional branch and the last quality of the branch
-            true_probability_quality = self.conditional_contract_program_probability_quality(
-                conditional_node.true_subprogram)
-            false_probability_quality = self.conditional_contract_program_probability_quality(
-                conditional_node.false_subprogram)
+            true_probability_quality = self.conditional_contract_program_probability_quality(conditional_node.true_subprogram)
+            false_probability_quality = self.conditional_contract_program_probability_quality(conditional_node.false_subprogram)
 
             performance_profile_true = true_probability_quality[0]
             performance_profile_false = false_probability_quality[0]
@@ -207,15 +205,19 @@ class PerformanceProfile:
 
             root_qualities.extend([true_quality, false_quality])
 
+            conditional_quality = rho * true_quality + (1 - rho) * false_quality
+
             probability = rho * performance_profile_true + (1 - rho) * performance_profile_false
 
         else:
             raise ValueError("Found an embedded conditional")
-        return [probability, root_qualities]
+
+        return [probability, conditional_quality]
 
     def conditional_contract_program_probability_quality(self, contract_program):
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
         # Assume for now that a contract_program is a conditional contract program
+
         probability = 1.0
         last_quality = []
 
@@ -230,40 +232,51 @@ class PerformanceProfile:
                 # break, since we found the first index
                 break
 
-        for (id, time_allocation) in enumerate(time_allocations):
+        refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
+        # utils.print_allocations(refactored_allocations)
+        for time_allocation in refactored_allocations:
             # print(utils.print_allocations(time_allocations))
             # Skip the time allocation with None time since it is present in a different DAG
             if time_allocation.time is None:
                 continue
 
             # print("id {}".format(contract_program.program_id))
-            node = self.find_node(id, contract_program.program_dag)
+            node = self.find_node(time_allocation.node_id, contract_program.program_dag)
 
-            if node.traversed:
-                pass
+            # print(time_allocation.node_id)
 
-            else:
-                node.traversed = True
+            # if node.traversed:
+            #     pass
 
-                if node.expression_type != "conditional":
-                    # Get the parents' qualities given their time allocations
-                    parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
+            # else:
+            # print(time_allocation.node_id)
+            # node.traversed = True
 
-                    # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities = self.query_quality_list_on_interval(time_allocation.time, id,
-                                                                    parent_qualities=parent_qualities)
+            if node.expression_type != "conditional":
 
-                    # Calculates the average quality on the list of qualities for querying
-                    average_quality = self.average_quality(qualities)
+                # Get the parents' qualities given their time allocations
+                parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
 
-                    # Keep only the average quality of the last node in the program
-                    # print("id:{}-{}".format(node.id, node.is_conditional_root))
-                    if node.id == conditional_root_index:
-                        last_quality.append(average_quality)
+                # Outputs a list of qualities from the instances at the specified time given a quality mapping
 
-                    probability *= self.query_probability_contract_expression(average_quality, qualities)
+                qualities = self.query_quality_list_on_interval(time_allocation.time, time_allocation.node_id,
+                                                                parent_qualities=parent_qualities)
 
-        return [probability, last_quality]
+                # Calculates the average quality on the list of qualities for querying
+                average_quality = self.average_quality(qualities)
+
+                # Keep only the average quality of the last node in the program
+                if node.id == conditional_root_index:
+
+                    last_quality.append(average_quality)
+
+                # print([average_quality, qualities])
+
+                probability *= self.query_probability_contract_expression(average_quality, qualities)
+
+        # self.reset_traversed()
+
+        return [probability, last_quality[0]]
 
     @staticmethod
     def estimate_rho() -> float:
@@ -296,8 +309,15 @@ class PerformanceProfile:
         depth += 1
 
         if node.parents:
+            if self.are_conditional_roots(node.parents):
+                # print([parent.id for parent in node.parents])
+                conditional_node = self.find_conditional_node(self.program_dag)
+
+                parent_quality = self.query_probability_and_quality_from_conditional_expression(conditional_node)[1]
+                return parent_quality
+
             # Check that none of the parents are conditional expressions
-            if not Node.is_conditional_node(node, "parents"):
+            elif not Node.is_conditional_node(node, "parents"):
 
                 parent_qualities = []
 
@@ -313,6 +333,7 @@ class PerformanceProfile:
 
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
+                    # utils.print_allocations(time_allocations)
                     quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
 
                     return quality
@@ -398,3 +419,29 @@ class PerformanceProfile:
             if node.id == node_id:
                 return node
         raise IndexError("Node not found with given id")
+
+    @staticmethod
+    def find_conditional_node(dag) -> Node:
+        nodes = dag.nodes
+        for node in nodes:
+            if node.expression_type == "conditional":
+                return node
+        raise IndexError("Conditional node not found in DAG")
+
+    @staticmethod
+    def are_conditional_roots(nodes) -> bool:
+        result = all(node.is_conditional_root is True for node in nodes)
+
+        if result:
+            return True
+        else:
+            return False
+
+    def reset_traversed(self) -> None:
+        """
+        Resets the traversed pointers to Node objects
+
+        :return: None
+        """
+        for node in self.program_dag.nodes:
+            node.traversed = False

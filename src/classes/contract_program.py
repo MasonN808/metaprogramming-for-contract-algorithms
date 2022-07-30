@@ -90,48 +90,49 @@ class ContractProgram:
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
         # print([i.node_id for i in time_allocations])
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
-
+        # print("---------------")
         for time_allocation in refactored_allocations:
-
+            # print(time_allocation.node_id)
             node = self.find_node(time_allocation.node_id, self.program_dag)
 
-            if node.traversed:
+            # if node.traversed:
+            #     continue
+            #
+            # else:
+            #     node.traversed = True
+            #
+            #     # Assuming we created the DAGs properly, this should be the first node in the allocations
+            if node.expression_type == "conditional" and node.in_subtree is True:
                 continue
 
+            elif node.expression_type != "conditional":
+                # Get the parents' qualities given their time allocations
+                parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
+
+                # Outputs a list of qualities from the instances at the specified time given a quality mapping
+                qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time, time_allocation.node_id,
+                                                                                    parent_qualities=parent_qualities)
+
+                # Calculates the average quality on the list of qualities for querying
+                average_quality = self.performance_profile.average_quality(qualities)
+
+                average_qualities.append(average_quality)
+
+                probability *= self.performance_profile.query_probability_contract_expression(average_quality,
+                                                                                              qualities)
+
+            # node.expression_type == "conditional" and node.in_subtree is False
             else:
-                node.traversed = True
+                # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
 
-                # Assuming we created the DAGs properly, this should be the first node in the allocations
-                if node.expression_type == "conditional" and node.in_subtree is True:
-                    continue
+                probability_and_qualities = self.performance_profile.query_probability_and_quality_from_conditional_expression(node)
+                # print(probability_and_qualities)
+                # Multiply the current probability by the performance profile of the conditional node
+                probability *= probability_and_qualities[0]
 
-                elif node.expression_type != "conditional":
-                    # Get the parents' qualities given their time allocations
-                    parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
+                conditional_quality = probability_and_qualities[1]
 
-                    # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                    qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time, time_allocation.node_id,
-                                                                                        parent_qualities=parent_qualities)
-
-                    # Calculates the average quality on the list of qualities for querying
-                    average_quality = self.performance_profile.average_quality(qualities)
-
-                    average_qualities.append(average_quality)
-
-                    probability *= self.performance_profile.query_probability_contract_expression(average_quality,
-                                                                                                  qualities)
-
-                # node.expression_type == "conditional" and node.in_subtree is False
-                else:
-                    # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
-                    probability_and_qualities = self.performance_profile.query_probability_conditional_expression(node)
-
-                    # Multiply the current probability by the performance profile of the conditional node
-                    probability *= probability_and_qualities[0]
-
-                    root_qualities = probability_and_qualities[1]
-
-                    average_qualities.extend(root_qualities)
+                average_qualities.append(conditional_quality)
 
         expected_utility = probability * self.global_utility(average_qualities)
 
@@ -153,8 +154,14 @@ class ContractProgram:
         :param decay: float, the decay rate of the temperature during annealing
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
+        # Check that the net budget doesn't go negative if taxed with tau
+        tau = self.performance_profile.calculate_tau()
+        taxed_budget = self.budget - tau
+
         # Check if the budget is 0 for the inner metareasoning
-        if self.budget != 0:
+        if self.budget != 0 and not taxed_budget <= 0:
+
+            self.initialize_allocations(initial_allocation="uniform")
 
             # Initialize the amount of time to be switched
             time_switched = self.find_uniform_allocation(self.budget)
@@ -201,26 +208,23 @@ class ContractProgram:
                         adjusted_allocations[permutation[1].node_id].time += time_switched
 
                         # Does hill climbing on the outer metareasoning problem that is a conditional
-                        if ((node_0.expression_type == "conditional" and node_0.in_subtree is False)
-                                or (node_1.expression_type == "conditional" and node_1.in_subtree is False)):
+                        if node_0.expression_type == "conditional" and node_0.in_subtree is False:
+                            # Reallocate the budgets for the inner metareasoning problems
+                            node_0.true_subprogram.budget = copy.deepcopy(adjusted_allocations[node_0.id].time)
+                            node_0.false_subprogram.budget = copy.deepcopy(adjusted_allocations[node_0.id].time)
 
-                            if node_0.expression_type == "conditional" and node_0.in_subtree is False:
-                                # Reallocate the budgets for the inner metareasoning problems
-                                node_0.true_subprogram.budget = adjusted_allocations[node_0.id].time
-                                node_0.false_subprogram.budget = adjusted_allocations[node_0.id].time
+                            # Do naive hill climbing on the branches
+                            true_allocations = node_0.true_subprogram.naive_hill_climbing(verbose=False, inner=True)
+                            false_allocations = node_0.false_subprogram.naive_hill_climbing(inner=True)
 
-                                # Do naive hill climbing on the branches
-                                true_allocations = node_0.true_subprogram.naive_hill_climbing(verbose=True, inner=True)
-                                false_allocations = node_0.false_subprogram.naive_hill_climbing(inner=True)
+                        if node_1.expression_type == "conditional" and node_1.in_subtree is False:
+                            # Reallocate the budgets for the inner metareasoning problems
+                            node_1.true_subprogram.budget = copy.deepcopy(adjusted_allocations[node_1.id].time)
+                            node_1.false_subprogram.budget = copy.deepcopy(adjusted_allocations[node_1.id].time)
 
-                            else:
-                                # Reallocate the budgets for the inner metareasoning problems
-                                node_1.true_subprogram.budget = adjusted_allocations[node_1.id].time
-                                node_1.false_subprogram.budget = adjusted_allocations[node_1.id].time
-
-                                # Do naive hill climbing on the branches
-                                true_allocations = node_1.true_subprogram.naive_hill_climbing(inner=True)
-                                false_allocations = node_1.false_subprogram.naive_hill_climbing(inner=True)
+                            # Do naive hill climbing on the branches
+                            true_allocations = node_1.true_subprogram.naive_hill_climbing(inner=True)
+                            false_allocations = node_1.false_subprogram.naive_hill_climbing(inner=True)
 
                         if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
 
@@ -269,8 +273,7 @@ class ContractProgram:
                 return [self.allocations, true_allocations, false_allocations]
 
         else:
-
-            return [0 for _ in self.allocations]
+            return [TimeAllocation(id, 0) for (id, allocation) in enumerate(self.allocations)]
 
     def uniform_budget(self) -> [TimeAllocation]:
         """
@@ -283,7 +286,6 @@ class ContractProgram:
         for i in range(self.generator_dag.order):
             time_allocations.append(TimeAllocation(i, None))
 
-        #
         budget = float(self.budget)
 
         # Initialize a list to properly loop through the nodes given that the node ids are not sequenced
@@ -291,8 +293,7 @@ class ContractProgram:
 
         # Do an initial pass to find the conditionals to adjust the budget
         for node_id in list_of_ordered_ids:
-            if self.find_node(node_id, self.program_dag).expression_type == "conditional" and self.find_node(node_id,
-                                                                                                             self.program_dag).in_subtree:
+            if self.find_node(node_id, self.program_dag).expression_type == "conditional" and self.find_node(node_id, self.program_dag).in_subtree:
                 # Assume every conditional takes tau time
                 tau = self.performance_profile.calculate_tau()
                 # Subtract tau from the budget
@@ -518,3 +519,15 @@ class ContractProgram:
             if child.expression_type == "conditional":
                 return True
         return False
+
+    def initialize_allocations(self, initial_allocation):
+        if initial_allocation == "uniform":
+
+            self.allocations = self.uniform_budget()
+
+        elif initial_allocation == "Dirichlet":
+            self.allocations = self.dirichlet_budget()
+        elif initial_allocation == "uniform with noise":
+            self.allocations = self.uniform_budget_with_noise()
+        else:
+            raise ValueError("Invalid initial allocation type")
