@@ -27,7 +27,7 @@ class Test:
             for i in range(0, iterations):
                 # Generate an initial allocation
                 self.initialize_allocations(initial_allocation)
-                optimal_allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
+                optimal_allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
                 optimal_time_allocations = [i.time for i in optimal_allocations]
                 eu_optimal = self.contract_program.global_expected_utility(
                     optimal_allocations) * self.contract_program.scale
@@ -76,21 +76,22 @@ class Test:
 
                 initial_time_allocations_outer.append(round(time_allocation.time, self.contract_program.decimals))
 
-            for time_allocation in self.contract_program.child_programs[0].allocations:
+            if self.contract_program.child_programs:
+                for time_allocation in self.contract_program.child_programs[0].allocations:
 
-                # Check that it's not None
-                if time_allocation.time is None:
-                    continue
+                    # Check that it's not None
+                    if time_allocation.time is None:
+                        continue
 
-                initial_time_allocations_inner_true.append(round(time_allocation.time, self.contract_program.decimals))
+                    initial_time_allocations_inner_true.append(round(time_allocation.time, self.contract_program.decimals))
 
-            for time_allocation in self.contract_program.child_programs[1].allocations:
+                for time_allocation in self.contract_program.child_programs[1].allocations:
 
-                # Check that it's not None
-                if time_allocation.time is None:
-                    continue
+                    # Check that it's not None
+                    if time_allocation.time is None:
+                        continue
 
-                initial_time_allocations_inner_false.append(round(time_allocation.time, self.contract_program.decimals))
+                    initial_time_allocations_inner_false.append(round(time_allocation.time, self.contract_program.decimals))
 
             eu_initial = round(eu_initial, self.contract_program.decimals)
 
@@ -112,13 +113,14 @@ class Test:
         print("{:<62}Time Allocations (inner-false): {}".format("", initial_time_allocations_inner_false))
 
         # Should output a list of lists of optimal time allocations
-        allocations = self.contract_program.naive_hill_climbing(verbose=verbose)
+        allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
 
         optimal_time_allocations_outer = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[0]])
         optimal_time_allocations_inner_true = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
         optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])
 
-        eu_optimal = self.contract_program.global_expected_utility(allocations[0]) * self.contract_program.scale
+        eu_optimal = self.contract_program.global_expected_utility(
+            allocations[0], self.contract_program.original_allocations_conditional_branches) * self.contract_program.scale
 
         if self.contract_program.decimals is not None:
             optimal_time_allocations_outer = [round(time, self.contract_program.decimals) for
@@ -198,13 +200,13 @@ class Test:
 
             # Find inner contract programs
             inner_contract_programs = self.find_inner_programs(contract_program)
+            if inner_contract_programs:
+                for inner_contract_program in inner_contract_programs:
+                    # initialize the allocations to the inner contract programs with the time allocation of the outer conditonal node
+                    inner_contract_program.budget = contract_program.allocations[
+                        self.find_node_id_of_conditional(contract_program)].time
 
-            for inner_contract_program in inner_contract_programs:
-                # initialize the allocations to the inner contract programs with the time allocation of the outer conditonal node
-                inner_contract_program.budget = contract_program.allocations[
-                    self.find_node_id_of_conditional(contract_program)].time
-
-                self.initialize_allocations(initial_allocation, inner_contract_program)
+                    self.initialize_allocations(initial_allocation, inner_contract_program)
 
         elif initial_allocation == "Dirichlet":
             contract_program.allocations = contract_program.dirichlet_budget()

@@ -16,17 +16,17 @@ if __name__ == "__main__":
 
     # Create a DAG manually for testing
     # Leaf nodes
-    node_3 = Node(3, [], [], expression_type="contract")
-    node_4 = Node(4, [], [], expression_type="contract")
-    node_5 = Node(5, [], [], expression_type="contract")
-    node_6 = Node(6, [], [], expression_type="contract")
+    node_3 = Node(3, [], [], expression_type="contract", in_subtree=False)
+    node_4 = Node(4, [], [], expression_type="contract", in_subtree=False)
+    node_5 = Node(5, [], [], expression_type="contract", in_subtree=False)
+    node_6 = Node(6, [], [], expression_type="contract", in_subtree=False)
 
     # Intermediate nodes
-    node_1 = Node(1, [node_3, node_4], [], expression_type="contract")
-    node_2 = Node(2, [node_5, node_6], [], expression_type="contract")
+    node_1 = Node(1, [node_3, node_4], [], expression_type="contract", in_subtree=False)
+    node_2 = Node(2, [node_5, node_6], [], expression_type="contract", in_subtree=False)
 
     # Root node
-    root = Node(0, [node_1, node_2], [], expression_type="contract")
+    root = Node(0, [node_1, node_2], [], expression_type="contract", in_subtree=False)
 
     # Add the children
     node_1.children = [root]
@@ -43,11 +43,17 @@ if __name__ == "__main__":
     dag = DirectedAcyclicGraph(nodes, root)
 
     # Used to create the synthetic data as instances and a populous file
-    generate = False
+    generate = True
     if not exists("populous.json") or generate:
         # Initialize a generator
-        generator = Generator(INSTANCES, dag, time_limit=TIME_LIMIT, time_step_size=STEP_SIZE, uniform_low=.05,
-                              uniform_high=.9)
+        generator = Generator(INSTANCES, program_dag=dag, time_limit=TIME_LIMIT, time_step_size=STEP_SIZE, uniform_low=.05,
+                              uniform_high=.9, generator_dag=dag)
+
+        # Initialize the velocities for the quality mappings in a list
+        # Need to initialize it after adjusting program_dag
+        # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
+        # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
+        generator.manual_override = [10, 0.1, 0.1, 0.1, 0.1, 10, 10]
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
@@ -56,11 +62,12 @@ if __name__ == "__main__":
         generator.populate(nodes, "populous.json")
 
     # Create the program with some budget
-    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.1)
+    program = ContractProgram(program_dag=dag, budget=BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.2, time_step_size=STEP_SIZE, child_programs=None, generator_dag=dag,
+                              in_subtree=False, parent_program=None, program_id=0)
 
     test = Test(program)
 
     # Test initial vs optimal expected utility and allocations
-    test.find_utility_and_allocations(initial_allocation="uniform", verbose=False)
-    test.find_utility_and_allocations(initial_allocation="uniform with noise", verbose=False)
-    test.find_utility_and_allocations(initial_allocation="Dirichlet", verbose=False)
+    test.find_utility_and_allocations(initial_allocation="uniform", verbose=False, outer_program=program)
+    test.find_utility_and_allocations(initial_allocation="uniform with noise", verbose=False, outer_program=program)
+    test.find_utility_and_allocations(initial_allocation="Dirichlet", verbose=False, outer_program=program)

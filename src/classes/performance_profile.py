@@ -38,6 +38,7 @@ class PerformanceProfile:
         return json.loads(f.read())
 
     def query_quality_list_on_interval(self, time, id, parent_qualities) -> [float]:
+        # TODO: This doesn't work exactly correctly (8/03/22) --> np.arange is off
         """
         Queries the quality mapping at a specific time, using some interval to create a distribution over qualities
 
@@ -61,20 +62,26 @@ class PerformanceProfile:
 
             qualities = []
 
+            num_decimals_interval = self.find_number_of_decimals(self.time_interval)
+
             # Initialize the start and end of the time interval for descritization of the prior
             # Check if time is equal to limit
             if time == self.time_limit:
-                start_step = ((time - self.time_interval) // self.time_interval) * self.time_interval
-                end_step = start_step + self.time_interval
+                start_step = round(((time - self.time_interval) // self.time_interval) * self.time_interval, num_decimals_interval)
+                end_step = round(start_step + self.time_interval, num_decimals_interval)
+
             else:
-                start_step = (time // self.time_interval) * self.time_interval
-                end_step = start_step + self.time_interval
+                start_step = round((time // self.time_interval) * self.time_interval, num_decimals_interval)
+                end_step = round(start_step + self.time_interval, num_decimals_interval)
 
             # Note: interval is [start_step, end_step) or [start_step, end_step] for time at limit
-            num_decimals = self.find_number_of_decimals(self.time_step_size)
+            num_decimals_step_size = self.find_number_of_decimals(self.time_step_size)
+
+            # print([start_step, end_step])
+            # print(np.arange(start_step, end_step, self.time_step_size))
 
             # Round to get rid of rounding error in division of time
-            for t in np.arange(start_step, end_step, self.time_step_size).round(num_decimals):
+            for t in np.arange(start_step, end_step, self.time_step_size).round(num_decimals_step_size):
                 # ["{}".format(t)]: The time allocation
                 # print(dictionary)
                 qualities += dictionary["{}".format(t)]
@@ -152,11 +159,13 @@ class PerformanceProfile:
 
         number_in_interval = 0
 
-        # Initialize the start and end of the quality interval for the posterior
-        start_quality = (queried_quality // self.quality_interval) * self.quality_interval
-        end_quality = start_quality + self.quality_interval
+        number_of_decimals = self.find_number_of_decimals(self.quality_interval)
 
-        # Note: interval of [start_step, end_step)
+        # Initialize the start and end of the quality interval for the posterior
+        start_quality = round((queried_quality // self.quality_interval) * self.quality_interval, number_of_decimals)
+        end_quality = round(start_quality + self.quality_interval, number_of_decimals)
+
+        # Note: interval of [start_step, end_step]
         for quality in quality_list:
             if start_quality <= quality <= end_quality:
                 number_in_interval += 1
@@ -207,10 +216,13 @@ class PerformanceProfile:
 
             conditional_quality = rho * true_quality + (1 - rho) * false_quality
 
-            probability = rho * performance_profile_true + (1 - rho) * performance_profile_false
+            probability = (rho * performance_profile_true) + ((1 - rho) * performance_profile_false)
 
         else:
+            # TODO: take into account embedded later
             raise ValueError("Found an embedded conditional")
+
+        # print([probability, conditional_quality, true_quality, false_quality])
 
         return [probability, conditional_quality]
 
@@ -233,24 +245,10 @@ class PerformanceProfile:
                 break
 
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
-        # utils.print_allocations(refactored_allocations)
+
         for time_allocation in refactored_allocations:
-            # print(utils.print_allocations(time_allocations))
-            # Skip the time allocation with None time since it is present in a different DAG
-            if time_allocation.time is None:
-                continue
 
-            # print("id {}".format(contract_program.program_id))
             node = self.find_node(time_allocation.node_id, contract_program.program_dag)
-
-            # print(time_allocation.node_id)
-
-            # if node.traversed:
-            #     pass
-
-            # else:
-            # print(time_allocation.node_id)
-            # node.traversed = True
 
             if node.expression_type != "conditional":
 

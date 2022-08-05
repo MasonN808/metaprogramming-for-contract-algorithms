@@ -15,13 +15,13 @@ if __name__ == "__main__":
     # Total budget for the DAG
     BUDGET = 10
     # Number of instances/simulations
-    INSTANCES = 10
+    INSTANCES = 5
     # The time upper-bound for each quality mapping
     TIME_LIMIT = BUDGET
     # The step size when producing the quality mapping
     TIME_STEP_SIZE = 0.1
     # The time interval when querying for the performance profile
-    TIME_INTERVAL = .01
+    TIME_INTERVAL = 0.1
     # The quality interval when querying for the performance profile
     QUALITY_INTERVAL = .05
     # For debugging
@@ -153,7 +153,7 @@ if __name__ == "__main__":
         # Need to initialize it after adjusting program_dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, "conditional", 10000]
+        generator.manual_override = [10000, 0.1, 0.1, 0.1, 0.1, 0.1, 10000, "conditional", 10000]
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes

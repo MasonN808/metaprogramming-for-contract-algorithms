@@ -48,10 +48,13 @@ class Generator:
         :param random_number: To produce noise in the quality mappings
         :return:
         """
+
         potential_parent_qualities = [format(i, '.2f') for i in np.arange(0, 1 + self.quality_interval, self.quality_interval).round(2)]
 
         if not node.parents:
+
             velocity = self.parent_dependent_transform(node, qualities, random_number)
+
             for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(self.find_number_decimals(self.time_step_size)):
                 # Use this function to approximate the performance profile
                 dictionary[t] = 1 - math.e ** (-velocity * t)
@@ -77,22 +80,38 @@ class Generator:
                         dictionary[quality][t] = 1 - math.e ** (-velocity * t)
 
                 else:
-                    self.recur_build(depth + 1, node, qualities.append(quality), dictionary[quality], random_number)
+                    qualities.append(quality)
+                    self.recur_build(depth + 1, node, qualities, dictionary[quality], random_number)
 
         return dictionary
 
     def parent_dependent_transform(self, node, qualities, random_number):
+
         if self.manual_override and self.valid_manual_override():
-            # self.manual_override_index += 1
-            # print(self.manual_override_index)
+
             if not self.manual_override[node.id] is None:
-                return self.manual_override[node.id]
+
+                average_parent_quality = 1
+
+                if qualities:
+
+                    # Convert the list of strings to floats
+                    qualities = [float(quality) for quality in qualities]
+
+                    # Get the average parent quality (this may not be what we want)
+                    average_parent_quality = sum(qualities) / len(node.parents)
+
+                return self.manual_override[node.id] * average_parent_quality
 
             else:
                 return random_number
 
         else:
             if qualities:
+
+                # Convert the list of strings to floats
+                qualities = [float(quality) for quality in qualities]
+
                 # Get the average parent quality (this may not be what we want)
                 average_parent_quality = sum(qualities) / len(node.parents)
 

@@ -15,18 +15,18 @@ if __name__ == "__main__":
 
     # Create a DAG manually for testing
     # Leaf nodes
-    node_4 = Node(4, [], [], expression_type="contract")
-    node_5 = Node(5, [], [], expression_type="contract")
+    node_4 = Node(4, [], [], expression_type="contract", in_subtree=False)
+    node_5 = Node(5, [], [], expression_type="contract", in_subtree=False)
 
     # Conditional Node
-    node_3 = Node(3, [node_4, node_5], [], expression_type="conditional")
+    node_3 = Node(3, [node_4, node_5], [], expression_type="conditional", in_subtree=True)
 
     # Intermediate nodes
-    node_1 = Node(1, [node_3], [], expression_type="contract")
-    node_2 = Node(2, [node_3], [], expression_type="contract")
+    node_1 = Node(1, [node_3], [], expression_type="contract", in_subtree=True)
+    node_2 = Node(2, [node_3], [], expression_type="contract", in_subtree=True)
 
     # Root node
-    root = Node(0, [node_1, node_2], [], expression_type="contract")
+    root = Node(0, [node_1, node_2], [], expression_type="contract", in_subtree=False)
 
     # Add the children
     node_1.children = [root]
@@ -58,7 +58,8 @@ if __name__ == "__main__":
         generator.populate(nodes, "populous.json")
 
     # Create the program with some budget
-    program = ContractProgram(dag, BUDGET, scale=10**6, decimals=3, time_interval=1)
+    program = ContractProgram(program_dag=dag, budget=BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.1, time_step_size=STEP_SIZE, child_programs=None, generator_dag=dag,
+                              in_subtree=False, parent_program=None, program_id=0)
 
     # Adjust allocations (hardcode)
     test = Test(program)
@@ -70,5 +71,5 @@ if __name__ == "__main__":
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))
 
     # Test initial vs optimal expected utility and allocations
-    test.find_utility_and_allocations(initial_allocation="uniform", verbose=False)
-    test.find_utility_and_allocations(initial_allocation="Dirichlet", verbose=False)
+    test.find_utility_and_allocations(initial_allocation="uniform", verbose=False, outer_program=program)
+    test.find_utility_and_allocations(initial_allocation="Dirichlet", verbose=False, outer_program=program)
