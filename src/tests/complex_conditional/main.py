@@ -136,7 +136,7 @@ if __name__ == "__main__":
     program_dag = DirectedAcyclicGraph(nodes, root)
 
     # Used to create the synthetic data as instances and a populous file
-    generate = True
+    generate = False
     if not exists("populous.json") or generate:
         # Initialize a generator
         generator = Generator(INSTANCES, program_dag=program_dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE,

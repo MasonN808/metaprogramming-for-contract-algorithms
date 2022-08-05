@@ -26,7 +26,7 @@ class Test:
             expected_utilities = []
             for i in range(0, iterations):
                 # Generate an initial allocation
-                self.initialize_allocations(initial_allocation)
+                self.initial_allocation_setup(initial_allocation)
                 optimal_allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
                 optimal_time_allocations = [i.time for i in optimal_allocations]
                 eu_optimal = self.contract_program.global_expected_utility(
@@ -57,7 +57,7 @@ class Test:
         start = timer()
 
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
-        self.initialize_allocations(initial_allocation=initial_allocation, contract_program=outer_program)
+        self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
 
         eu_initial = self.contract_program.global_expected_utility(
             self.contract_program.allocations) * self.contract_program.scale
@@ -194,24 +194,31 @@ class Test:
 
         model.run()
 
-    def initialize_allocations(self, initial_allocation, contract_program):
+    def initial_allocation_setup(self, initial_allocation, contract_program):
         if initial_allocation == "uniform":
-            contract_program.allocations = contract_program.uniform_budget()
-
+            print(contract_program.budget)
+            print(contract_program.initialize_allocations.budget)
+            contract_program.allocations = contract_program.initialize_allocations.uniform_budget()
+            utils.print_allocations(contract_program.allocations)
             # Find inner contract programs
             inner_contract_programs = self.find_inner_programs(contract_program)
-            if inner_contract_programs:
-                for inner_contract_program in inner_contract_programs:
-                    # initialize the allocations to the inner contract programs with the time allocation of the outer conditonal node
-                    inner_contract_program.budget = contract_program.allocations[
-                        self.find_node_id_of_conditional(contract_program)].time
 
-                    self.initialize_allocations(initial_allocation, inner_contract_program)
+            if inner_contract_programs:
+
+                for inner_contract_program in inner_contract_programs:
+
+                    # initialize the allocations to the inner contract programs with the time allocation of the outer conditonal node
+                    inner_contract_program.change_budget(contract_program.allocations[
+                        self.find_node_id_of_conditional(contract_program)].time)
+
+                    self.initial_allocation_setup(initial_allocation, inner_contract_program)
 
         elif initial_allocation == "Dirichlet":
             contract_program.allocations = contract_program.dirichlet_budget()
+
         elif initial_allocation == "uniform with noise":
             contract_program.allocations = contract_program.uniform_budget_with_noise()
+
         else:
             raise ValueError("Invalid initial allocation type")
 

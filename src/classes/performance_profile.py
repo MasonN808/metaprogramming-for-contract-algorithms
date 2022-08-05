@@ -349,7 +349,7 @@ class PerformanceProfile:
                     # Repoint the allocations as well
                     time_allocations = parent_program.allocations
 
-                    node_conditional = parent_program.find_node(node_conditional.id, parent_program.program_dag)
+                    node_conditional = utils.find_node(node_conditional.id, parent_program.program_dag)
 
                 parent_qualities = []
 
