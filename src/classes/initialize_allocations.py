@@ -7,6 +7,20 @@ from src.classes.time_allocation import TimeAllocation
 
 
 class InitializeAllocations:
+    """
+    A class that holds all methods to initialize the time allocations of a contract program using various methods
+
+    :param: budget : non-negative float
+        The budget of the contract program represented as seconds
+    :param: program_dag : DAG object
+        The DAG that the contract program inherits
+    :param: generator_dag : DAG object
+        The DAG that unions all inner and outer DAGS
+    :param: performance_profile : PerformanceProfile
+        The performance_profile of the contract program
+    :param: in_subtree : bool
+        Determines whether the contract program is a child of another contract program
+    """
     def __init__(self, budget, program_dag, generator_dag, performance_profile, in_subtree):
         self.budget = budget
         self.program_dag = program_dag
@@ -134,7 +148,7 @@ class InitializeAllocations:
                 # Check if is child of conditional so that both children of the conditional are allocated same time
                 if utils.child_of_conditional(utils.find_node(random_index_0)):
                     # find the neighbor node
-                    neighbor = self.find_neighbor_branch(utils.find_node(random_index_0))
+                    neighbor = utils.find_neighbor_branch(utils.find_node(random_index_0))
 
                     # Adjust the allocation to the traversed node under the conditional
                     time_allocations[random_index_0].time -= random_number
@@ -146,7 +160,7 @@ class InitializeAllocations:
 
                 elif utils.child_of_conditional(utils.find_node(random_index_1)):
                     # find the neighbor node
-                    neighbor = self.find_neighbor_branch(utils.find_node(random_index_1))
+                    neighbor = utils.find_neighbor_branch(utils.find_node(random_index_1))
 
                     # Adjust the allocation to the traversed node under the conditional
                     time_allocations[random_index_1].time += random_number
@@ -183,20 +197,6 @@ class InitializeAllocations:
         """
         for node in self.program_dag.nodes:
             node.traversed = False
-
-    # def find_uniform_allocation(self, budget) -> float:
-    #     """
-    #     Finds the allocation that can uniformly be distributed given the budget
-    #
-    #     :param budget: float
-    #     :return: uniformed allocation
-    #     """
-    #     number_of_conditionals = self.count_conditionals()
-    #     # multiply by two since the branches get an equivalent time allocation
-    #
-    #     allocation = budget / (self.program_dag.order - number_of_conditionals)
-    #
-    #     return allocation
 
     def count_conditionals(self) -> int:
         """

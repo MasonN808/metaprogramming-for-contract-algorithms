@@ -71,7 +71,6 @@ class ContractProgram:
 
         # Flatten the list of qualities
         qualities = utils.flatten(qualities)
-        # print(qualities)
 
         return math.prod(qualities)
 
@@ -124,13 +123,12 @@ class ContractProgram:
             else:
 
                 if original_allocations_conditional_branches:
+
                     copied_branch_allocations = [copy.deepcopy(node.true_subprogram.allocations),
                                                  copy.deepcopy(node.false_subprogram.allocations)]
 
                     node.true_subprogram.allocations = original_allocations_conditional_branches[0]
                     node.false_subprogram.allocations = original_allocations_conditional_branches[1]
-
-                # utils.print_allocations(refactored_allocations)
 
                 # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
                 probability_and_qualities = self.performance_profile.query_probability_and_quality_from_conditional_expression(
@@ -154,7 +152,7 @@ class ContractProgram:
 
     def naive_hill_climbing_outer(self, decay=1.1, threshold=.01, verbose=False, inner=False) -> [float]:
         """
-        Does naive hill climbing search by randomly replacing a set amount of time s between two different contract
+        Does outer naive hill climbing search by randomly replacing a set amount of time s between two different contract
         algorithms. If the expected value of the root node of the contract algorithm increases, we commit to the
         replacement; else, we divide s by a decay rate and repeat the above until s reaches some threshold by which we
         terminate.
@@ -284,10 +282,10 @@ class ContractProgram:
 
     def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=False) -> [float]:
         """
-        Does naive hill climbing search by randomly replacing a set amount of time s between two different contract
-        algorithms. If the expected value of the root node of the contract algorithm increases, we commit to the
-        replacement; else, we divide s by a decay rate and repeat the above until s reaches some threshold by which we
-        terminate.
+        Does inner naive hill climbing search on one of the branches of a conditional by randomly replacing a set
+        amount of time s between two different contract algorithms. If the expected value of the root node of the
+        contract algorithm increases, we commit to the replacement; else, we divide s by a decay rate and repeat the
+        above until s reaches some threshold by which we terminate.
 
         :param verbose: Verbose mode
         :param threshold: float, the threshold of the temperature decay during annealing
@@ -391,49 +389,13 @@ class ContractProgram:
 
             return self.allocations
 
-    def reset_traversed(self) -> None:
+    def change_budget(self, new_budget) -> None:
         """
-        Resets the traversed pointers to Node objects
+        Changes the budget of the contract program and adjusts the objects that use the budget of the
+        contract program
 
+        :param new_budget: float
         :return: None
         """
-        for node in self.program_dag.nodes:
-            node.traversed = False
-
-    @staticmethod
-    def find_neighbor_branch(node) -> Node:
-        """
-        Finds the neighbor branch of the child node of a conditional node
-        Assumption: the input node is the child of a conditional node
-
-        :param node: Node object
-        :return: Node object
-        """
-        conditional_node = node.parents[0]
-        for child in conditional_node.children:
-            if child != node:
-                return child
-
-    def count_conditionals(self) -> int:
-        """
-        Counts the number of conditionals in the contract program
-
-        :return: number of conditionals:
-        """
-        if self.in_subtree:
-            number_of_conditionals = 0
-
-            # Initialize a list to properly loop through the nodes given that the node ids are not sequenced
-            list_of_ordered_ids = [node.id for node in self.program_dag.nodes]
-
-            for node_id in list_of_ordered_ids:
-                if utils.find_node(node_id, self.program_dag).expression_type == "conditional":
-                    number_of_conditionals += 1
-            return number_of_conditionals
-        else:
-            # Since the conditionals don't affect the outer metareasoning allocations
-            return 0
-
-    def change_budget(self, new_budget):
         self.budget = new_budget
         self.initialize_allocations.budget = new_budget

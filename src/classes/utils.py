@@ -53,6 +53,20 @@ def parent_of_conditional(node) -> bool:
     return False
 
 
+def find_neighbor_branch(node) -> Node:
+    """
+    Finds the neighbor branch of the child node of a conditional node
+    Assumption: the input node is the child of a conditional node
+
+    :param node: Node object
+    :return: Node object
+    """
+    conditional_node = node.parents[0]
+    for child in conditional_node.children:
+        if child != node:
+            return child
+
+
 def flatten(arr):
     flattened_list = []
     for sublist in arr:
