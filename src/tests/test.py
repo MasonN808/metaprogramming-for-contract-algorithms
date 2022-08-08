@@ -218,10 +218,9 @@ class Test:
 
     def initial_allocation_setup(self, initial_allocation, contract_program):
         if initial_allocation == "uniform":
-            print(contract_program.budget)
-            print(contract_program.initialize_allocations.budget)
+
             contract_program.allocations = contract_program.initialize_allocations.uniform_budget()
-            utils.print_allocations(contract_program.allocations)
+
             # Find inner contract programs
             inner_contract_programs = self.find_inner_programs(contract_program)
 

@@ -59,6 +59,11 @@ class ContractProgram:
                                                             generator_dag=self.generator_dag,
                                                             performance_profile=self.performance_profile,
                                                             in_subtree=self.in_subtree)
+        # self.deferred_imports()
+        # self.solution_methods = SolutionMethods(self.program_id, self.parent_program, self.child_programs,
+        #                                         self.program_dag, self.budget, self.scale, self.decimals,
+        #                                         self.quality_interval, self.time_interval, self.time_step_size,
+        #                                         self.in_subtree, self.generator_dag)
 
     @staticmethod
     def global_utility(qualities) -> float:
@@ -83,7 +88,7 @@ class ContractProgram:
 
         Assumption: A time-allocation is given to each node in the contract program
 
-        :param inner: bool, indicates whether the global expected utility is being calculated for an inner DAG
+        :param original_allocations_conditional_branches:
         :param time_allocations: float[], required
                 The time allocations for each contract algorithm
         :return: float
@@ -145,7 +150,6 @@ class ContractProgram:
                     node.true_subprogram.allocations = copied_branch_allocations[0]
                     node.false_subprogram.allocations = copied_branch_allocations[1]
 
-        # print(probability)
         expected_utility = probability * self.global_utility(average_qualities)
 
         return expected_utility
@@ -311,13 +315,11 @@ class ContractProgram:
                     # TODO: make a pointer from an element of the list of time allocations to a pointer to the left and right time allocations for conditional time allocations in the outer program
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations, self.original_allocations_conditional_branches):
-
                         possible_local_max.append([adjusted_allocations, true_allocations, false_allocations])
 
                     eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
-                    eu_original = self.global_expected_utility(
-                        self.allocations,
-                        original_allocations_conditional_branches=self.original_allocations_conditional_branches) * self.scale
+                    eu_original = self.global_expected_utility(self.allocations,
+                                                               self.original_allocations_conditional_branches) * self.scale
 
                     adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
 
@@ -326,7 +328,6 @@ class ContractProgram:
 
                     # Check for rounding
                     if self.decimals is not None:
-                        # utils.print_allocations(adjusted_allocations)
                         print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
 
                         eu_adjusted = round(eu_adjusted, self.decimals)
@@ -347,11 +348,11 @@ class ContractProgram:
             # arg max here
             if possible_local_max:
 
-                best_allocation = max([self.global_expected_utility(j[0], [j[1], j[2]]) for j in possible_local_max])
+                best_allocation = max(
+                    [self.global_expected_utility(j[0], [j[1], j[2]]) for j in possible_local_max])
 
                 for j in possible_local_max:
                     if self.global_expected_utility(j[0], [j[1], j[2]]) == best_allocation:
-
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j[0])
 
@@ -439,7 +440,6 @@ class ContractProgram:
 
                         # Check for rounding
                         if self.decimals is not None:
-                            # utils.print_allocations(adjusted_allocations)
                             print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
 
                             eu_adjusted = round(eu_adjusted, self.decimals)
@@ -450,7 +450,8 @@ class ContractProgram:
 
                         if verbose:
                             message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
-                            print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations_outer))
+                            print(message.format(temp_time_switched, eu_adjusted, eu_original,
+                                                 print_allocations_outer))
 
                 # arg max here
                 if possible_local_max:
@@ -485,3 +486,11 @@ class ContractProgram:
         """
         self.budget = new_budget
         self.initialize_allocations.budget = new_budget
+
+    # def change_allocations(self, new_allocations) -> None:
+    #     self.allocations = new_allocations
+    #     self.solution_methods.allocations = new_allocations
+
+    # @staticmethod
+    # def deferred_imports():
+    #     # from src.classes.solution_methods import SolutionMethods
