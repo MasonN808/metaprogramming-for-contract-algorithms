@@ -49,7 +49,7 @@ class Test:
         Finds the expected utility and time allocations for an optimal expected utility or initial expected utility
         given the initial time allocations
 
-        :param outer_program:
+        :param outer_program: ContractProgram object
         :param initial_allocation: string, the type of initial allocation given for optimization
         :param verbose: bool, prints the optimization steps
         :return: None
@@ -115,36 +115,58 @@ class Test:
         # Should output a list of lists of optimal time allocations
         allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
 
-        optimal_time_allocations_outer = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[0]])
-        optimal_time_allocations_inner_true = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
-        optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])
+        if outer_program.child_programs:
+            optimal_time_allocations_outer = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[0]])
+            optimal_time_allocations_inner_true = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
+            optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])
 
-        eu_optimal = self.contract_program.global_expected_utility(
-            allocations[0], self.contract_program.original_allocations_conditional_branches) * self.contract_program.scale
+            eu_optimal = self.contract_program.global_expected_utility(allocations[0],
+                                                                       self.contract_program.original_allocations_conditional_branches) * self.contract_program.scale
 
-        if self.contract_program.decimals is not None:
-            optimal_time_allocations_outer = [round(time, self.contract_program.decimals) for
-                                              time in optimal_time_allocations_outer]
+            if self.contract_program.decimals is not None:
 
-            optimal_time_allocations_inner_true = [round(time, self.contract_program.decimals) for
-                                                   time in optimal_time_allocations_inner_true]
+                optimal_time_allocations_outer = [round(time, self.contract_program.decimals) for
+                                                  time in optimal_time_allocations_outer]
 
-            optimal_time_allocations_inner_false = [round(time, self.contract_program.decimals) for
-                                                    time in optimal_time_allocations_inner_false]
+                optimal_time_allocations_inner_true = [round(time, self.contract_program.decimals) for
+                                                       time in optimal_time_allocations_inner_true]
 
-            eu_optimal = round(eu_optimal, self.contract_program.decimals)
+                optimal_time_allocations_inner_false = [round(time, self.contract_program.decimals) for
+                                                        time in optimal_time_allocations_inner_false]
 
-        # End the timer
-        end = timer()
+                eu_optimal = round(eu_optimal, self.contract_program.decimals)
 
-        print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
-              "Time Allocations (outer): {}".format(eu_optimal, optimal_time_allocations_outer))
+            # End the timer
+            end = timer()
 
-        print("{:<62}Time Allocations (inner-true): {}".format("", optimal_time_allocations_inner_true))
+            print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
+                  "Time Allocations (outer): {}".format(eu_optimal, optimal_time_allocations_outer))
 
-        print("{:<62}Time Allocations (inner-false): {} \n".format("", optimal_time_allocations_inner_false))
+            print("{:<62}Time Allocations (inner-true): {}".format("", optimal_time_allocations_inner_true))
 
-        print("{:<62}Execution Time (seconds): {}".format("", end - start))
+            print("{:<62}Time Allocations (inner-false): {} \n".format("", optimal_time_allocations_inner_false))
+
+            print("{:<62}Execution Time (seconds): {}".format("", end - start))
+
+        else:
+            optimal_time_allocations = utils.remove_nones_times([time_allocation.time for time_allocation in allocations])
+
+            eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
+
+            if self.contract_program.decimals is not None:
+
+                optimal_time_allocations = [round(time, self.contract_program.decimals) for
+                                                  time in optimal_time_allocations]
+
+                eu_optimal = round(eu_optimal, self.contract_program.decimals)
+
+            # End the timer
+            end = timer()
+
+            print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
+                  "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
+
+            print("{:<62}Execution Time (seconds): {}".format("", end - start))
 
     def print_tree(self, root, marker_str="+- ", level_markers=None):
         """
