@@ -156,7 +156,7 @@ class Test:
             if self.contract_program.decimals is not None:
 
                 optimal_time_allocations = [round(time, self.contract_program.decimals) for
-                                                  time in optimal_time_allocations]
+                                            time in optimal_time_allocations]
 
                 eu_optimal = round(eu_optimal, self.contract_program.decimals)
 

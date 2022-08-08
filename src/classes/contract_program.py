@@ -175,8 +175,8 @@ class ContractProgram:
             # Go through all permutations of the time allocations
             for permutation in permutations(refactored_allocations, 2):
 
-                node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
-                node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
+                # node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
+                # node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
 
                 # Makes a deep copy to avoid pointers to the same list
                 adjusted_allocations = copy.deepcopy(self.allocations)
@@ -312,11 +312,7 @@ class ContractProgram:
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
                             self.allocations, self.original_allocations_conditional_branches):
 
-                        if self.child_programs:
-                            possible_local_max.append([adjusted_allocations, true_allocations, false_allocations])
-
-                        else:
-                            possible_local_max.append(adjusted_allocations)
+                        possible_local_max.append([adjusted_allocations, true_allocations, false_allocations])
 
                     eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
                     eu_original = self.global_expected_utility(
@@ -351,27 +347,18 @@ class ContractProgram:
             # arg max here
             if possible_local_max:
 
-                if self.child_programs:
-                    best_allocation = max([self.global_expected_utility(j[0], [j[1], j[2]]) for j in possible_local_max])
+                best_allocation = max([self.global_expected_utility(j[0], [j[1], j[2]]) for j in possible_local_max])
 
-                    for j in possible_local_max:
-                        if self.global_expected_utility(j[0], [j[1], j[2]]) == best_allocation:
+                for j in possible_local_max:
+                    if self.global_expected_utility(j[0], [j[1], j[2]]) == best_allocation:
 
-                            # Make a deep copy to avoid pointers to the same list
-                            self.allocations = copy.deepcopy(j[0])
+                        # Make a deep copy to avoid pointers to the same list
+                        self.allocations = copy.deepcopy(j[0])
 
-                            self.original_allocations_conditional_branches = [
-                                copy.deepcopy(j[1]),
-                                copy.deepcopy(j[2])
-                            ]
-
-                else:
-                    best_allocation = max([self.global_expected_utility(j) for j in possible_local_max])
-
-                    for j in possible_local_max:
-                        if self.global_expected_utility(j) == best_allocation:
-                            # Make a deep copy to avoid pointers to the same list
-                            self.allocations = copy.deepcopy(j)
+                        self.original_allocations_conditional_branches = [
+                            copy.deepcopy(j[1]),
+                            copy.deepcopy(j[2])
+                        ]
 
             else:
                 time_switched = time_switched / decay

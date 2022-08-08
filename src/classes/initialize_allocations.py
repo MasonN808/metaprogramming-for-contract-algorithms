@@ -21,6 +21,7 @@ class InitializeAllocations:
     :param: in_subtree : bool
         Determines whether the contract program is a child of another contract program
     """
+
     def __init__(self, budget, program_dag, generator_dag, performance_profile, in_subtree):
         self.budget = budget
         self.program_dag = program_dag
