@@ -125,7 +125,6 @@ class Test:
             print("                   Initial ==> Expected Utility: {:<5} ==> "
                   "Time Allocations (outer): {}".format(eu_initial, initial_time_allocations_outer))
 
-
         # Should output a list of lists of optimal time allocations
         allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
 
