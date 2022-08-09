@@ -62,7 +62,7 @@ if __name__ == "__main__":
         generator.populate(nodes, "populous.json")
 
     # Create the program with some budget
-    program = ContractProgram(program_dag=dag, budget=BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.2, time_step_size=STEP_SIZE, child_programs=None, generator_dag=dag,
+    program = ContractProgram(program_dag=dag, budget=BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.1, time_step_size=STEP_SIZE, child_programs=None, generator_dag=dag,
                               in_subtree=False, parent_program=None, program_id=0)
 
     test = Test(program)

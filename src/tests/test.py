@@ -96,21 +96,35 @@ class Test:
             eu_initial = round(eu_initial, self.contract_program.decimals)
 
         else:
-            initial_time_allocations_outer = [time_allocation.time for time_allocation in
-                                              self.contract_program.allocations]
-            initial_time_allocations_inner_true = [time_allocation.time for time_allocation in
-                                                   self.contract_program.child_programs[0].allocations]
-            initial_time_allocations_inner_false = [time_allocation.time for time_allocation in
-                                                    self.contract_program.child_programs[1].allocations]
 
-        print(" {} \n ----------------------".format(initial_allocation))
-        # The initial time allocations for each contract algorithm
-        print("                   Initial ==> Expected Utility: {:<5} ==> "
-              "Time Allocations (outer): {}".format(eu_initial, initial_time_allocations_outer))
+            if outer_program.child_programs:
+                initial_time_allocations_outer = [time_allocation.time for time_allocation in
+                                                  self.contract_program.allocations]
+                initial_time_allocations_inner_true = [time_allocation.time for time_allocation in
+                                                       self.contract_program.child_programs[0].allocations]
+                initial_time_allocations_inner_false = [time_allocation.time for time_allocation in
+                                                        self.contract_program.child_programs[1].allocations]
 
-        print("{:<62}Time Allocations (inner-true): {}".format("", initial_time_allocations_inner_true))
+            else:
+                initial_time_allocations_outer = [time_allocation.time for time_allocation in
+                                                  self.contract_program.allocations]
 
-        print("{:<62}Time Allocations (inner-false): {}".format("", initial_time_allocations_inner_false))
+        if outer_program.child_programs:
+            print(" {} \n ----------------------".format(initial_allocation))
+            # The initial time allocations for each contract algorithm
+            print("                   Initial ==> Expected Utility: {:<5} ==> "
+                  "Time Allocations (outer): {}".format(eu_initial, initial_time_allocations_outer))
+
+            print("{:<62}Time Allocations (inner-true): {}".format("", initial_time_allocations_inner_true))
+
+            print("{:<62}Time Allocations (inner-false): {}".format("", initial_time_allocations_inner_false))
+
+        else:
+            print(" {} \n ----------------------".format(initial_allocation))
+            # The initial time allocations for each contract algorithm
+            print("                   Initial ==> Expected Utility: {:<5} ==> "
+                  "Time Allocations (outer): {}".format(eu_initial, initial_time_allocations_outer))
+
 
         # Should output a list of lists of optimal time allocations
         allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
