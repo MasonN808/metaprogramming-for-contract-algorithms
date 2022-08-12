@@ -31,6 +31,11 @@ class Node:
         self.in_subtree = in_subtree
         self.in_true = None
         self.in_false = None
+
+        # subtree for the for loop
+        self.for_subprogram = None
+        self.in_for = None
+
         # Used for the subtree that doesn't have access to parents
         self.parent_qualities = []
         self.is_conditional_root = is_conditional_root
