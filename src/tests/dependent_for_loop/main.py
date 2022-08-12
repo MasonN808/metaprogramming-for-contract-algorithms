@@ -47,16 +47,16 @@
 #     # ----------------------------------------------------------------------------------------
 #
 #     # Leaf nodes
-#     node_outer_2 = Node(3, [], [], expression_type="contract", in_subtree=False)
+#     node_outer_3 = Node(3, [], [], expression_type="contract", in_subtree=False)
 #
 #     # Conditional Node
-#     node_outer_1 = Node(2, [node_outer_2], [], expression_type="for", in_subtree=False)
+#     node_outer_2 = Node(2, [node_outer_3], [], expression_type="for", in_subtree=False)
 #
 #     # Root node
-#     root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_subtree=False)
+#     root_outer = Node(0, [node_outer_2, node_outer_3], [], expression_type="contract", in_subtree=False)
 #
 #     # Nodes
-#     nodes_outer = [root_outer, node_outer_1, node_outer_2]
+#     nodes_outer = [root_outer, node_outer_2, node_outer_3]
 #
 #     # Create and verify the DAG from the node list
 #     dag_outer = DirectedAcyclicGraph(nodes_outer, root_outer)
@@ -74,11 +74,11 @@
 #     node_1 = Node(1, [node_2], [], expression_type="contract", in_subtree=False)
 #
 #     # Root Node
-#     node_root = Node(0, [node_2], [], expression_type="contract", in_subtree=False)
+#     node_root = Node(0, [node_1], [], expression_type="contract", in_subtree=False)
 #
 #     # Add the children
 #     node_3.children = [node_2]
-#     node_2.children = [node_root]
+#     node_1.children = [node_root]
 #
 #
 #     # For a list of nodes for the DAG creation

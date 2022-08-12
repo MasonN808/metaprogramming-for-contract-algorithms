@@ -36,6 +36,7 @@ class Node:
         self.is_conditional_root = is_conditional_root
 
         self.time = time
+
         # Used in checking for connectedness in the DAG
         self.traversed_connectedness = False
         self.traversed = False
