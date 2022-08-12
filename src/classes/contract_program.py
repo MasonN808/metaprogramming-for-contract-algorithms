@@ -103,7 +103,7 @@ class ContractProgram:
         for time_allocation in refactored_allocations:
 
             node = utils.find_node(time_allocation.node_id, self.program_dag)
-
+            # TODO: add more if statements for for-loops
             if node.expression_type == "conditional" and node.in_subtree is True:
                 continue
 
