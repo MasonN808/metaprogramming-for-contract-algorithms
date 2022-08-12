@@ -151,8 +151,8 @@ if __name__ == "__main__":
 
     # Convert to a contract program
     node_6.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=for_subtree, budget=0, scale=10 ** 6, decimals=3,
-                                                   quality_interval=QUALITY_INTERVAL,
-                                                   time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag)
+                                            quality_interval=QUALITY_INTERVAL,
+                                            time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag)
 
     # Initialize the pointers of the nodes to the program it is in
     initialize_node_pointers_current_program(node_6.true_subprogram)
