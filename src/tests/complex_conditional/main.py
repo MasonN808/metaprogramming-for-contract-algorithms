@@ -1,9 +1,13 @@
-from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
-from src.classes.nodes.node import Node
-from src.classes.contract_program import ContractProgram
-from src.classes.generator import Generator
-from src.tests.test import Test
-from os.path import exists
+import sys
+
+sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+
+from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
+from classes.nodes.node import Node  # noqa
+from classes.contract_program import ContractProgram  # noqa
+from classes.generator import Generator  # noqa
+from tests.test import Test  # noqa
+from os.path import exists  # noqa
 
 
 def initialize_node_pointers_current_program(contract_program):

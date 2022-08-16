@@ -1,9 +1,12 @@
+import sys
+from typing import List
 from random import random
-
 import numpy as np
 
-from src.classes import utils
-from src.classes.time_allocation import TimeAllocation
+sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+
+from classes import utils  # noqa
+from classes.time_allocation import TimeAllocation  # noqa
 
 
 class InitializeAllocations:
@@ -29,7 +32,7 @@ class InitializeAllocations:
         self.performance_profile = performance_profile
         self.in_subtree = in_subtree
 
-    def uniform_budget(self) -> [TimeAllocation]:
+    def uniform_budget(self) -> List[TimeAllocation]:
         """
         Partitions the budget into equal partitions relative to the order of the DAG
 
@@ -70,7 +73,7 @@ class InitializeAllocations:
         # print("DEBUG-ALLOCATIONS-{}".format(utils.print_allocations(time_allocations)))
         return time_allocations
 
-    def dirichlet_budget(self) -> [TimeAllocation]:
+    def dirichlet_budget(self) -> List[TimeAllocation]:
         """
         Partitions the budget into random partitions such that they add to the budget using a Dirichlet distribution
 
@@ -108,7 +111,7 @@ class InitializeAllocations:
 
         return [TimeAllocation(node_id=id, time=time) for (id, time) in enumerate(allocations_list)]
 
-    def uniform_budget_with_noise(self, perturbation_bound=.1, iterations=10) -> [TimeAllocation]:
+    def uniform_budget_with_noise(self, perturbation_bound=.1, iterations=10) -> List[TimeAllocation]:
         """
         Partitions the budget into a uniform distribution with added noise
 

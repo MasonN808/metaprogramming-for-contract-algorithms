@@ -1,12 +1,15 @@
+import sys
 import numpy as np
-from geneticalgorithm import geneticalgorithm as ga
 from time import sleep
 from progress.bar import ChargingBar
 from timeit import default_timer as timer
+from geneticalgorithm import geneticalgorithm as ga
 
-# from src.classes import utils
-from src.classes import utils
-from src.classes.nodes.node import Node
+
+sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+
+from classes import utils  # noqa
+from classes.nodes.node import Node  # noqa
 
 
 class Test:

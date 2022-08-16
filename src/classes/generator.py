@@ -1,9 +1,14 @@
+import sys
+from typing import List
 import copy
 import json
 import math
 import numpy as np
-from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
-from src.classes.nodes.node import Node
+
+sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+
+from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
+from classes.nodes.node import Node  # noqa
 
 
 class Generator:
@@ -159,7 +164,7 @@ class Generator:
 
         return dictionary
 
-    def generate_nodes(self) -> [str]:
+    def generate_nodes(self) -> List[str]:
         """
         Generates instances using the DAG and number of instances required
         :param: manual_override: A list of floats to manually adjust the quality mappings

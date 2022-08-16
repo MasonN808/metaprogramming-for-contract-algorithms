@@ -1,10 +1,15 @@
+import sys
+from typing import List
 import copy
 import math
 from itertools import permutations
-from src.classes import utils
-from src.classes.nodes.node import Node
-from src.classes.performance_profile import PerformanceProfile
-from src.classes.initialize_allocations import InitializeAllocations
+
+sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+
+from classes import utils  # noqa
+from classes.nodes.node import Node  # noqa
+from classes.performance_profile import PerformanceProfile  # noqa
+from classes.initialize_allocations import InitializeAllocations  # noqa
 
 
 class ContractProgram:
@@ -154,7 +159,7 @@ class ContractProgram:
 
         return expected_utility
 
-    def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> [float]:
+    def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
         Does outer naive hill climbing search by randomly replacing a set amount of time s between two different contract
         algorithms. If the expected value of the root node of the contract algorithm increases, we commit to the
@@ -239,7 +244,7 @@ class ContractProgram:
 
         return self.allocations
 
-    def naive_hill_climbing_outer(self, decay=1.1, threshold=.01, verbose=False) -> [float]:
+    def naive_hill_climbing_outer(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
         Does outer naive hill climbing search by randomly replacing a set amount of time s between two different contract
         algorithms. If the expected value of the root node of the contract algorithm increases, we commit to the
@@ -367,7 +372,7 @@ class ContractProgram:
         return [self.allocations, self.original_allocations_conditional_branches[0],
                 self.original_allocations_conditional_branches[1]]
 
-    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=False) -> [float]:
+    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
         Does inner naive hill climbing search on one of the branches of a conditional by randomly replacing a set
         amount of time s between two different contract algorithms. If the expected value of the root node of the

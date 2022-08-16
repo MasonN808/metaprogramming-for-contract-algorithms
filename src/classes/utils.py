@@ -1,4 +1,7 @@
-from src.classes.nodes.node import Node
+from classes.nodes.node import Node
+import sys
+
+sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
 
 def print_allocations(allocations) -> None:

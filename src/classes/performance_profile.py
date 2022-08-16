@@ -1,8 +1,12 @@
+import sys
+from typing import List
 import json
 import numpy as np
 
-from src.classes import utils
-from src.classes.nodes.node import Node
+sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+
+from classes import utils  # noqa
+from classes.nodes.node import Node  # noqa
 
 
 class PerformanceProfile:
@@ -37,7 +41,7 @@ class PerformanceProfile:
         f = open('{}'.format(file_name), "r")
         return json.loads(f.read())
 
-    def query_quality_list_on_interval(self, time, id, parent_qualities) -> [float]:
+    def query_quality_list_on_interval(self, time, id, parent_qualities) -> List[float]:
         # TODO: This doesn't work exactly correctly (8/03/22) --> np.arange is off
         """
         Queries the quality mapping at a specific time, using some interval to create a distribution over qualities
@@ -174,7 +178,7 @@ class PerformanceProfile:
 
         return probability
 
-    def query_probability_and_quality_from_conditional_expression(self, conditional_node) -> [float, [float]]:
+    def query_probability_and_quality_from_conditional_expression(self, conditional_node) -> List[float]:
         """
         The performance profile (conditional expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
@@ -294,7 +298,7 @@ class PerformanceProfile:
         # Assume it takes constant time
         return 0.1
 
-    def find_parent_qualities(self, node, time_allocations, depth) -> [float]:
+    def find_parent_qualities(self, node, time_allocations, depth) -> List[float]:
         """
         Returns the parent qualities given the time allocations and node
 
