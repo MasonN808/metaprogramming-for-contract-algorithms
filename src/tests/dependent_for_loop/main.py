@@ -47,10 +47,10 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
 
     # Leaf nodes
-    node_outer_2 = Node(7, [], [], expression_type="contract", in_subtree=False)
+    node_outer_2 = Node(2, [], [], expression_type="contract", in_subtree=False)
 
     # Conditional Node
-    node_outer_1 = Node(6, [node_outer_2], [], expression_type="for", in_subtree=False)
+    node_outer_1 = Node(1, [node_outer_2], [], expression_type="for", in_subtree=False)
 
     # Root node
     root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_subtree=False)
