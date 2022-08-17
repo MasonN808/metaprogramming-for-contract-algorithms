@@ -15,7 +15,6 @@ def initialize_node_pointers_current_program(contract_program):
         node.current_program = contract_program
 
 
-
 if __name__ == "__main__":
     # Total budget for the DAG
     BUDGET = 10
@@ -168,7 +167,7 @@ if __name__ == "__main__":
     node_outer_1.false_subprogram.generator_dag = program_dag
     # The input should be the outermost program
     test = Test(program_outer)
-    
+
     # Test a random distribution on the initial allocations
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))
 
