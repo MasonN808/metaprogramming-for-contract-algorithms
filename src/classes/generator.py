@@ -337,7 +337,9 @@ class Generator:
         :return: directedAcyclicGraph Object, a trimmed version
         """
         dag = copy.deepcopy(dag)
+        added_index = 0
         for node in dag.nodes:
+            print(added_index)
             if node.expression_type == "for":
 
                 for_node = node
@@ -346,8 +348,7 @@ class Generator:
                 # Edit the parents and children of each added node
                 for i in range(for_node.num_loops):
 
-                    # TODO: make sure to adjust the node ids everytime we loop
-                    # TODO: CONTINUE HERE 8/16
+                    # TODO: Do some sort of recursion HERE
 
                     # Make deep copy to avoid overlapped pointers
                     for_dag = copy.deepcopy(for_node.for_dag)
@@ -372,9 +373,10 @@ class Generator:
 
                     added_index = len(for_dag.nodes) * i + for_node.id
 
-                    # Reset the node ids when appending to the current dag
+                    # Reinstate the node ids when appending to the current dag
                     for node in for_dag.nodes:
-                        node.id += added_index
+                        node.id += added_index + 1
+                        node.traversed = True
 
                     # Add the nodes to the ndoe list
                     # Use slicing to extend a list at a specified index
@@ -382,6 +384,13 @@ class Generator:
 
                     # Go to the end of the internals of the for loop and reinitialize the node pointer
                     node = root
+
+            elif not node.traversed:
+                node.id += added_index
+
+        # Reset the traveresed pointers
+        for node in dag.nodes:
+            node.traversed = False
 
         return dag
 
