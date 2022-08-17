@@ -1,4 +1,3 @@
-from email import utils
 import sys
 
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
@@ -44,7 +43,6 @@ if __name__ == "__main__":
 
     # Create and verify the DAG from the node list
     for_dag = DirectedAcyclicGraph(nodes_inner, root_inner)
-
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
@@ -140,11 +138,8 @@ if __name__ == "__main__":
     # Initialize the pointers of the nodes to the program it is in
     initialize_node_pointers_current_program(program_outer)
 
-    # Add the for subtree
-    for_subtree = DirectedAcyclicGraph(nodes_inner, root=node_inner_1)
-
     # Convert to a contract program
-    node_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=for_subtree, budget=0, scale=10 ** 6, decimals=3,
+    node_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=for_dag, budget=0, scale=10 ** 6, decimals=3,
                                             quality_interval=QUALITY_INTERVAL,
                                             time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag)
 

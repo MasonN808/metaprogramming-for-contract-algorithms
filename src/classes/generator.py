@@ -346,15 +346,15 @@ class Generator:
                 # Edit the parents and children of each added node
                 for i in range(for_node.num_loops):
 
-                    # TODO: make sure to adjust the node ids everytime we loop 
+                    # TODO: make sure to adjust the node ids everytime we loop
                     # TODO: CONTINUE HERE 8/16
-                    
+
                     # Make deep copy to avoid overlapped pointers
                     for_dag = copy.deepcopy(for_node.for_dag)
 
                     # Get the root node and the leaf node of the subprogram
                     root = for_dag.nodes[0]
-                    leaf = for_dag.nodes[len(for_dag.nodes)-1]
+                    leaf = for_dag.nodes[len(for_dag.nodes) - 1]
 
                     # Check for first iteration
                     if i == 0:
@@ -369,7 +369,7 @@ class Generator:
                     else:
                         # Make the parent the root of the previous iteration
                         leaf.parents = node
-                    
+
                     # Go to the end of the internals of the for loop and reinitialize the node pointer
                     node = root
         return dag
