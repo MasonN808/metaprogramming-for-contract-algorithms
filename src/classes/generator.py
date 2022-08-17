@@ -264,6 +264,7 @@ class Generator:
                     populate_dictionary["{}".format(t)] = []
 
                 populate_dictionary["{}".format(t)].append(dictionary[t])
+
         # Node with parents
         else:
             parents_length = len(node.parents)
@@ -324,6 +325,53 @@ class Generator:
                     parent.children.extend(node.children)
                     parent.children.remove(node)
                 dag.nodes.remove(node)
+        return dag
+
+    @staticmethod
+    def adjust_dag_with_for_loops(dag) -> DirectedAcyclicGraph:
+        """
+        Changes the structure of the DAG by removing any conditional nodes and appending its parents to its children
+        temporarily for generation. Note that the original structure of the DAG remains intact
+
+        :param dag: directedAcyclicGraph Object, original version
+        :return: directedAcyclicGraph Object, a trimmed version
+        """
+        dag = copy.deepcopy(dag)
+        for node in dag.nodes:
+            if node.expression_type == "for":
+
+                for_node = node
+
+                # Expand the for subtree into a chain
+                # Edit the parents and children of each added node
+                for i in range(for_node.num_loops):
+
+                    # TODO: make sure to adjust the node ids everytime we loop 
+                    # TODO: CONTINUE HERE 8/16
+                    
+                    # Make deep copy to avoid overlapped pointers
+                    for_dag = copy.deepcopy(for_node.for_dag)
+
+                    # Get the root node and the leaf node of the subprogram
+                    root = for_dag.nodes[0]
+                    leaf = for_dag.nodes[len(for_dag.nodes)-1]
+
+                    # Check for first iteration
+                    if i == 0:
+                        # Make the parents of the for-node the parents of the first iteration
+                        for_node.children = leaf
+                        leaf.parents = for_node.parents
+
+                    # Check for last iteration
+                    elif i == for_node.num_loops:
+                        root.children = for_node.children
+
+                    else:
+                        # Make the parent the root of the previous iteration
+                        leaf.parents = node
+                    
+                    # Go to the end of the internals of the for loop and reinitialize the node pointer
+                    node = root
         return dag
 
     @staticmethod

@@ -33,8 +33,9 @@ class Node:
         self.in_false = None
 
         # subtree for the for loop
-        self.for_subprogram = None
+        self.for_dag = None
         self.in_for = None
+        self.num_loops = 0
 
         # Used for the subtree that doesn't have access to parents
         self.parent_qualities = []

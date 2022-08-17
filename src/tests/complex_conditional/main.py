@@ -1,3 +1,4 @@
+from email import utils
 import sys
 
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
@@ -36,10 +37,14 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
 
     # Root Node
-    node_inner_1 = Node(1, [], [], expression_type="contract", in_subtree=True)
+    root_inner = Node(0, [], [], expression_type="contract", in_subtree=True)
 
     # Create a list of the nodes in breadth-first order for the false branch
-    nodes_inner = [node_inner_1]
+    nodes_inner = [root_inner]
+
+    # Create and verify the DAG from the node list
+    for_dag = DirectedAcyclicGraph(nodes_inner, root_inner)
+
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
@@ -50,15 +55,26 @@ if __name__ == "__main__":
 
     # Conditional Node
     node_outer_1 = Node(1, [node_outer_2], [], expression_type="for", in_subtree=False)
+    node_outer_1.num_loops = 5
+    node_outer_1.for_dag = for_dag
 
     # Root node
     root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_subtree=False)
+
+    # Append the children
+    node_outer_2.children = [node_outer_1]
+    node_outer_1.children = [root_outer]
 
     # Nodes
     nodes_outer = [root_outer, node_outer_1, node_outer_2]
 
     # Create and verify the DAG from the node list
     dag_outer = DirectedAcyclicGraph(nodes_outer, root_outer)
+
+    dag_outer_adjusted = Generator.adjust_dag_with_for_loops(dag_outer)
+    print([i.id for i in dag_outer_adjusted.nodes])
+
+    # TODO: recursively create the dag with the number of loops here and output all the nodes
 
     # ----------------------------------------------------------------------------------------
     # Create a program_dag with expanded subtrees for quality mapping generation
@@ -69,6 +85,7 @@ if __name__ == "__main__":
 
     # Intermediate Nodes
     node_1 = Node(1, [node_2], [], expression_type="for", in_subtree=False)
+    node_1.num_loops = 5
 
     # Root Node
     node_root = Node(0, [node_1], [], expression_type="contract", in_subtree=False)
