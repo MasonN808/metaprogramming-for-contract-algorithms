@@ -370,8 +370,19 @@ class Generator:
                         # Make the parent the root of the previous iteration
                         leaf.parents = node
 
+                    added_index = len(for_dag.nodes) * i + for_node.id
+
+                    # Reset the node ids when appending to the current dag
+                    for node in for_dag.nodes:
+                        node.id += added_index
+
+                    # Add the nodes to the ndoe list
+                    # Use slicing to extend a list at a specified index
+                    dag.nodes[node.id:node.id] = for_dag.nodes
+
                     # Go to the end of the internals of the for loop and reinitialize the node pointer
                     node = root
+
         return dag
 
     @staticmethod
