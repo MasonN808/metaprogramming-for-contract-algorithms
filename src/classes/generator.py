@@ -344,12 +344,17 @@ class Generator:
                 # Append its parents to the children
                 # Then remove the node from the parents and children
                 # Then remove the node from the nodes list
+
+                # print(node.id)
+                # print(node.children)
                 for child in node.children:
                     child.parents.extend(node.parents)
-                    child.parents.remove(node)
+                    if node in child.parents:
+                        child.parents.remove(node)
                 for parent in node.parents:
                     parent.children.extend(node.children)
-                    parent.children.remove(node)
+                    if node in parent.children:
+                        parent.children.remove(node)
                 dag.nodes.remove(node)
         return dag
 
@@ -385,7 +390,7 @@ class Generator:
                     # Check for first iteration
                     if i == 0:
                         # Make the parents of the for-node the parents of the first iteration
-                        for_node.children = leaf
+                        for_node.children = [leaf]
                         leaf.parents = for_node.parents
 
                     # Check for last iteration
