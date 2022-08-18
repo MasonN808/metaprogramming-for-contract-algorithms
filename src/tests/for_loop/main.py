@@ -38,6 +38,7 @@ if __name__ == "__main__":
 
     # Root Node
     root_inner = Node(0, [], [], expression_type="contract", in_subtree=True)
+    root_inner.in_for = True
 
     # Create a list of the nodes in breadth-first order for the false branch
     nodes_inner = [root_inner]
@@ -98,7 +99,7 @@ if __name__ == "__main__":
     program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)
     print([i.id for i in program_dag.nodes])
     for i in program_dag.nodes:
-        if i.expression_type == "for":
+        if i.in_for:
             print(i.id)
 
     # ----------------------------------------------------------------------------------------

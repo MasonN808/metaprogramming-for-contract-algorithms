@@ -114,7 +114,8 @@ class PerformanceProfile:
             # ['qualities']: The node's quality mappings
             dictionary = self.dictionary["node_{}".format(adjusted_id)]['qualities']
             estimated_time = self.round_nearest(time_allocation.time, self.time_interval)
-
+            # TODO: FIX THIS (8/17)
+            print(dictionary)
             # Use .1f to add a trailing zero
             qualities = dictionary["{:.1f}".format(estimated_time)]
 

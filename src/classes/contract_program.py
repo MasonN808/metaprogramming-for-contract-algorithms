@@ -109,7 +109,7 @@ class ContractProgram:
 
             node = utils.find_node(time_allocation.node_id, self.program_dag)
             # TODO: add more if statements for for-loops
-            if node.expression_type == "conditional" and node.in_subtree is True:
+            if (node.expression_type == "conditional" and node.in_subtree is True) or (node.expression_type == "for"):
                 continue
 
             elif node.expression_type != "conditional":
@@ -125,7 +125,9 @@ class ContractProgram:
                 # Calculates the average quality on the list of qualities for querying
                 average_quality = self.performance_profile.average_quality(qualities)
 
-                average_qualities.append(average_quality)
+                # If in for loop, only apply the last loop into out utility function
+                if not node.in_for or node.is_last_for_loop:
+                    average_qualities.append(average_quality)
 
                 probability *= self.performance_profile.query_probability_contract_expression(average_quality,
                                                                                               qualities)

@@ -374,6 +374,9 @@ class Generator:
 
                 for_node = find_children_fors(node)[0]
 
+                root = None
+                leaf = None
+
                 # Expand the for subtree into a chain
                 # Edit the parents and children of each added node
                 for i in range(for_node.num_loops):
@@ -382,6 +385,8 @@ class Generator:
 
                     # Make deep copy to avoid overlapped pointers
                     for_dag = copy.deepcopy(for_node.for_dag)
+
+                    previous_root = root
 
                     # Get the root node and the leaf node of the subprogram
                     root = for_dag.nodes[0]
@@ -392,9 +397,11 @@ class Generator:
                         # Make the parents of the for-node the parents of the first iteration
                         for_node.children = [leaf]
                         leaf.parents = for_node.parents
+                        leaf.is_last_for_loop = True
 
                     # Check for last iteration
                     elif i == for_node.num_loops:
+                        leaf.parents = previous_root.children
                         root.children = for_node.children
 
                     else:
