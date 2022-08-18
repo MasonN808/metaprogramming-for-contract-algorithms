@@ -1,4 +1,5 @@
 import sys
+from typing import List
 
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
@@ -42,6 +43,33 @@ def child_of_conditional(node) -> bool:
         if parent.expression_type == "conditional":
             return True
     return False
+
+
+def child_of_for(node) -> bool:
+    """
+    Checks whether the node is a child of a for-loop
+
+    :param: node: Node object
+    :return bool
+    """
+    for parent in node.parents:
+        if parent.expression_type == "for":
+            return True
+    return False
+
+
+def find_children_fors(node) -> List[Node]:
+    """
+    Finds the children of the node that are for-loops
+
+    :param: node: Node object
+    :return list of nodes that are for-loop nodes
+    """
+    for_nodes = []
+    for parent in node.parents:
+        if parent.expression_type == "for":
+            for_nodes.append(parent)
+    return for_nodes
 
 
 def parent_of_conditional(node) -> bool:

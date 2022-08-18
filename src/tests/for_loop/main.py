@@ -1,3 +1,4 @@
+import copy
 import sys
 
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
@@ -69,11 +70,6 @@ if __name__ == "__main__":
     # Create and verify the DAG from the node list
     dag_outer = DirectedAcyclicGraph(nodes_outer, root_outer)
 
-    dag_outer_adjusted = Generator.adjust_dag_with_for_loops(dag_outer)
-    print([i.id for i in dag_outer_adjusted.nodes])
-
-    # TODO: recursively create the dag with the number of loops here and output all the nodes
-
     # ----------------------------------------------------------------------------------------
     # Create a program_dag with expanded subtrees for quality mapping generation
     # ----------------------------------------------------------------------------------------
@@ -84,6 +80,7 @@ if __name__ == "__main__":
     # Intermediate Nodes
     node_1 = Node(1, [node_2], [], expression_type="for", in_subtree=False)
     node_1.num_loops = 5
+    node_1.for_dag = copy.deepcopy(for_dag)
 
     # Root Node
     node_root = Node(0, [node_1], [], expression_type="contract", in_subtree=False)
@@ -97,12 +94,19 @@ if __name__ == "__main__":
 
     program_dag = DirectedAcyclicGraph(nodes, node_root)
 
+    # Rollout the for loop in a seperate DAG
+    program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)
+    print([i.id for i in program_dag.nodes])
+    for i in program_dag.nodes:
+        if i.expression_type == "for":
+            print(i.id)
+
     # ----------------------------------------------------------------------------------------
     # Generate the performance profiles
     # ----------------------------------------------------------------------------------------
 
     # Used to create the synthetic data as instances and a populous file
-    generate = False
+    generate = True
     if not exists("populous.json") or generate:
         # Initialize a generator
         generator = Generator(INSTANCES, program_dag=program_dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE,
@@ -113,13 +117,13 @@ if __name__ == "__main__":
         # generator.trivial_root = True
 
         # Adjust the DAG structure that has conditionals for generation
-        generator.generator_dag = generator.adjust_dag_with_conditionals(program_dag)
+        generator.generator_dag = generator.adjust_dag_with_fors(program_dag)
 
         # Initialize the velocities for the quality mappings in a list
         # Need to initialize it after adjusting program_dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [.1, "for", .1]
+        generator.manual_override = [.1, "for", .1, .1, .1, .1, .1, .1]
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes

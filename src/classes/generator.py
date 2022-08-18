@@ -5,6 +5,8 @@ import json
 import math
 import numpy as np
 
+from .utils import child_of_for, find_children_fors
+
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
@@ -328,7 +330,31 @@ class Generator:
         return dag
 
     @staticmethod
-    def adjust_dag_with_for_loops(dag) -> DirectedAcyclicGraph:
+    def adjust_dag_with_fors(dag) -> DirectedAcyclicGraph:
+        """
+        Changes the structure of the DAG by removing any for nodes and appending its parents to its children
+        temporarily for generation. Note that the original structure of the DAG remains intact
+
+        :param dag: directedAcyclicGraph Object, original version
+        :return: directedAcyclicGraph Object, a trimmed version
+        """
+        dag = copy.deepcopy(dag)
+        for node in dag.nodes:
+            if node.expression_type == "for":
+                # Append its parents to the children
+                # Then remove the node from the parents and children
+                # Then remove the node from the nodes list
+                for child in node.children:
+                    child.parents.extend(node.parents)
+                    child.parents.remove(node)
+                for parent in node.parents:
+                    parent.children.extend(node.children)
+                    parent.children.remove(node)
+                dag.nodes.remove(node)
+        return dag
+
+    @staticmethod
+    def adjust_dag_structure_with_for_loops(dag) -> DirectedAcyclicGraph:
         """
         Changes the structure of the DAG by removing any conditional nodes and appending its parents to its children
         temporarily for generation. Note that the original structure of the DAG remains intact
@@ -339,10 +365,9 @@ class Generator:
         dag = copy.deepcopy(dag)
         added_index = 0
         for node in dag.nodes:
-            print(added_index)
-            if node.expression_type == "for":
+            if child_of_for(node):
 
-                for_node = node
+                for_node = find_children_fors(node)[0]
 
                 # Expand the for subtree into a chain
                 # Edit the parents and children of each added node
@@ -369,13 +394,13 @@ class Generator:
 
                     else:
                         # Make the parent the root of the previous iteration
-                        leaf.parents = node
+                        leaf.parents = [node]
 
                     added_index = len(for_dag.nodes) * i + for_node.id
 
                     # Reinstate the node ids when appending to the current dag
                     for node in for_dag.nodes:
-                        node.id += added_index + 1
+                        node.id += added_index
                         node.traversed = True
 
                     # Add the nodes to the ndoe list
