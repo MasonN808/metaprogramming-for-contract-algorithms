@@ -99,9 +99,13 @@ if __name__ == "__main__":
     program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)
     print([i.id for i in program_dag.nodes])
     for i in program_dag.nodes:
-        if i.in_for:
-            print(i.id)
- 
+        if i.is_last_for_loop:
+            print("last loop id: {}".format(i.id))
+        if i.expression_type == "for":
+            print("for id: {}".format(i.id))
+        if i.id == 0:
+            print("parents of 0: {}".format([j.id for j in i.parents]))
+
     # ----------------------------------------------------------------------------------------
     # Generate the performance profiles
     # ----------------------------------------------------------------------------------------
@@ -119,6 +123,13 @@ if __name__ == "__main__":
 
         # Adjust the DAG structure that has conditionals for generation
         generator.generator_dag = generator.adjust_dag_with_fors(program_dag)
+        for i in generator.generator_dag.nodes:
+            if i.is_last_for_loop:
+                print("last loop id: {}".format(i.id))
+            if i.expression_type == "for":
+                print("for id: {}".format(i.id))
+            if i.id == 0:
+                print("parents of 0: {}".format([j.id for j in i.parents]))
 
         # Initialize the velocities for the quality mappings in a list
         # Need to initialize it after adjusting program_dag

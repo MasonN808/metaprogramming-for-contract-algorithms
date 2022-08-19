@@ -82,3 +82,29 @@ class Node:
             return False
         else:
             raise ValueError("Invalid family_type")
+
+    @staticmethod
+    def is_for_node(node, family_type=None) -> bool:
+        """
+        Checks whether the parents or children are a for node
+
+        :param node: Node object
+        :param family_type: The "children" or "parents"
+        :return: bool
+        """
+        if family_type is None:
+            if node.expression_type == "for":
+                return True
+            return False
+        if family_type == "parents":
+            for parent in node.parents:
+                if parent.expression_type == "for":
+                    return True
+            return False
+        elif family_type == "children":
+            for child in node.parents:
+                if child.expression_type == "for":
+                    return True
+            return False
+        else:
+            raise ValueError("Invalid family_type")
