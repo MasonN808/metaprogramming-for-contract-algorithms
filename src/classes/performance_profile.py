@@ -102,7 +102,7 @@ class PerformanceProfile:
         :return: A quality
         """
         adjusted_id = id
-        if Node.is_conditional_node(self.generator_dag.nodes[id]):
+        if Node.is_conditional_node(self.generator_dag.nodes[id]) or Node.is_for_node(self.generator_dag.nodes[id]):
             adjusted_id = id + 1
 
         if self.dictionary is None:
@@ -114,7 +114,7 @@ class PerformanceProfile:
             # ['qualities']: The node's quality mappings
             dictionary = self.dictionary["node_{}".format(adjusted_id)]['qualities']
             estimated_time = self.round_nearest(time_allocation.time, self.time_interval)
-            # TODO: FIX THIS (8/17)
+
             # Use .1f to add a trailing zero
             qualities = dictionary["{:.1f}".format(estimated_time)]
 

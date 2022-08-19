@@ -148,6 +148,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
 
     # Create the outer program with some budget
+    # TODO FIX THIS (8/18)
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag)
 

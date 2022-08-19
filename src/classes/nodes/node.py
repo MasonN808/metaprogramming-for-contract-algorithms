@@ -34,6 +34,7 @@ class Node:
 
         # subtree for the for loop
         self.for_dag = None
+        self.for_subprogram = None
         self.in_for = None
         self.is_last_for_loop = None
         self.num_loops = 0

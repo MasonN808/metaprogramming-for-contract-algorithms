@@ -213,6 +213,7 @@ class Generator:
 
             i = 0
             j = 0
+
             for node in nodes:
 
                 if Node.is_conditional_node(self.program_dag.nodes[i]) or Node.is_for_node(self.program_dag.nodes[i]):
@@ -226,6 +227,7 @@ class Generator:
                 temp_dictionary = self.import_performance_profiles(node)
 
                 for instance in temp_dictionary['instances']:
+
                     # Loop through all the time steps
                     recursion_dictionary = temp_dictionary['instances'][instance]
                     populate_dictionary = bundle["node_{}".format(i)]['qualities']
@@ -233,8 +235,10 @@ class Generator:
                     self.recur_traverse(0, self.generator_dag.nodes[j], [], recursion_dictionary, populate_dictionary)
 
                 bundle["node_{}".format(i)]['parents'] = temp_dictionary['parents']
+
                 j += 1
                 i += 1
+
             json.dump(bundle, f, indent=2)
 
         print("Finished populating JSON file using nodes JSON files")
@@ -279,7 +283,7 @@ class Generator:
                     populate_dictionary[parent_quality]
 
                 except KeyError:
-                    populate_dictionary[parent_quality] = {"{}".format(parent_quality): {}}
+                    populate_dictionary[parent_quality] = {}
 
                 # Base Case
                 if depth == parents_length - 1:
