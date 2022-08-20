@@ -164,22 +164,18 @@ if __name__ == "__main__":
     initialize_node_pointers_current_program(program_outer)
 
     # Convert to a contract program
-    node_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=dag_inner, budget=0, scale=10 ** 6, decimals=3,
-                                            quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag)
+    node_outer_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=dag_inner, budget=0, scale=10 ** 6, decimals=3,
+                                                  quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag)
 
     # Initialize the pointers of the nodes to the program it is in
-    initialize_node_pointers_current_program(node_1.for_subprogram)
+    initialize_node_pointers_current_program(node_outer_1.for_subprogram)
 
-    program_outer.child_programs = [node_1.for_subprogram]
-
-    # utils.print_allocations(program_outer.allocations)
-
-    # utils.print_allocations(node_1.for_subprogram.allocations)
+    program_outer.child_programs = [node_outer_1.for_subprogram]
 
     # Add the pointers from the parent program to the subprograms
-    node_1.subprogram_expression_type = "for"
-    node_1.for_subprogram.parent_program = program_outer
-    node_1.for_subprogram.generator_dag = program_dag
+    node_outer_1.for_subprogram.subprogram_expression_type = "for"
+    node_outer_1.for_subprogram.parent_program = program_outer
+    node_outer_1.for_subprogram.generator_dag = program_dag
 
     # The input should be the outermost program
     test = Test(program_outer)

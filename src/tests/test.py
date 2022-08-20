@@ -437,12 +437,14 @@ class Test:
             inner_contract_programs = self.find_inner_programs(contract_program)
 
             if inner_contract_programs:
-
                 for inner_contract_program in inner_contract_programs:
 
                     # initialize the allocations to the inner contract programs with the time allocation of the outer conditonal node
-                    inner_contract_program.change_budget(contract_program.allocations[
-                        self.find_node_id_of_conditional(contract_program)].time)
+                    if inner_contract_program.subprogram_expression_type == "for":
+                        inner_contract_program.change_budget(contract_program.allocations[self.find_node_id_of_for(contract_program)].time)
+
+                    elif inner_contract_program.subprogram_expression_type == "conditional":
+                        inner_contract_program.change_budget(contract_program.allocations[self.find_node_id_of_conditional(contract_program)].time)
 
                     self.initial_allocation_setup(initial_allocation, inner_contract_program)
 
@@ -460,9 +462,16 @@ class Test:
         inner_programs = []
 
         for outer_node in outer_program.program_dag.nodes:
-            if Node.is_conditional_node(outer_node) and not outer_node.in_subtree:
-                # Append its subprograms to the list
-                inner_programs.extend([outer_node.true_subprogram, outer_node.false_subprogram])
+
+            if not outer_node.in_subtree:
+
+                if Node.is_for_node(outer_node):
+                    # Append its subprograms to the list
+                    inner_programs.extend([outer_node.for_subprogram])
+
+                elif Node.is_conditional_node(outer_node):
+                    # Append its subprograms to the list
+                    inner_programs.extend([outer_node.true_subprogram, outer_node.false_subprogram])
 
         return inner_programs
 
@@ -472,3 +481,10 @@ class Test:
             if Node.is_conditional_node(outer_node):
                 return outer_node.id
         raise Exception("Didn't find a conditional Node")
+
+    @staticmethod
+    def find_node_id_of_for(outer_program):
+        for outer_node in outer_program.program_dag.nodes:
+            if Node.is_for_node(outer_node):
+                return outer_node.id
+        raise Exception("Didn't find a for Node")
