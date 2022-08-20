@@ -1,6 +1,7 @@
 import copy
 import sys
 
+
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
@@ -31,6 +32,7 @@ if __name__ == "__main__":
     QUALITY_INTERVAL = .05
     # For debugging
     VERBOSE = False
+    NUMBER_OF_LOOPS = 5
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (inner subtree)
@@ -38,25 +40,29 @@ if __name__ == "__main__":
 
     # Root Node
     root_inner = Node(0, [], [], expression_type="contract", in_subtree=True)
+    root_inner.num_loops = NUMBER_OF_LOOPS
     root_inner.in_for = True
 
     # Create a list of the nodes in breadth-first order for the false branch
     nodes_inner = [root_inner]
 
     # Create and verify the DAG from the node list
-    for_dag = DirectedAcyclicGraph(nodes_inner, root_inner)
+    dag_inner = DirectedAcyclicGraph(nodes_inner, root_inner)
+
+    # Rollout the for loop in a seperate DAG
+    dag_inner = Generator.adjust_dag_structure_with_for_loops(dag_inner)
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
     # ----------------------------------------------------------------------------------------
 
     # Leaf nodes
-    node_outer_2 = Node(2, [], [], expression_type="contract", in_subtree=False)
+    node_outer_2 = Node(7, [], [], expression_type="contract", in_subtree=False)
 
     # Conditional Node
-    node_outer_1 = Node(1, [node_outer_2], [], expression_type="for", in_subtree=False)
-    node_outer_1.num_loops = 5
-    node_outer_1.for_dag = for_dag
+    node_outer_1 = Node(6, [node_outer_2], [], expression_type="for", in_subtree=False)
+    node_outer_1.num_loops = NUMBER_OF_LOOPS
+    node_outer_1.for_dag = dag_inner
 
     # Root node
     root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_subtree=False)
@@ -81,7 +87,7 @@ if __name__ == "__main__":
     # Intermediate Nodes
     node_1 = Node(1, [node_2], [], expression_type="for", in_subtree=False)
     node_1.num_loops = 5
-    node_1.for_dag = copy.deepcopy(for_dag)
+    node_1.for_dag = copy.deepcopy(dag_inner)
 
     # Root Node
     node_root = Node(0, [node_1], [], expression_type="contract", in_subtree=False)
@@ -97,14 +103,6 @@ if __name__ == "__main__":
 
     # Rollout the for loop in a seperate DAG
     program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)
-    print([i.id for i in program_dag.nodes])
-    for i in program_dag.nodes:
-        if i.is_last_for_loop:
-            print("last loop id: {}".format(i.id))
-        if i.expression_type == "for":
-            print("for id: {}".format(i.id))
-        if i.id == 0:
-            print("parents of 0: {}".format([j.id for j in i.parents]))
 
     # ----------------------------------------------------------------------------------------
     # Generate the performance profiles
@@ -149,6 +147,16 @@ if __name__ == "__main__":
 
     # Create the outer program with some budget
     # TODO FIX THIS (8/18)
+
+    print([i.id for i in program_dag.nodes])
+    for i in program_dag.nodes:
+        if i.is_last_for_loop:
+            print("last loop id: {}".format(i.id))
+        if i.expression_type == "for":
+            print("for id: {}".format(i.id))
+        if i.id == 0:
+            print("parents of 0: {}".format([j.id for j in i.parents]))
+
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag)
 
@@ -156,17 +164,22 @@ if __name__ == "__main__":
     initialize_node_pointers_current_program(program_outer)
 
     # Convert to a contract program
-    node_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=for_dag, budget=0, scale=10 ** 6, decimals=3,
-                                            quality_interval=QUALITY_INTERVAL,
-                                            time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag)
+    node_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=dag_inner, budget=0, scale=10 ** 6, decimals=3,
+                                            quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag)
 
     # Initialize the pointers of the nodes to the program it is in
     initialize_node_pointers_current_program(node_1.for_subprogram)
 
     program_outer.child_programs = [node_1.for_subprogram]
 
+    # utils.print_allocations(program_outer.allocations)
+
+    # utils.print_allocations(node_1.for_subprogram.allocations)
+
     # Add the pointers from the parent program to the subprograms
+    node_1.subprogram_expression_type = "for"
     node_1.for_subprogram.parent_program = program_outer
+    node_1.for_subprogram.generator_dag = program_dag
 
     # The input should be the outermost program
     test = Test(program_outer)

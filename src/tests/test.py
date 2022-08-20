@@ -57,10 +57,144 @@ class Test:
         :param verbose: bool, prints the optimization steps
         :return: None
         """
+
+        if self.contract_program.child_programs:
+
+            if self.contract_program.child_programs[0].subprogram_expression_type == "for":
+                self.find_utility_and_allocations_for(initial_allocation, outer_program, verbose)
+
+            elif self.contract_program.child_programs[0].subprogram_expression_type == "conditional":
+                self.find_utility_and_allocations_conditional(initial_allocation, outer_program, verbose)
+
+        else:
+            self.find_utility_and_allocations_default(initial_allocation, outer_program, verbose)
+
+    def find_utility_and_allocations_for(self, initial_allocation, outer_program, verbose=False) -> None:
+
         start = timer()
 
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
+
+        utils.print_allocations(self.contract_program.allocations)
+
+        eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
+
+        if self.contract_program.decimals is not None:
+
+            initial_time_allocations_outer = []
+            initial_time_allocations_inner_for = []
+
+            for time_allocation in self.contract_program.allocations:
+
+                # Check that it's not None
+                if time_allocation.time is None:
+                    continue
+
+                initial_time_allocations_outer.append(round(time_allocation.time, self.contract_program.decimals))
+
+            # TODO: If a composition exists with different types of expressions, this needs to be changed for arbitrary expressions (8/18)
+
+            if self.contract_program.child_programs:
+
+                for time_allocation in self.contract_program.child_programs[0].allocations:
+
+                    # Check that it's not None
+                    if time_allocation.time is None:
+                        continue
+
+                    initial_time_allocations_inner_for.append(round(time_allocation.time, self.contract_program.decimals))
+
+            eu_initial = round(eu_initial, self.contract_program.decimals)
+
+        else:
+
+            # TODO: Make this more general as well (8/18)
+
+            if outer_program.child_programs:
+
+                initial_time_allocations_outer = [time_allocation.time for time_allocation in
+                                                  self.contract_program.allocations]
+                initial_time_allocations_inner_for = [time_allocation.time for time_allocation in
+                                                      self.contract_program.child_programs[0].allocations]
+
+            else:
+                initial_time_allocations_outer = [time_allocation.time for time_allocation in
+                                                  self.contract_program.allocations]
+
+        if outer_program.child_programs:
+
+            print(" {} \n ----------------------".format(initial_allocation))
+            # The initial time allocations for each contract algorithm
+            print("                   Initial ==> Expected Utility: {:<5} ==> "
+                  "Time Allocations (outer): {}".format(eu_initial, initial_time_allocations_outer))
+
+            print("{:<62}Time Allocations (inner-true): {}".format("", initial_time_allocations_inner_for))
+
+        else:
+            print(" {} \n ----------------------".format(initial_allocation))
+            # The initial time allocations for each contract algorithm
+            print("                   Initial ==> Expected Utility: {:<5} ==> "
+                  "Time Allocations (outer): {}".format(eu_initial, initial_time_allocations_outer))
+
+        # Should output a list of lists of optimal time allocations
+        allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
+
+        if outer_program.child_programs:
+            optimal_time_allocations_outer = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[0]])
+            optimal_time_allocations_inner_for = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
+
+            eu_optimal = self.contract_program.global_expected_utility(allocations[0],
+                                                                       self.contract_program.original_allocations_conditional_branches) * self.contract_program.scale
+
+            if self.contract_program.decimals is not None:
+
+                optimal_time_allocations_outer = [round(time, self.contract_program.decimals) for
+                                                  time in optimal_time_allocations_outer]
+
+                optimal_time_allocations_inner_for = [round(time, self.contract_program.decimals) for
+                                                      time in optimal_time_allocations_inner_for]
+
+                eu_optimal = round(eu_optimal, self.contract_program.decimals)
+
+            # End the timer
+            end = timer()
+
+            print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
+                  "Time Allocations (outer): {}".format(eu_optimal, optimal_time_allocations_outer))
+
+            print("{:<62}Time Allocations (inner-for): {}".format("", optimal_time_allocations_inner_for))
+
+            print("{:<62}Execution Time (seconds): {}".format("", end - start))
+
+        else:
+            optimal_time_allocations = utils.remove_nones_times([time_allocation.time for time_allocation in allocations])
+
+            eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
+
+            if self.contract_program.decimals is not None:
+
+                optimal_time_allocations = [round(time, self.contract_program.decimals) for
+                                            time in optimal_time_allocations]
+
+                eu_optimal = round(eu_optimal, self.contract_program.decimals)
+
+            # End the timer
+            end = timer()
+
+            print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
+                  "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
+
+            print("{:<62}Execution Time (seconds): {}".format("", end - start))
+
+    def find_utility_and_allocations_conditional(self, initial_allocation, outer_program, verbose=False) -> None:
+
+        start = timer()
+
+        # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
+        self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
+
+        utils.print_allocations(self.contract_program.allocations)
 
         eu_initial = self.contract_program.global_expected_utility(
             self.contract_program.allocations) * self.contract_program.scale
@@ -79,7 +213,10 @@ class Test:
 
                 initial_time_allocations_outer.append(round(time_allocation.time, self.contract_program.decimals))
 
+            # TODO: If a composition exists with different types of expressions, this needs to be changed for arbitrary expressions (8/18)
+
             if self.contract_program.child_programs:
+
                 for time_allocation in self.contract_program.child_programs[0].allocations:
 
                     # Check that it's not None
@@ -100,7 +237,10 @@ class Test:
 
         else:
 
+            # TODO: Make this more general as well (8/18)
+
             if outer_program.child_programs:
+
                 initial_time_allocations_outer = [time_allocation.time for time_allocation in
                                                   self.contract_program.allocations]
                 initial_time_allocations_inner_true = [time_allocation.time for time_allocation in
@@ -113,6 +253,7 @@ class Test:
                                                   self.contract_program.allocations]
 
         if outer_program.child_programs:
+
             print(" {} \n ----------------------".format(initial_allocation))
             # The initial time allocations for each contract algorithm
             print("                   Initial ==> Expected Utility: {:<5} ==> "
@@ -183,6 +324,61 @@ class Test:
                   "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
 
             print("{:<62}Execution Time (seconds): {}".format("", end - start))
+
+    def find_utility_and_allocations_default(self, initial_allocation, outer_program, verbose=False) -> None:
+
+        start = timer()
+
+        # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
+        self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
+
+        utils.print_allocations(self.contract_program.allocations)
+
+        eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
+
+        if self.contract_program.decimals is not None:
+
+            initial_time_allocations = []
+
+            for time_allocation in self.contract_program.allocations:
+
+                # Check that it's not None
+                if time_allocation.time is None:
+                    continue
+
+                initial_time_allocations.append(round(time_allocation.time, self.contract_program.decimals))
+
+            eu_initial = round(eu_initial, self.contract_program.decimals)
+
+        else:
+            initial_time_allocations = [time_allocation.time for time_allocation in self.contract_program.allocations]
+
+        print(" {} \n ----------------------".format(initial_allocation))
+        # The initial time allocations for each contract algorithm
+        print("                   Initial ==> Expected Utility: {:<5} ==> "
+              "Time Allocations: {}".format(eu_initial, initial_time_allocations))
+
+        # Should output a list of lists of optimal time allocations
+        allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
+
+        optimal_time_allocations = utils.remove_nones_times([time_allocation.time for time_allocation in allocations])
+
+        eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
+
+        if self.contract_program.decimals is not None:
+
+            optimal_time_allocations = [round(time, self.contract_program.decimals) for
+                                        time in optimal_time_allocations]
+
+            eu_optimal = round(eu_optimal, self.contract_program.decimals)
+
+        # End the timer
+        end = timer()
+
+        print("Naive Hill Climbing Search ==> Expected Utility: {:<5} ==> "
+              "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
+
+        print("{:<62}Execution Time (seconds): {}".format("", end - start))
 
     def print_tree(self, root, marker_str="+- ", level_markers=None):
         """

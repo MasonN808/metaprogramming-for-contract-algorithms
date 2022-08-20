@@ -528,6 +528,9 @@ class Generator:
         for node in dag.nodes:
             node.traversed = False
 
+        # Adjust the order
+        dag.order = len(dag.nodes)
+
         return dag
 
     @staticmethod

@@ -36,6 +36,7 @@ class ContractProgram:
                  quality_interval, time_interval, time_step_size, in_subtree, generator_dag):
 
         self.program_id = program_id
+        self.subprogram_expression_type = None
         self.program_dag = program_dag
         self.budget = budget
         self.scale = scale
@@ -128,6 +129,7 @@ class ContractProgram:
                 # If in for loop, only apply the last loop into out utility function
                 if not node.in_for or node.is_last_for_loop:
                     average_qualities.append(average_quality)
+                # average_qualities.append(average_quality)
 
                 probability *= self.performance_profile.query_probability_contract_expression(average_quality,
                                                                                               qualities)
@@ -266,7 +268,7 @@ class ContractProgram:
                                                               copy.deepcopy(self.child_programs[1].allocations)]
 
         else:
-            return self.naive_hill_climbing_no_children_no_parents()
+            return self.naive_hill_climbing_no_children_no_parents(verbose=verbose)
 
         # Initialize the amount of time to be switched
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)

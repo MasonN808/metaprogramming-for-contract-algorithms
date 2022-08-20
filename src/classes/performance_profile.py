@@ -42,7 +42,6 @@ class PerformanceProfile:
         return json.loads(f.read())
 
     def query_quality_list_on_interval(self, time, id, parent_qualities) -> List[float]:
-        # TODO: This doesn't work exactly correctly (8/03/22) --> np.arange is off
         """
         Queries the quality mapping at a specific time, using some interval to create a distribution over qualities
 
@@ -81,13 +80,9 @@ class PerformanceProfile:
             # Note: interval is [start_step, end_step) or [start_step, end_step] for time at limit
             num_decimals_step_size = self.find_number_of_decimals(self.time_step_size)
 
-            # print([start_step, end_step])
-            # print(np.arange(start_step, end_step, self.time_step_size))
-
             # Round to get rid of rounding error in division of time
             for t in np.arange(start_step, end_step, self.time_step_size).round(num_decimals_step_size):
                 # ["{}".format(t)]: The time allocation
-                # print(dictionary)
                 qualities += dictionary["{}".format(t)]
 
             return qualities
@@ -116,6 +111,7 @@ class PerformanceProfile:
             estimated_time = self.round_nearest(time_allocation.time, self.time_interval)
 
             # Use .1f to add a trailing zero
+            # print(adjusted_id)
             qualities = dictionary["{:.1f}".format(estimated_time)]
 
             average_quality = self.average_quality(qualities)
@@ -280,6 +276,39 @@ class PerformanceProfile:
 
         return [probability, last_quality[0]]
 
+    def for_contract_program_probability_quality(self, contract_program):
+        probability = 1.0
+        last_quality = None
+
+        time_allocations = contract_program.allocations
+
+        refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
+
+        for time_allocation in refactored_allocations:
+
+            node = self.find_node(time_allocation.node_id, contract_program.program_dag)
+
+            if node.expression_type != "for":
+
+                # Get the parents' qualities given their time allocations
+                parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
+
+                # Outputs a list of qualities from the instances at the specified time given a quality mapping
+
+                qualities = self.query_quality_list_on_interval(time_allocation.time, time_allocation.node_id,
+                                                                parent_qualities=parent_qualities)
+
+                # Calculates the average quality on the list of qualities for querying
+                average_quality = self.average_quality(qualities)
+
+                # Keep only the average quality of the last node in the program
+                if node.is_last_for_loop:
+                    last_quality = average_quality
+
+                probability *= self.query_probability_contract_expression(average_quality, qualities)
+
+        return [probability, last_quality]
+
     @staticmethod
     def estimate_rho() -> float:
         """
@@ -312,14 +341,22 @@ class PerformanceProfile:
 
         if node.parents:
             if self.are_conditional_roots(node.parents):
-                # print([parent.id for parent in node.parents])
+
                 conditional_node = self.find_conditional_node(self.program_dag)
 
                 parent_quality = self.query_probability_and_quality_from_conditional_expression(conditional_node)[1]
+
                 return parent_quality
 
-            # Check that none of the parents are conditional expressions
-            elif not Node.is_conditional_node(node, "parents"):
+            elif self.has_last_for_loop(node.parents):
+
+                for_node = self.find_for_node(self.program_dag)
+
+                parent_quality = self.for_contract_program_probability_quality(for_node.for_subprogram)[1]
+                print(parent_quality)
+
+            # Check that none of the parents are conditional expressions or for expressions
+            elif not Node.is_conditional_node(node, "parents") and not Node.is_for_node(node, "parents"):
 
                 parent_qualities = []
 
@@ -339,7 +376,43 @@ class PerformanceProfile:
                     quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
 
                     return quality
-            else:
+
+            elif Node.is_for_node(node, "parents"):
+                # Assumption: Node only has one parent (the for)
+                # Skip the for node since no relevant mapping exists
+                node_for = node.parents[0]
+
+                # Add a reference to the outer program to pull the qualities of the parents of the conditional
+                if node.in_subtree:
+
+                    # Initialize the parent program since we need to query the qualities from here
+                    parent_program = node.current_program.parent_program
+
+                    # Repoint the allocations as well
+                    time_allocations = parent_program.allocations
+
+                    node_for = utils.find_node(node_for.id, parent_program.program_dag)
+
+                parent_qualities = []
+
+                for parent in node_for.parents:
+
+                    quality = self.find_parent_qualities(parent, time_allocations, depth)
+
+                    # Reset the parent qualities for the next node_for
+                    parent_qualities.append(quality)
+
+                if depth == 1:
+                    return parent_qualities
+
+                else:
+                    # Return a list of parent-dependent qualities (not a leaf or root)
+                    quality = self.query_average_quality(node.id, time_allocations[node_for.id],
+                                                         parent_qualities)
+
+                    return quality
+
+            elif Node.is_conditional_node(node, "parents"):
                 # Assumption: Node only has one parent (the conditional)
                 # Skip the conditional node since no relevant mapping exists
                 node_conditional = node.parents[0]
@@ -431,6 +504,14 @@ class PerformanceProfile:
         raise IndexError("Conditional node not found in DAG")
 
     @staticmethod
+    def find_for_node(dag) -> Node:
+        nodes = dag.nodes
+        for node in nodes:
+            if node.expression_type == "for":
+                return node
+        raise IndexError("Conditional node not found in DAG")
+
+    @staticmethod
     def are_conditional_roots(nodes) -> bool:
         result = all(node.is_conditional_root is True for node in nodes)
 
@@ -438,6 +519,15 @@ class PerformanceProfile:
             return True
         else:
             return False
+
+    @staticmethod
+    def has_last_for_loop(nodes) -> bool:
+        for node in nodes:
+
+            if node.is_last_for_loop:
+                return True
+
+        return False
 
     def reset_traversed(self) -> None:
         """
