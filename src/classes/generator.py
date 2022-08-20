@@ -473,7 +473,7 @@ class Generator:
 
         root = None
         leaf = None
-        
+
         # Expand the for subtree into a chain
         # Edit the parents and children of each added node
         for i in range(dag.number_of_loops - 1):
