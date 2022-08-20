@@ -371,9 +371,8 @@ class Generator:
         """
         Changes the structure of the DAG by removing any conditional nodes and appending its parents to its children
         temporarily for generation. Note that the original structure of the DAG remains intact
-
         :param dag: directedAcyclicGraph Object, original version
-        :return: directedAcyclicGraph Object, a rollout version
+        :return: directedAcyclicGraph Object, a trimmed version
         """
         dag = copy.deepcopy(dag)
         added_index = 0
@@ -427,11 +426,11 @@ class Generator:
 
                     else:
                         # Make the parent the root of the previous iteration
-                        leaf.parents = [previous_root]
+                        leaf.parents = [node]
                         previous_root.children = [leaf]
 
                     largest_added_index = len(for_dag.nodes) * (for_node.num_loops)
-                    added_index = len(for_dag.nodes) * (for_node.num_loops - i) - for_node.id + 1
+                    added_index = len(for_dag.nodes) * (for_node.num_loops - i) - for_node.id
 
                     # Reinstate the node ids when appending to the current dag
                     for node in for_dag.nodes:
@@ -456,7 +455,6 @@ class Generator:
 
         # Adjust the order
         dag.order = len(dag.nodes)
-        print(dag.order)
 
         return dag
 
@@ -528,8 +526,6 @@ class Generator:
 
         # Adjust the order
         roll_out_dag.order = len(roll_out_dag.nodes)
-        print([node.id for node in roll_out_dag.nodes])
-        print(roll_out_dag.order)
 
         return roll_out_dag
 

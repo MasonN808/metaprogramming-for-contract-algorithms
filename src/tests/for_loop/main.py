@@ -1,7 +1,6 @@
 import copy
 import sys
 
-
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
@@ -62,7 +61,7 @@ if __name__ == "__main__":
     # Conditional Node
     node_outer_1 = Node(6, [node_outer_2], [], expression_type="for", in_subtree=False)
     node_outer_1.num_loops = NUMBER_OF_LOOPS
-    node_outer_1.for_dag = dag_inner
+    node_outer_1.for_dag = copy.deepcopy(dag_inner)
 
     # Root node
     root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_subtree=False)
@@ -86,7 +85,7 @@ if __name__ == "__main__":
 
     # Intermediate Nodes
     node_1 = Node(1, [node_2], [], expression_type="for", in_subtree=False)
-    node_1.num_loops = 5
+    node_1.num_loops = NUMBER_OF_LOOPS
     node_1.for_dag = copy.deepcopy(dag_inner)
 
     # Root Node

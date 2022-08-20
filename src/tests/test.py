@@ -129,7 +129,7 @@ class Test:
             print("                   Initial ==> Expected Utility: {:<5} ==> "
                   "Time Allocations (outer): {}".format(eu_initial, initial_time_allocations_outer))
 
-            print("{:<62}Time Allocations (inner-true): {}".format("", initial_time_allocations_inner_for))
+            print("{:<62}Time Allocations (inner-for): {}".format("", initial_time_allocations_inner_for))
 
         else:
             print(" {} \n ----------------------".format(initial_allocation))
