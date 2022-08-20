@@ -442,7 +442,7 @@ class Test:
                     # initialize the allocations to the inner contract programs with the time allocation of the outer conditonal node
                     if inner_contract_program.subprogram_expression_type == "for":
                         inner_contract_program.change_budget(contract_program.allocations[self.find_node_id_of_for(contract_program)].time)
-
+                        # print(inner_contract_program.program_dag.orders)
                     elif inner_contract_program.subprogram_expression_type == "conditional":
                         inner_contract_program.change_budget(contract_program.allocations[self.find_node_id_of_conditional(contract_program)].time)
 

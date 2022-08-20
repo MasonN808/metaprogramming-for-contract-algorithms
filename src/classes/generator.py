@@ -366,80 +366,6 @@ class Generator:
 
         return dag
 
-    # @staticmethod
-    # def adjust_dag_structure_with_for_loops(dag) -> DirectedAcyclicGraph:
-    #     """
-    #     Changes the structure of the DAG by removing any conditional nodes and appending its parents to its children
-    #     temporarily for generation. Note that the original structure of the DAG remains intact
-
-    #     :param dag: directedAcyclicGraph Object, original version
-    #     :return: directedAcyclicGraph Object, a trimmed version
-    #     """
-    #     dag = copy.deepcopy(dag)
-    #     added_index = 0
-    #     for node in dag.nodes:
-    #         if child_of_for(node):
-
-    #             for_node = find_children_fors(node)[0]
-
-    #             root = None
-    #             leaf = None
-
-    #             # Expand the for subtree into a chain
-    #             # Edit the parents and children of each added node
-    #             for i in range(for_node.num_loops):
-
-    #                 # TODO: Do some sort of recursion HERE
-
-    #                 # Make deep copy to avoid overlapped pointers
-    #                 for_dag = copy.deepcopy(for_node.for_dag)
-
-    #                 previous_root = root
-
-    #                 # Get the root node and the leaf node of the subprogram
-    #                 root = for_dag.nodes[0]
-    #                 leaf = for_dag.nodes[len(for_dag.nodes) - 1]
-
-    #                 # Check for first iteration
-    #                 if i == 0:
-    #                     # Make the parents of the for-node the parents of the first iteration
-    #                     for_node.children = [leaf]
-    #                     leaf.parents = for_node.parents
-    #                     leaf.is_last_for_loop = True
-
-    #                 # Check for last iteration
-    #                 elif i == for_node.num_loops-1:
-    #                     leaf.parents = previous_root.children
-    #                     root.children = for_node.children
-
-    #                 else:
-    #                     # Make the parent the root of the previous iteration
-    #                     leaf.parents = [node]
-    #                     previous_root.children = [leaf]
-
-    #                 added_index = len(for_dag.nodes) * i + for_node.id
-
-    #                 # Reinstate the node ids when appending to the current dag
-    #                 for node in for_dag.nodes:
-    #                     node.id += added_index
-    #                     node.traversed = True
-
-    #                 # Add the nodes to the ndoe list
-    #                 # Use slicing to extend a list at a specified index
-    #                 dag.nodes[node.id:node.id] = for_dag.nodes
-
-    #                 # Go to the end of the internals of the for loop and reinitialize the node pointer
-    #                 node = root
-
-    #         elif not node.traversed:
-    #             node.id += added_index
-
-    #     # Reset the traveresed pointers
-    #     for node in dag.nodes:
-    #         node.traversed = False
-
-    #     return dag
-
     @staticmethod
     def adjust_dag_structure_with_for_loops(dag) -> DirectedAcyclicGraph:
         """
@@ -447,7 +373,7 @@ class Generator:
         temporarily for generation. Note that the original structure of the DAG remains intact
 
         :param dag: directedAcyclicGraph Object, original version
-        :return: directedAcyclicGraph Object, a trimmed version
+        :return: directedAcyclicGraph Object, a rollout version
         """
         dag = copy.deepcopy(dag)
         added_index = 0
@@ -501,7 +427,7 @@ class Generator:
 
                     else:
                         # Make the parent the root of the previous iteration
-                        leaf.parents = [node]
+                        leaf.parents = [previous_root]
                         previous_root.children = [leaf]
 
                     largest_added_index = len(for_dag.nodes) * (for_node.num_loops)
@@ -530,8 +456,82 @@ class Generator:
 
         # Adjust the order
         dag.order = len(dag.nodes)
+        print(dag.order)
 
         return dag
+
+    @staticmethod
+    def rollout_for_loops(dag) -> DirectedAcyclicGraph:
+        """
+        Rolls out the for loop given one iteration of the internal componnets of the for expression
+
+        :param dag: directedAcyclicGraph Object, original version
+        :return: directedAcyclicGraph Object, a rollout version
+        """
+        added_index = 0
+        node = dag.nodes[0]
+
+        root = None
+        leaf = None
+        
+        # Expand the for subtree into a chain
+        # Edit the parents and children of each added node
+        for i in range(dag.number_of_loops - 1):
+            # TODO: Do some sort of recursion HERE
+
+            # Make deep copy to avoid overlapped pointers
+            dag = copy.deepcopy(dag)
+
+            previous_root = root
+
+            # Get the root node and the leaf node of the subprogram
+            root = dag.nodes[0]
+            leaf = dag.nodes[len(dag.nodes) - 1]
+
+            # Check for first iteration
+            if i == 0:
+                # Make the parents of the for-node the parents of the first iteration
+                # leaf.parents = for_node.parents
+                roll_out_dag = copy.deepcopy(dag)
+
+            # Check for last iteration
+            elif i == dag.number_of_loops - 1:
+                leaf.parents = [previous_root]
+                # root.children = for_node.children
+
+                # for child in for_node.children:
+                #     child.parents.extend([root])
+                #     if for_node in child.parents:
+                #         child.parents.remove(for_node)
+
+                for loop_node in dag.nodes:
+                    loop_node.is_last_for_loop = True
+
+            else:
+                # Make the parent the root of the previous iteration
+                leaf.parents = [previous_root]
+                previous_root.children = [leaf]
+
+            added_index = len(dag.nodes) * (dag.number_of_loops - i) - (dag.number_of_loops - i) + 1
+
+            # Reinstate the node ids when appending to the current dag
+            for node in dag.nodes:
+                # print(added_index)
+                node.id += added_index
+
+            # Add the nodes to the ndoe list
+            # Use slicing to extend a list at a specified index
+            # print(node.id)
+            roll_out_dag.nodes[len(roll_out_dag.nodes):len(roll_out_dag.nodes)] = dag.nodes
+
+            # Go to the end of the internals of the for loop and reinitialize the node pointer
+
+        # Adjust the order
+        roll_out_dag.order = len(roll_out_dag.nodes)
+        print([node.id for node in roll_out_dag.nodes])
+        print(roll_out_dag.order)
+
+        return roll_out_dag
 
     @staticmethod
     def find_number_decimals(number):

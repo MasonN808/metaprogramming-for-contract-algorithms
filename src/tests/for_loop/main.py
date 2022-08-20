@@ -39,8 +39,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
 
     # Root Node
-    root_inner = Node(0, [], [], expression_type="contract", in_subtree=True)
-    root_inner.num_loops = NUMBER_OF_LOOPS
+    root_inner = Node(1, [], [], expression_type="contract", in_subtree=True)
     root_inner.in_for = True
 
     # Create a list of the nodes in breadth-first order for the false branch
@@ -48,9 +47,10 @@ if __name__ == "__main__":
 
     # Create and verify the DAG from the node list
     dag_inner = DirectedAcyclicGraph(nodes_inner, root_inner)
+    dag_inner.number_of_loops = NUMBER_OF_LOOPS
 
     # Rollout the for loop in a seperate DAG
-    dag_inner = Generator.adjust_dag_structure_with_for_loops(dag_inner)
+    dag_inner_rolled_out = Generator.rollout_for_loops(dag_inner)
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
@@ -121,13 +121,6 @@ if __name__ == "__main__":
 
         # Adjust the DAG structure that has conditionals for generation
         generator.generator_dag = generator.adjust_dag_with_fors(program_dag)
-        for i in generator.generator_dag.nodes:
-            if i.is_last_for_loop:
-                print("last loop id: {}".format(i.id))
-            if i.expression_type == "for":
-                print("for id: {}".format(i.id))
-            if i.id == 0:
-                print("parents of 0: {}".format([j.id for j in i.parents]))
 
         # Initialize the velocities for the quality mappings in a list
         # Need to initialize it after adjusting program_dag
@@ -148,14 +141,14 @@ if __name__ == "__main__":
     # Create the outer program with some budget
     # TODO FIX THIS (8/18)
 
-    print([i.id for i in program_dag.nodes])
-    for i in program_dag.nodes:
-        if i.is_last_for_loop:
-            print("last loop id: {}".format(i.id))
-        if i.expression_type == "for":
-            print("for id: {}".format(i.id))
-        if i.id == 0:
-            print("parents of 0: {}".format([j.id for j in i.parents]))
+    # print([i.id for i in program_dag.nodes])
+    # for i in program_dag.nodes:
+    #     if i.is_last_for_loop:
+    #         print("last loop id: {}".format(i.id))
+    #     if i.expression_type == "for":
+    #         print("for id: {}".format(i.id))
+    #     if i.id == 0:
+    #         print("parents of 0: {}".format([j.id for j in i.parents]))
 
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag)
@@ -164,7 +157,7 @@ if __name__ == "__main__":
     initialize_node_pointers_current_program(program_outer)
 
     # Convert to a contract program
-    node_outer_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=dag_inner, budget=0, scale=10 ** 6, decimals=3,
+    node_outer_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=dag_inner_rolled_out, budget=0, scale=10 ** 6, decimals=3,
                                                   quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag)
 
     # Initialize the pointers of the nodes to the program it is in

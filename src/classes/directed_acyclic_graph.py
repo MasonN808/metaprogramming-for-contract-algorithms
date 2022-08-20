@@ -15,6 +15,10 @@ class DirectedAcyclicGraph:
         self.nodes = nodes
         self.order = len(self.nodes)
         self.root = root
+
+        # For for-loops
+        self.number_of_loops = None
+
         if do_checks:
             # Checks if the input root is valid
             if self.__find_root() != self.root:
