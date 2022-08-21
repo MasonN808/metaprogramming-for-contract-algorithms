@@ -1,13 +1,13 @@
-from classes.directed_acyclic_graph import DirectedAcyclicGraph
-from classes.nodes.node import Node
-from classes.contract_program import ContractProgram
-from classes.generator import Generator
-from tests.test import Test
-from os.path import exists
 import sys
 
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
+from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
+from classes.nodes.node import Node  # noqa
+from classes.contract_program import ContractProgram  # noqa
+from classes.generator import Generator  # noqa
+from tests.test import Test  # noqa
+from os.path import exists  # noqa
 
 if __name__ == "__main__":
     BUDGET = 10

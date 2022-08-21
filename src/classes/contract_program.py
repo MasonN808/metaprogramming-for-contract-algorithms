@@ -54,6 +54,7 @@ class ContractProgram:
         self.generator_dag = generator_dag
 
         self.original_allocations_conditional_branches = None
+        self.original_allocations_for_branch = None
 
         self.performance_profile = PerformanceProfile(program_dag=self.program_dag, generator_dag=self.generator_dag,
                                                       file_name=self.POPULOUS_FILE_NAME,
@@ -260,12 +261,20 @@ class ContractProgram:
         :param decay: float, the decay rate of the temperature during annealing
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
-        if self.child_programs:
+        # Check if it has child programs and what type of child programs
+        # TODO: Make it more general later to accompany more then one type of child program
+        if self.child_programs and self.child_programs[0].subexpression_type == "conditional":
             true_allocations = copy.deepcopy(self.child_programs[0].allocations)
             false_allocations = copy.deepcopy(self.child_programs[1].allocations)
 
             self.original_allocations_conditional_branches = [copy.deepcopy(self.child_programs[0].allocations),
                                                               copy.deepcopy(self.child_programs[1].allocations)]
+
+        elif self.child_programs and self.child_programs[0].subexpression_type == "for":
+
+            # for_allocations = copy.deepcopy(self.child_programs[0].allocations)
+
+            self.original_allocations_for_branch = [copy.deepcopy(self.child_programs[0].allocations)]
 
         else:
             return self.naive_hill_climbing_no_children_no_parents(verbose=verbose)
