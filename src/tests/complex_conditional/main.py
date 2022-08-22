@@ -186,7 +186,14 @@ if __name__ == "__main__":
     # Test a random distribution on the initial allocations
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))
 
+    for i in program_dag.nodes:
+        print("program_dag: {}, {}".format(i.id, [j.id for j in i.parents]))
+    for i in true_subtree.nodes:
+        print("true_subtree: {}, {}".format(i.id, [j.id for j in i.parents]))
+    for i in dag_outer.nodes:
+        print("dag_outer: {}, {}".format(i.id, [j.id for j in i.parents]))
+
     # Test initial vs optimal expected utility and allocations
-    test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
+    # test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
     # test.find_utility_and_allocations(initial_allocation="uniform with noise", outer_program=program_outer, verbose=False)
     # test.find_utility_and_allocations(initial_allocation="Dirichlet", outer_program=program_outer, verbose=False)

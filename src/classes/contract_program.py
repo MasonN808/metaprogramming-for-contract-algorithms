@@ -53,8 +53,7 @@ class ContractProgram:
 
         self.generator_dag = generator_dag
 
-        self.original_allocations_conditional_branches = None
-        self.original_allocations_for_branch = None
+        self.original_allocations_inner = None
 
         self.performance_profile = PerformanceProfile(program_dag=self.program_dag, generator_dag=self.generator_dag,
                                                       file_name=self.POPULOUS_FILE_NAME,
@@ -87,7 +86,7 @@ class ContractProgram:
 
         return math.prod(qualities)
 
-    def global_expected_utility(self, time_allocations, original_allocations_conditional_branches=None) -> float:
+    def global_expected_utility(self, time_allocations, original_allocations_inner=None) -> float:
         """
         Gives the expected utility of the contract program given the performance profiles of the nodes
         (i.e., the probability distribution of each contract program's conditional performance profile) and the
@@ -95,7 +94,7 @@ class ContractProgram:
 
         Assumption: A time-allocation is given to each node in the contract program
 
-        :param original_allocations_conditional_branches:
+        :param original_allocations_inner:
         :param time_allocations: float[], required
                 The time allocations for each contract algorithm
         :return: float
@@ -110,11 +109,57 @@ class ContractProgram:
         for time_allocation in refactored_allocations:
 
             node = utils.find_node(time_allocation.node_id, self.program_dag)
-            # TODO: add more if statements for for-loops
-            if (node.expression_type == "conditional" and node.in_subtree is True) or (node.expression_type == "for"):
+
+            if node.in_subtree:
                 continue
 
-            elif node.expression_type != "conditional":
+            # Calculates the EU of a conditional expression
+            elif node.expression_type == "conditional" and not node.in_subtree:
+
+                if original_allocations_inner:
+                    copied_branch_allocations = [copy.deepcopy(node.true_subprogram.allocations),
+                                                 copy.deepcopy(node.false_subprogram.allocations)]
+
+                    node.true_subprogram.allocations = original_allocations_inner[0]
+                    node.false_subprogram.allocations = original_allocations_inner[1]
+
+                # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
+                probability_and_qualities = self.performance_profile.query_probability_and_quality_from_conditional_expression(
+                    node)
+
+                # Multiply the current probability by the performance profile of the conditional node
+                probability *= probability_and_qualities[0]
+
+                conditional_quality = probability_and_qualities[1]
+
+                average_qualities.append(conditional_quality)
+
+                if original_allocations_inner:
+                    node.true_subprogram.allocations = copied_branch_allocations[0]
+                    node.false_subprogram.allocations = copied_branch_allocations[1]
+
+            # Calculates the EU of a for expression
+            elif node.expression_type == "for" and not node.in_subtree:
+
+                if original_allocations_inner:
+                    copied_branch_allocations = [copy.deepcopy(node.for_subprogram.allocations)]
+
+                    node.for_subprogram.allocations = original_allocations_inner[0]
+
+                # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
+                probability_and_qualities = self.performance_profile.query_probability_and_quality_from_for_expression(node)
+
+                # Multiply the current probability by the performance profile of the conditional node
+                probability *= probability_and_qualities[0]
+
+                last_for_quality = probability_and_qualities[1]
+
+                average_qualities.append(last_for_quality)
+
+                if original_allocations_inner:
+                    node.for_subprogram.allocations = copied_branch_allocations[0]
+
+            else:
 
                 # Get the parents' qualities given their time allocations
                 parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
@@ -134,31 +179,6 @@ class ContractProgram:
 
                 probability *= self.performance_profile.query_probability_contract_expression(average_quality,
                                                                                               qualities)
-
-            # node.expression_type == "conditional" and node.in_subtree is False
-            else:
-
-                if original_allocations_conditional_branches:
-                    copied_branch_allocations = [copy.deepcopy(node.true_subprogram.allocations),
-                                                 copy.deepcopy(node.false_subprogram.allocations)]
-
-                    node.true_subprogram.allocations = original_allocations_conditional_branches[0]
-                    node.false_subprogram.allocations = original_allocations_conditional_branches[1]
-
-                # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
-                probability_and_qualities = self.performance_profile.query_probability_and_quality_from_conditional_expression(
-                    node)
-
-                # Multiply the current probability by the performance profile of the conditional node
-                probability *= probability_and_qualities[0]
-
-                conditional_quality = probability_and_qualities[1]
-
-                average_qualities.append(conditional_quality)
-
-                if original_allocations_conditional_branches:
-                    node.true_subprogram.allocations = copied_branch_allocations[0]
-                    node.false_subprogram.allocations = copied_branch_allocations[1]
 
         expected_utility = probability * self.global_utility(average_qualities)
 
@@ -263,18 +283,23 @@ class ContractProgram:
         """
         # Check if it has child programs and what type of child programs
         # TODO: Make it more general later to accompany more then one type of child program
-        if self.child_programs and self.child_programs[0].subexpression_type == "conditional":
+        if self.child_programs and self.child_programs[0].subprogram_expression_type == "conditional":
+
             true_allocations = copy.deepcopy(self.child_programs[0].allocations)
             false_allocations = copy.deepcopy(self.child_programs[1].allocations)
 
-            self.original_allocations_conditional_branches = [copy.deepcopy(self.child_programs[0].allocations),
-                                                              copy.deepcopy(self.child_programs[1].allocations)]
+            self.original_allocations_inner = [copy.deepcopy(self.child_programs[0].allocations),
+                                               copy.deepcopy(self.child_programs[1].allocations)]
 
-        elif self.child_programs and self.child_programs[0].subexpression_type == "for":
+            return self.naive_hill_climbing_outer_conditional(true_allocations, false_allocations, verbose=verbose)
 
-            # for_allocations = copy.deepcopy(self.child_programs[0].allocations)
+        elif self.child_programs and self.child_programs[0].subprogram_expression_type == "for":
 
-            self.original_allocations_for_branch = [copy.deepcopy(self.child_programs[0].allocations)]
+            for_allocations = copy.deepcopy(self.child_programs[0].allocations)
+
+            self.original_allocations_inner = [copy.deepcopy(self.child_programs[0].allocations)]
+
+            return self.naive_hill_climbing_outer_for(for_allocations, verbose=verbose)
 
         else:
             return self.naive_hill_climbing_no_children_no_parents(verbose=verbose)
@@ -332,12 +357,12 @@ class ContractProgram:
 
                     # TODO: make a pointer from an element of the list of time allocations to a pointer to the left and right time allocations for conditional time allocations in the outer program
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
-                            self.allocations, self.original_allocations_conditional_branches):
+                            self.allocations, self.original_allocations_inner):
                         possible_local_max.append([adjusted_allocations, true_allocations, false_allocations])
 
                     eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
                     eu_original = self.global_expected_utility(self.allocations,
-                                                               self.original_allocations_conditional_branches) * self.scale
+                                                               self.original_allocations_inner) * self.scale
 
                     adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
 
@@ -359,9 +384,9 @@ class ContractProgram:
                         print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations_outer))
 
                     # Reset the branches of the inner conditional
-                    if self.original_allocations_conditional_branches:
-                        true_allocations = self.original_allocations_conditional_branches[0]
-                        false_allocations = self.original_allocations_conditional_branches[1]
+                    if self.original_allocations_inner:
+                        true_allocations = self.original_allocations_inner[0]
+                        false_allocations = self.original_allocations_inner[1]
 
             # arg max here
             if possible_local_max:
@@ -374,7 +399,7 @@ class ContractProgram:
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j[0])
 
-                        self.original_allocations_conditional_branches = [
+                        self.original_allocations_inner = [
                             copy.deepcopy(j[1]),
                             copy.deepcopy(j[2])
                         ]
@@ -382,8 +407,225 @@ class ContractProgram:
             else:
                 time_switched = time_switched / decay
 
-        return [self.allocations, self.original_allocations_conditional_branches[0],
-                self.original_allocations_conditional_branches[1]]
+        return [self.allocations, self.original_allocations_inner[0],
+                self.original_allocations_inner[1]]
+
+    def naive_hill_climbing_outer_conditional(self, true_allocations, false_allocations, decay=1.1, threshold=.01, verbose=False) -> List[float]:
+        """
+
+        :param verbose: Verbose mode
+        :param threshold: float, the threshold of the temperature decay during annealing
+        :param decay: float, the decay rate of the temperature during annealing
+        :return: A stream of optimized time allocations associated with each contract algorithm
+        """
+
+        # Initialize the amount of time to be switched
+        time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
+
+        while time_switched > threshold:
+
+            possible_local_max = []
+
+            # Remove the Nones in the list before taking permutations
+            refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
+
+            # Go through all permutations of the time allocations
+            for permutation in permutations(refactored_allocations, 2):
+
+                node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
+                node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
+
+                # Makes a deep copy to avoid pointers to the same list
+                adjusted_allocations = copy.deepcopy(self.allocations)
+
+                # Avoids exchanging time with itself
+                if permutation[0].node_id == permutation[1].node_id:
+                    continue
+
+                # Avoids negative time allocation
+                elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
+                    continue
+
+                else:
+                    adjusted_allocations[permutation[0].node_id].time -= time_switched
+                    adjusted_allocations[permutation[1].node_id].time += time_switched
+
+                    # Does hill climbing on the outer metareasoning problem that is a conditional
+                    if node_0.expression_type == "conditional":
+                        # Reallocate the budgets for the inner metareasoning problems
+                        node_0.true_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_0.id].time))
+                        node_0.false_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_0.id].time))
+
+                        # Do naive hill climbing on the branches
+                        true_allocations = copy.deepcopy(
+                            node_0.true_subprogram.naive_hill_climbing_inner(verbose=False))
+                        false_allocations = copy.deepcopy(node_0.false_subprogram.naive_hill_climbing_inner())
+
+                    if node_1.expression_type == "conditional":
+                        # Reallocate the budgets for the inner metareasoning problems
+                        node_1.true_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_1.id].time))
+                        node_1.false_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_1.id].time))
+
+                        # Do naive hill climbing on the branches
+                        true_allocations = copy.deepcopy(node_1.true_subprogram.naive_hill_climbing_inner())
+                        false_allocations = copy.deepcopy(node_1.false_subprogram.naive_hill_climbing_inner())
+
+                    # TODO: make a pointer from an element of the list of time allocations to a pointer to the left and right time allocations for conditional time allocations in the outer program
+                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
+                            self.allocations, self.original_allocations_inner):
+                        possible_local_max.append([adjusted_allocations, true_allocations, false_allocations])
+
+                    eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
+                    eu_original = self.global_expected_utility(self.allocations,
+                                                               self.original_allocations_inner) * self.scale
+
+                    adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
+
+                    print_allocations_outer = [i.time for i in adjusted_allocations]
+                    temp_time_switched = time_switched
+
+                    # Check for rounding
+                    if self.decimals is not None:
+                        print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
+
+                        eu_adjusted = round(eu_adjusted, self.decimals)
+                        eu_original = round(eu_original, self.decimals)
+
+                        # self.global_expected_utility(self.allocations) * self.scale
+                        temp_time_switched = round(temp_time_switched, self.decimals)
+
+                    if verbose:
+                        message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
+                        print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations_outer))
+
+                    # Reset the branches of the inner conditional
+                    if self.original_allocations_inner:
+                        true_allocations = self.original_allocations_inner[0]
+                        false_allocations = self.original_allocations_inner[1]
+
+            # arg max here
+            if possible_local_max:
+
+                best_allocation = max(
+                    [self.global_expected_utility(j[0], [j[1], j[2]]) for j in possible_local_max])
+
+                for j in possible_local_max:
+                    if self.global_expected_utility(j[0], [j[1], j[2]]) == best_allocation:
+                        # Make a deep copy to avoid pointers to the same list
+                        self.allocations = copy.deepcopy(j[0])
+
+                        self.original_allocations_inner = [
+                            copy.deepcopy(j[1]),
+                            copy.deepcopy(j[2])
+                        ]
+
+            else:
+                time_switched = time_switched / decay
+
+        return [self.allocations, self.original_allocations_inner[0],
+                self.original_allocations_inner[1]]
+
+    def naive_hill_climbing_outer_for(self, for_allocations, decay=1.1, threshold=.01, verbose=False) -> List[float]:
+        """
+
+        :param verbose: Verbose mode
+        :param threshold: float, the threshold of the temperature decay during annealing
+        :param decay: float, the decay rate of the temperature during annealing
+        :return: A stream of optimized time allocations associated with each contract algorithm
+        """
+
+        # Initialize the amount of time to be switched
+        time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
+
+        while time_switched > threshold:
+
+            possible_local_max = []
+
+            # Remove the Nones in the list before taking permutations
+            refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
+
+            # Go through all permutations of the time allocations
+            for permutation in permutations(refactored_allocations, 2):
+
+                node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
+                node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
+
+                # Makes a deep copy to avoid pointers to the same list
+                adjusted_allocations = copy.deepcopy(self.allocations)
+
+                # Avoids exchanging time with itself
+                if permutation[0].node_id == permutation[1].node_id:
+                    continue
+
+                # Avoids negative time allocation
+                elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
+                    continue
+
+                else:
+                    adjusted_allocations[permutation[0].node_id].time -= time_switched
+                    adjusted_allocations[permutation[1].node_id].time += time_switched
+
+                    # Does hill climbing on the outer metareasoning problem that is a conditional
+                    if node_0.expression_type == "for":
+                        # Reallocate the budgets for the inner metareasoning problems
+                        node_0.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_0.id].time))
+
+                        # Do naive hill climbing on the branches
+                        for_allocations = copy.deepcopy(node_0.for_subprogram.naive_hill_climbing_inner())
+
+                    if node_1.expression_type == "for":
+                        # Reallocate the budgets for the inner metareasoning problems
+                        node_1.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_1.id].time))
+
+                        # Do naive hill climbing on the branches
+                        for_allocations = copy.deepcopy(node_1.for_subprogram.naive_hill_climbing_inner())
+
+                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations, self.original_allocations_inner):
+
+                        possible_local_max.append([adjusted_allocations, for_allocations])
+
+                    eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
+                    eu_original = self.global_expected_utility(self.allocations, self.original_allocations_inner) * self.scale
+
+                    adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
+
+                    print_allocations_outer = [i.time for i in adjusted_allocations]
+                    temp_time_switched = time_switched
+
+                    # Check for rounding
+                    if self.decimals is not None:
+                        print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
+
+                        eu_adjusted = round(eu_adjusted, self.decimals)
+                        eu_original = round(eu_original, self.decimals)
+
+                        # self.global_expected_utility(self.allocations) * self.scale
+                        temp_time_switched = round(temp_time_switched, self.decimals)
+
+                    if verbose:
+                        message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
+                        print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations_outer))
+
+                    # Reset the branches of the inner conditional
+                    if self.original_allocations_inner:
+                        for_allocations = self.original_allocations_inner[0]
+
+            # arg max here
+            if possible_local_max:
+
+                best_allocation = max([self.global_expected_utility(j[0], [j[1]]) for j in possible_local_max])
+
+                for j in possible_local_max:
+                    if self.global_expected_utility(j[0], [j[1]]) == best_allocation:
+                        # Make a deep copy to avoid pointers to the same list
+                        self.allocations = copy.deepcopy(j[0])
+
+                        self.original_allocations_inner = [copy.deepcopy(j[1])]
+
+            else:
+                time_switched = time_switched / decay
+
+        return [self.allocations, self.original_allocations_inner[0]]
 
     def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
@@ -397,9 +639,13 @@ class ContractProgram:
         :param decay: float, the decay rate of the temperature during annealing
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
-        # Check that the net budget doesn't go negative if taxed with tau for inner
-        tau = self.performance_profile.calculate_tau()
-        taxed_budget = self.budget - tau
+        if self.subprogram_expression_type == "conditional":
+            # Check that the net budget doesn't go negative if taxed with tau for inner
+            tau = self.performance_profile.calculate_tau()
+            taxed_budget = self.budget - tau
+
+        elif self.subprogram_expression_type == "for":
+            taxed_budget = self.budget
 
         # Check if the budget is 0 for the inner metareasoning
         if taxed_budget > 0:
@@ -434,6 +680,10 @@ class ContractProgram:
                     elif node_0.expression_type == "conditional" or node_1.expression_type == "conditional":
                         continue
 
+                    # Avoids all permutations that include the for node in the inner metareasoning problem
+                    elif node_0.expression_type == "for" or node_1.expression_type == "for":
+                        continue
+
                     # Avoids negative time allocation
                     elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
                         continue
@@ -441,10 +691,10 @@ class ContractProgram:
                     else:
                         adjusted_allocations[permutation[0].node_id].time -= time_switched
                         adjusted_allocations[permutation[1].node_id].time += time_switched
+                        print(self.budget)
 
                         # TODO: make a pointer from an element of the list of time allocations to a pointer to the left and right time allocations for conditional time allocations in the outer program
-                        if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
-                                self.allocations):
+                        if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
                             possible_local_max.append(adjusted_allocations)
 
                         eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale

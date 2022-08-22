@@ -76,7 +76,7 @@ class Test:
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
 
-        utils.print_allocations(self.contract_program.allocations)
+        # utils.print_allocations(self.contract_program.allocations)
 
         eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
 

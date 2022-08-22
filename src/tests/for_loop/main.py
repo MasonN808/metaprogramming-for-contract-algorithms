@@ -38,11 +38,12 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
 
     # Root Node
-    root_inner = Node(1, [], [], expression_type="contract", in_subtree=True)
+    node_inner_1 = Node(6, [], [], expression_type="for", in_subtree=True)
+    root_inner = Node(1, [node_inner_1], [], expression_type="contract", in_subtree=True)
     root_inner.in_for = True
 
     # Create a list of the nodes in breadth-first order for the false branch
-    nodes_inner = [root_inner]
+    nodes_inner = [root_inner, node_inner_1]
 
     # Create and verify the DAG from the node list
     dag_inner = DirectedAcyclicGraph(nodes_inner, root_inner)
@@ -50,6 +51,9 @@ if __name__ == "__main__":
 
     # Rollout the for loop in a seperate DAG
     dag_inner_rolled_out = Generator.rollout_for_loops(dag_inner)
+
+    for i in dag_inner_rolled_out.nodes:
+        print("dag_inner_rolled_out: {}, {}".format(i.id, [j.id for j in i.parents]))
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
@@ -64,7 +68,7 @@ if __name__ == "__main__":
     node_outer_1.for_dag = copy.deepcopy(dag_inner)
 
     # Root node
-    root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_subtree=False)
+    root_outer = Node(0, [node_outer_1], [], expression_type="contract", in_subtree=False)
 
     # Append the children
     node_outer_2.children = [node_outer_1]
@@ -86,7 +90,9 @@ if __name__ == "__main__":
     # Intermediate Nodes
     node_1 = Node(1, [node_2], [], expression_type="for", in_subtree=False)
     node_1.num_loops = NUMBER_OF_LOOPS
-    node_1.for_dag = copy.deepcopy(dag_inner)
+    for_dag = copy.deepcopy(dag_inner)
+    for_dag.nodes = for_dag.nodes[0:len(for_dag.nodes) - 1]
+    node_1.for_dag = copy.deepcopy(for_dag)
 
     # Root Node
     node_root = Node(0, [node_1], [], expression_type="contract", in_subtree=False)
@@ -102,6 +108,9 @@ if __name__ == "__main__":
 
     # Rollout the for loop in a seperate DAG
     program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)
+
+    for i in program_dag.nodes:
+        print("program_dag: {}, {}".format(i.id, [j.id for j in i.parents]))
 
     # ----------------------------------------------------------------------------------------
     # Generate the performance profiles
@@ -171,6 +180,13 @@ if __name__ == "__main__":
 
     # The input should be the outermost program
     test = Test(program_outer)
+
+    for i in program_dag.nodes:
+        print("program_dag: {}, {}".format(i.id, [j.id for j in i.parents]))
+    for i in dag_inner_rolled_out.nodes:
+        print("dag_inner_rolled_out: {}, {}".format(i.id, [j.id for j in i.parents]))
+    for i in dag_outer.nodes:
+        print("dag_outer: {}, {}".format(i.id, [j.id for j in i.parents]))
 
     # Test initial vs optimal expected utility and allocations
     test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)

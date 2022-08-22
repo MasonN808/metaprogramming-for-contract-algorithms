@@ -7,6 +7,7 @@ import numpy as np
 
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
+from classes import utils  # noqa
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
 from classes.nodes.node import Node  # noqa
 
@@ -409,12 +410,12 @@ class Generator:
                     if i == 0:
                         # Make the parents of the for-node the parents of the first iteration
                         # for_node.children = [leaf]
-                        leaf.parents = for_node.parents
+                        leaf.parents = [for_node]
 
                     # Check for last iteration
                     elif i == for_node.num_loops - 1:
                         leaf.parents = [previous_root]
-                        root.children = for_node.children
+                        root.children = [for_node]
 
                         for child in for_node.children:
                             child.parents.extend([root])
@@ -467,62 +468,76 @@ class Generator:
         :return: directedAcyclicGraph Object, a rollout version
         """
         added_index = 0
-        node = dag.nodes[0]
+        # for_node = dag.nodes[0]
 
         root = None
         leaf = None
 
+        roll_out_dag = copy.deepcopy(dag)
+        copied_dag = copy.deepcopy(dag)
+        copied_dag.nodes = copied_dag.nodes[0:len(dag.nodes) - 1]
+
+        previous_root = copied_dag.nodes[0]
+        previous_leaf = copied_dag.nodes[len(copied_dag.nodes) - 1]
+
+        # copied_dag.nodes = copied_dag.nodes[0:len(dag.nodes)-1]
+
+        # roll_out_dag.nodes = roll_out_dag.nodes[1:len(roll_out_dag)]
+        # root =
+        # # leaf = roll_out_dag.nodes[len(dag.nodes) - 1]
+        # leaf = for_node
+
         # Expand the for subtree into a chain
         # Edit the parents and children of each added node
         for i in range(dag.number_of_loops - 1):
+            # print("meta: {}".format(i))
             # TODO: Do some sort of recursion HERE
 
             # Make deep copy to avoid overlapped pointers
-            dag = copy.deepcopy(dag)
+            copied_dag = copy.deepcopy(copied_dag)
 
-            previous_root = root
+            if i != 0:
+                previous_root = root
+                previous_leaf = leaf
 
             # Get the root node and the leaf node of the subprogram
-            root = dag.nodes[0]
-            leaf = dag.nodes[len(dag.nodes) - 1]
+            root = copied_dag.nodes[0]
+            leaf = copied_dag.nodes[len(copied_dag.nodes) - 1]
 
-            # Check for first iteration
+            previous_leaf.parents = [root]
+
+            # pass on the first iteration to initialize the previous pointers
             if i == 0:
-                # Make the parents of the for-node the parents of the first iteration
-                # leaf.parents = for_node.parents
-                roll_out_dag = copy.deepcopy(dag)
+                # copied_dag = copy.deepcopy(copied_dag)
+                pass
 
             # Check for last iteration
-            elif i == dag.number_of_loops - 1:
-                leaf.parents = [previous_root]
-                # root.children = for_node.children
+            if i == copied_dag.number_of_loops - 2:
 
-                # for child in for_node.children:
-                #     child.parents.extend([root])
-                #     if for_node in child.parents:
-                #         child.parents.remove(for_node)
+                previous_leaf.parents = [root]
 
-                for loop_node in dag.nodes:
+                for loop_node in copied_dag.nodes:
                     loop_node.is_last_for_loop = True
 
             else:
                 # Make the parent the root of the previous iteration
-                leaf.parents = [previous_root]
+                previous_leaf.parents = [root]
                 previous_root.children = [leaf]
 
-            added_index = len(dag.nodes) * (dag.number_of_loops - i) - (dag.number_of_loops - i) + 1
+            added_index = len(copied_dag.nodes) * (copied_dag.number_of_loops - i) - (copied_dag.number_of_loops - i) + 1
 
-            # Reinstate the node ids when appending to the current dag
-            for node in dag.nodes:
-                # print(added_index)
+            # Reinstate the node ids when appending to the current copied_dag
+            for node in copied_dag.nodes:
                 node.id += added_index
 
             # Add the nodes to the ndoe list
             # Use slicing to extend a list at a specified index
-            # print(node.id)
-            roll_out_dag.nodes[len(roll_out_dag.nodes):len(roll_out_dag.nodes)] = dag.nodes
+            roll_out_dag.nodes[len(roll_out_dag.nodes) - 1:len(roll_out_dag.nodes) - 1] = copied_dag.nodes
 
             # Go to the end of the internals of the for loop and reinitialize the node pointer
+
+        # Adjust the first node's parent pointer
+        roll_out_dag.nodes[0].parents = [roll_out_dag.nodes[1]]
 
         # Adjust the order
         roll_out_dag.order = len(roll_out_dag.nodes)

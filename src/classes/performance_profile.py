@@ -3,8 +3,10 @@ from typing import List
 import json
 import numpy as np
 
+
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
+# from classes import contract_program # noqa
 from classes import utils  # noqa
 from classes.nodes.node import Node  # noqa
 
@@ -112,6 +114,7 @@ class PerformanceProfile:
 
             # Use .1f to add a trailing zero
             # print(adjusted_id)
+            print("adjusted_id: {}".format(adjusted_id))
             qualities = dictionary["{:.1f}".format(estimated_time)]
 
             average_quality = self.average_quality(qualities)
@@ -276,9 +279,12 @@ class PerformanceProfile:
 
         return [probability, last_quality[0]]
 
-    def for_contract_program_probability_quality(self, contract_program):
+    def query_probability_and_quality_from_for_expression(self, for_node):
+
         probability = 1.0
         last_quality = None
+
+        contract_program = for_node.for_subprogram
 
         time_allocations = contract_program.allocations
 
@@ -294,7 +300,6 @@ class PerformanceProfile:
                 parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
 
                 # Outputs a list of qualities from the instances at the specified time given a quality mapping
-
                 qualities = self.query_quality_list_on_interval(time_allocation.time, time_allocation.node_id,
                                                                 parent_qualities=parent_qualities)
 
@@ -340,6 +345,7 @@ class PerformanceProfile:
         depth += 1
 
         if node.parents:
+
             if self.are_conditional_roots(node.parents):
 
                 conditional_node = self.find_conditional_node(self.program_dag)
@@ -352,8 +358,9 @@ class PerformanceProfile:
 
                 for_node = self.find_for_node(self.program_dag)
 
-                parent_quality = self.for_contract_program_probability_quality(for_node.for_subprogram)[1]
-                print(parent_quality)
+                parent_quality = self.query_probability_and_quality_from_for_expression(for_node)[1]
+
+                return parent_quality
 
             # Check that none of the parents are conditional expressions or for expressions
             elif not Node.is_conditional_node(node, "parents") and not Node.is_for_node(node, "parents"):
@@ -361,9 +368,9 @@ class PerformanceProfile:
                 parent_qualities = []
 
                 for parent in node.parents:
-                    # utils.print_allocations(time_allocations)
-                    # print([i.id for i in node.parents])
+
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
+
                     # Reset the parent qualities for the next node
                     parent_qualities.append(quality)
 
@@ -371,13 +378,15 @@ class PerformanceProfile:
                     return parent_qualities
 
                 else:
+
                     # Return a list of parent-dependent qualities (not a leaf or root)
-                    # utils.print_allocations(time_allocations)
                     quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
 
                     return quality
 
             elif Node.is_for_node(node, "parents"):
+                # print([node.id])
+                # print([i.id for i in node.parents])
                 # Assumption: Node only has one parent (the for)
                 # Skip the for node since no relevant mapping exists
                 node_for = node.parents[0]
@@ -431,7 +440,9 @@ class PerformanceProfile:
                 parent_qualities = []
 
                 for parent in node_conditional.parents:
+
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
+
                     # Reset the parent qualities for the next node_conditional
                     parent_qualities.append(quality)
 
@@ -448,7 +459,7 @@ class PerformanceProfile:
         # Base Case (Leaf Nodes in a functional expression)
         else:
             # Leaf Node as a trivial functional expression
-            if depth == 1 or Node.is_conditional_node(node):
+            if depth == 1 or Node.is_conditional_node(node) or Node.is_for_node(node):
                 return []
 
             else:
