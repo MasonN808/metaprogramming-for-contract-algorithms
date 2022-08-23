@@ -114,7 +114,7 @@ class PerformanceProfile:
 
             # Use .1f to add a trailing zero
             # print(adjusted_id)
-            print("adjusted_id: {}".format(adjusted_id))
+            # print("adjusted_id: {}".format(adjusted_id))
             qualities = dictionary["{:.1f}".format(estimated_time)]
 
             average_quality = self.average_quality(qualities)
@@ -182,7 +182,7 @@ class PerformanceProfile:
         The performance profile (conditional expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
 
-        :param conditional_node: Node object, the conditional node being evaluated
+        :param conditional_node: Node object, the conditional nodddde being evaluated
         :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
         allocation
         """
@@ -242,7 +242,9 @@ class PerformanceProfile:
 
         # Do an initial pass to find the root of the conditional subbranch for outputting the last quality
         for time_allocation in time_allocations:
+
             if time_allocation.time is not None:
+
                 conditional_root_index = time_allocation.node_id
                 # break, since we found the first index
                 break
@@ -274,8 +276,6 @@ class PerformanceProfile:
                 # print([average_quality, qualities])
 
                 probability *= self.query_probability_contract_expression(average_quality, qualities)
-
-        # self.reset_traversed()
 
         return [probability, last_quality[0]]
 

@@ -194,10 +194,7 @@ class Test:
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
 
-        utils.print_allocations(self.contract_program.allocations)
-
-        eu_initial = self.contract_program.global_expected_utility(
-            self.contract_program.allocations) * self.contract_program.scale
+        eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
 
         if self.contract_program.decimals is not None:
 
@@ -278,7 +275,7 @@ class Test:
             optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])
 
             eu_optimal = self.contract_program.global_expected_utility(allocations[0],
-                                                                       self.contract_program.original_allocations_conditional_branches) * self.contract_program.scale
+                                                                       self.contract_program.original_allocations_inner) * self.contract_program.scale
 
             if self.contract_program.decimals is not None:
 
