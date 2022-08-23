@@ -83,8 +83,10 @@ class PerformanceProfile:
             num_decimals_step_size = self.find_number_of_decimals(self.time_step_size)
 
             # Round to get rid of rounding error in division of time
-            for t in np.arange(start_step, end_step, self.time_step_size).round(num_decimals_step_size):
+            for t in np.arange(start_step + self.time_step_size, end_step + self.time_step_size, self.time_step_size).round(num_decimals_step_size):
                 # ["{}".format(t)]: The time allocation
+                # print(start_step)
+                # print(end_step)
                 qualities += dictionary["{}".format(t)]
 
             return qualities

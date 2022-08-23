@@ -302,6 +302,7 @@ class ContractProgram:
             return self.naive_hill_climbing_outer_for(for_allocations, verbose=verbose)
 
         else:
+
             return self.naive_hill_climbing_no_children_no_parents(verbose=verbose)
 
     def naive_hill_climbing_outer_conditional(self, true_allocations, false_allocations, decay=1.1, threshold=.01, verbose=False) -> List[float]:
@@ -317,6 +318,7 @@ class ContractProgram:
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
 
         while time_switched > threshold:
+
             possible_local_max = []
 
             # Remove the Nones in the list before taking permutations
@@ -430,7 +432,8 @@ class ContractProgram:
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
 
         while time_switched > threshold:
-
+            print("self.allocations: {}".format([t.time for t in self.allocations]))
+            print("original allocations inner: {}".format([t.time for t in self.original_allocations_inner[0]]))
             possible_local_max = []
 
             # Remove the Nones in the list before taking permutations
@@ -476,6 +479,8 @@ class ContractProgram:
 
                         possible_local_max.append([adjusted_allocations, for_allocations])
 
+                    # utils.print_allocations(self.original_allocations_inner[0])
+
                     eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
                     eu_original = self.global_expected_utility(self.allocations, self.original_allocations_inner) * self.scale
 
@@ -498,17 +503,20 @@ class ContractProgram:
                         message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
                         print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations_outer))
 
-                    # Reset the branches of the inner conditional
+                    # Reset the branch of the inner for
                     if self.original_allocations_inner:
+
                         for_allocations = self.original_allocations_inner[0]
 
             # arg max here
             if possible_local_max:
-
+                print("possible local max: {}".format([self.global_expected_utility(j[0], [j[1]]) for j in possible_local_max]))
                 best_allocation = max([self.global_expected_utility(j[0], [j[1]]) for j in possible_local_max])
-
+                print("Best Allocation: {}".format(best_allocation))
                 for j in possible_local_max:
+
                     if self.global_expected_utility(j[0], [j[1]]) == best_allocation:
+
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j[0])
 
@@ -584,6 +592,9 @@ class ContractProgram:
                         adjusted_allocations[permutation[0].node_id].time -= time_switched
                         adjusted_allocations[permutation[1].node_id].time += time_switched
 
+                        # utils.print_allocations(adjusted_allocations)
+                        # utils.print_allocations(self.allocations)
+
                         # TODO: make a pointer from an element of the list of time allocations to a pointer to the left and right time allocations for conditional time allocations in the outer program
                         if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
                             possible_local_max.append(adjusted_allocations)
@@ -599,6 +610,7 @@ class ContractProgram:
 
                         # Check for rounding
                         if self.decimals is not None:
+
                             print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
 
                             eu_adjusted = round(eu_adjusted, self.decimals)
@@ -608,15 +620,20 @@ class ContractProgram:
                             temp_time_switched = round(temp_time_switched, self.decimals)
 
                         if verbose:
+
                             message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
                             print(message.format(temp_time_switched, eu_adjusted, eu_original,
                                                  print_allocations_outer))
 
                 # arg max here
                 if possible_local_max:
+
                     best_allocation = max([self.global_expected_utility(j) for j in possible_local_max])
+
                     for j in possible_local_max:
+
                         if self.global_expected_utility(j) == best_allocation:
+
                             # Make a deep copy to avoid pointers to the same list
                             self.allocations = copy.deepcopy(j)
 
