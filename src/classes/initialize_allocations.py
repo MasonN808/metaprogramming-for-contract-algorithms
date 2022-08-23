@@ -48,10 +48,11 @@ class InitializeAllocations:
         # Initialize a list to properly loop through the nodes given that the node ids are not sequenced
         list_of_ordered_ids = [node.id for node in self.program_dag.nodes]
 
-        # Do an initial pass to find the conditionals to adjust the budget
+        # Do an initial pass to find the conditionals to adjust the budget and time allocation
         for node_id in list_of_ordered_ids:
-            if utils.find_node(node_id, self.program_dag).expression_type == "conditional" and utils.find_node(node_id,
-                                                                                                               self.program_dag).in_subtree:
+
+            if utils.find_node(node_id, self.program_dag).expression_type == "conditional" and utils.find_node(node_id, self.program_dag).in_subtree:
+
                 # Assume every conditional takes tau time
                 tau = self.performance_profile.calculate_tau()
                 # Subtract tau from the budget
@@ -59,12 +60,17 @@ class InitializeAllocations:
                 # Add the time allocation at a specified index
                 time_allocations[node_id] = TimeAllocation(node_id, tau)
 
+            if utils.find_node(node_id, self.program_dag).expression_type == "for" and utils.find_node(node_id, self.program_dag).in_subtree:
+
+                time_allocations[node_id] = TimeAllocation(node_id, 0)
+
         # Do a second pass to add in the rest of the allocations wrt a uniform allocation
         for node_id in list_of_ordered_ids:
 
+            expression_type = utils.find_node(node_id, self.program_dag).expression_type
+
             # Continue since we already did the initial pass
-            if utils.find_node(node_id, self.program_dag).expression_type == "conditional" and utils.find_node(node_id,
-                                                                                                               self.program_dag).in_subtree:
+            if (expression_type == "conditional" or expression_type == "for") and utils.find_node(node_id, self.program_dag).in_subtree:
                 continue
 
             allocation = self.find_uniform_allocation(budget)
@@ -188,9 +194,10 @@ class InitializeAllocations:
         :return: uniformed allocation
         """
         number_of_conditionals = self.count_conditionals()
+        number_of_fors = self.count_fors()
         # multiply by two since the branches get an equivalent time allocation
 
-        allocation = budget / (self.program_dag.order - number_of_conditionals)
+        allocation = budget / (self.program_dag.order - number_of_conditionals - number_of_fors)
         return allocation
 
     def reset_traversed(self) -> None:
@@ -218,6 +225,26 @@ class InitializeAllocations:
                 if utils.find_node(node_id, self.program_dag).expression_type == "conditional":
                     number_of_conditionals += 1
             return number_of_conditionals
+        else:
+            # Since the conditionals don't affect the outer metareasoning allocations
+            return 0
+
+    def count_fors(self) -> int:
+        """
+        Counts the number of fors in the contract program
+
+        :return: number of fors:
+        """
+        if self.in_subtree:
+            number_of_fors = 0
+
+            # Initialize a list to properly loop through the nodes given that the node ids are not sequenced
+            list_of_ordered_ids = [node.id for node in self.program_dag.nodes]
+
+            for node_id in list_of_ordered_ids:
+                if utils.find_node(node_id, self.program_dag).expression_type == "for":
+                    number_of_fors += 1
+            return number_of_fors
         else:
             # Since the conditionals don't affect the outer metareasoning allocations
             return 0

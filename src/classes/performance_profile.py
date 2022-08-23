@@ -355,7 +355,7 @@ class PerformanceProfile:
                 return parent_quality
 
             elif self.has_last_for_loop(node.parents):
-
+                print(node.id)
                 for_node = self.find_for_node(self.program_dag)
 
                 parent_quality = self.query_probability_and_quality_from_for_expression(for_node)[1]

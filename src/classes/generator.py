@@ -477,6 +477,9 @@ class Generator:
         copied_dag = copy.deepcopy(dag)
         copied_dag.nodes = copied_dag.nodes[0:len(dag.nodes) - 1]
 
+        for loop_node in roll_out_dag.nodes[0:len(roll_out_dag.nodes) - 1]:
+            loop_node.is_last_for_loop = True
+
         previous_root = copied_dag.nodes[0]
         previous_leaf = copied_dag.nodes[len(copied_dag.nodes) - 1]
 
@@ -515,9 +518,6 @@ class Generator:
             if i == copied_dag.number_of_loops - 2:
 
                 previous_leaf.parents = [root]
-
-                for loop_node in copied_dag.nodes:
-                    loop_node.is_last_for_loop = True
 
             else:
                 # Make the parent the root of the previous iteration

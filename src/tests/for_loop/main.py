@@ -183,8 +183,12 @@ if __name__ == "__main__":
 
     for i in program_dag.nodes:
         print("program_dag: {}, {}".format(i.id, [j.id for j in i.parents]))
+        if i.is_last_for_loop:
+            print(i.id)
     for i in dag_inner_rolled_out.nodes:
         print("dag_inner_rolled_out: {}, {}".format(i.id, [j.id for j in i.parents]))
+        if i.is_last_for_loop:
+            print(i.id)
     for i in dag_outer.nodes:
         print("dag_outer: {}, {}".format(i.id, [j.id for j in i.parents]))
 
