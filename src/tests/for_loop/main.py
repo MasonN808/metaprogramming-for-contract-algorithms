@@ -134,7 +134,7 @@ if __name__ == "__main__":
         # Need to initialize it after adjusting program_dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [.7, .1, .2, .1, .1, .1, "for", .1]
+        generator.manual_override = [.1, .1, .1, .1, .1, .1, "for", .1]
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes

@@ -145,7 +145,7 @@ class Test:
             optimal_time_allocations_inner_for = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
 
             eu_optimal = self.contract_program.global_expected_utility(allocations[0],
-                                                                       self.contract_program.original_allocations_conditional_branches) * self.contract_program.scale
+                                                                       self.contract_program.original_allocations_inner) * self.contract_program.scale
 
             if self.contract_program.decimals is not None:
 

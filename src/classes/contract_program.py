@@ -121,6 +121,8 @@ class ContractProgram:
                                                  copy.deepcopy(node.false_subprogram.allocations)]
 
                     node.true_subprogram.allocations = original_allocations_inner[0]
+                    # print("subprogram allocations: {}".format(utils.print_allocations(node.true_subprogram.allocations)))
+
                     node.false_subprogram.allocations = original_allocations_inner[1]
 
                 # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
@@ -142,9 +144,12 @@ class ContractProgram:
             elif node.expression_type == "for" and not node.in_subtree:
 
                 if original_allocations_inner:
+
                     copied_branch_allocations = [copy.deepcopy(node.for_subprogram.allocations)]
 
                     node.for_subprogram.allocations = original_allocations_inner[0]
+
+                    # print("subprogram allocations: {}".format(utils.print_allocations(node.for_subprogram.allocations)))
 
                 # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
                 probability_and_qualities = self.performance_profile.query_probability_and_quality_from_for_expression(node)
@@ -173,8 +178,8 @@ class ContractProgram:
                 average_quality = self.performance_profile.average_quality(qualities)
 
                 # If in for loop, only apply the last loop into out utility function
-                if not node.in_for or node.is_last_for_loop:
-                    average_qualities.append(average_quality)
+                # if not (node.in_for or node.is_last_for_loop):
+                average_qualities.append(average_quality)
                 # average_qualities.append(average_quality)
 
                 probability *= self.performance_profile.query_probability_contract_expression(average_quality,
@@ -366,6 +371,7 @@ class ContractProgram:
 
                     # TODO: make a pointer from an element of the list of time allocations to a pointer to the left and right time allocations for conditional time allocations in the outer program
                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations, self.original_allocations_inner):
+
                         possible_local_max.append([adjusted_allocations, true_allocations, false_allocations])
 
                     eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
@@ -399,11 +405,11 @@ class ContractProgram:
             if possible_local_max:
 
                 best_allocation = max(
-                    [self.global_expected_utility(j[0], [j[1], j[2]]) for j in possible_local_max])
+                    [self.global_expected_utility(j[0]) for j in possible_local_max])
 
                 for j in possible_local_max:
 
-                    if self.global_expected_utility(j[0], [j[1], j[2]]) == best_allocation:
+                    if self.global_expected_utility(j[0]) == best_allocation:
 
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j[0])
@@ -432,8 +438,8 @@ class ContractProgram:
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
 
         while time_switched > threshold:
-            print("self.allocations: {}".format([t.time for t in self.allocations]))
-            print("original allocations inner: {}".format([t.time for t in self.original_allocations_inner[0]]))
+            # print("self.allocations: {}".format([t.time for t in self.allocations]))
+            # print("original allocations inner: {}".format([t.time for t in self.original_allocations_inner[0]]))
             possible_local_max = []
 
             # Remove the Nones in the list before taking permutations
@@ -467,6 +473,7 @@ class ContractProgram:
 
                         # Do naive hill climbing on the branches
                         for_allocations = copy.deepcopy(node_0.for_subprogram.naive_hill_climbing_inner())
+                        # print("subprogram allocations: {} end".format(utils.print_allocations(node_0.for_subprogram.allocations)))
 
                     if node_1.expression_type == "for":
                         # Reallocate the budgets for the inner metareasoning problems
@@ -474,10 +481,12 @@ class ContractProgram:
 
                         # Do naive hill climbing on the branches
                         for_allocations = copy.deepcopy(node_1.for_subprogram.naive_hill_climbing_inner())
+                        # print("subprogram allocations: {}".format(utils.print_allocations(node_1.for_subprogram.allocations)))
 
-                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations, self.original_allocations_inner):
+                    if self.global_expected_utility(adjusted_allocations, [for_allocations]) > self.global_expected_utility(self.allocations, self.original_allocations_inner):
 
                         possible_local_max.append([adjusted_allocations, for_allocations])
+                        # print("for_allocations: {}".format(utils.print_allocations(for_allocations)))
 
                     # utils.print_allocations(self.original_allocations_inner[0])
 
@@ -510,12 +519,13 @@ class ContractProgram:
 
             # arg max here
             if possible_local_max:
-                print("possible local max: {}".format([self.global_expected_utility(j[0], [j[1]]) for j in possible_local_max]))
-                best_allocation = max([self.global_expected_utility(j[0], [j[1]]) for j in possible_local_max])
-                print("Best Allocation: {}".format(best_allocation))
+                # print("possible local max: {}".format([self.global_expected_utility(j[0]) for j in possible_local_max]))
+
+                best_allocation = max([self.global_expected_utility(j[0]) for j in possible_local_max])
+                # print("Best Allocation: {}".format(best_allocation))
                 for j in possible_local_max:
 
-                    if self.global_expected_utility(j[0], [j[1]]) == best_allocation:
+                    if self.global_expected_utility(j[0]) == best_allocation:
 
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j[0])
