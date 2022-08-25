@@ -178,9 +178,12 @@ class ContractProgram:
                 average_quality = self.performance_profile.average_quality(qualities)
 
                 # If in for loop, only apply the last loop into out utility function
-                # if not (node.in_for or node.is_last_for_loop):
+                # if node.in_for and not node.is_last_for_loop:
+
+                #     pass
+
+                # else:
                 average_qualities.append(average_quality)
-                # average_qualities.append(average_quality)
 
                 probability *= self.performance_profile.query_probability_contract_expression(average_quality,
                                                                                               qualities)
