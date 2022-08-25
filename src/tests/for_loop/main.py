@@ -134,7 +134,7 @@ if __name__ == "__main__":
         # Need to initialize it after adjusting program_dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [.1, .1, .1, .1, .1, .1, "for", .1]
+        generator.manual_override = [.1, .2, .2, .2, .2, .2, "for", .1]
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
@@ -181,16 +181,16 @@ if __name__ == "__main__":
     # The input should be the outermost program
     test = Test(program_outer)
 
-    for i in program_dag.nodes:
-        print("program_dag: {}, {}".format(i.id, [j.id for j in i.parents]))
-        if i.is_last_for_loop:
-            print(i.id)
-    for i in dag_inner_rolled_out.nodes:
-        print("dag_inner_rolled_out: {}, {}".format(i.id, [j.id for j in i.parents]))
-        if i.is_last_for_loop:
-            print(i.id)
-    for i in dag_outer.nodes:
-        print("dag_outer: {}, {}".format(i.id, [j.id for j in i.parents]))
+    # for i in program_dag.nodes:
+    #     print("program_dag: {}, {}".format(i.id, [j.id for j in i.parents]))
+    #     if i.is_last_for_loop:
+    #         print(i.id)
+    # for i in dag_inner_rolled_out.nodes:
+    #     print("dag_inner_rolled_out: {}, {}".format(i.id, [j.id for j in i.parents]))
+    #     if i.is_last_for_loop:
+    #         print(i.id)
+    # for i in dag_outer.nodes:
+    #     print("dag_outer: {}, {}".format(i.id, [j.id for j in i.parents]))
 
     # Test initial vs optimal expected utility and allocations
     test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)

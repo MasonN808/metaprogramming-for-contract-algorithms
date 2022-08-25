@@ -490,7 +490,7 @@ class ContractProgram:
 
                     # utils.print_allocations(self.original_allocations_inner[0])
 
-                    eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
+                    eu_adjusted = self.global_expected_utility(adjusted_allocations, [for_allocations]) * self.scale
                     eu_original = self.global_expected_utility(self.allocations, self.original_allocations_inner) * self.scale
 
                     adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
