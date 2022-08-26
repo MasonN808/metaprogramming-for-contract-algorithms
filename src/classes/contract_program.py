@@ -3,7 +3,7 @@ from typing import List
 import copy
 import math
 from itertools import permutations
-import numpy as np
+# import numpy as np
 
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
@@ -233,7 +233,7 @@ class ContractProgram:
         probability = 1.0
 
         # A list of all possible discretized solution qualities
-        possible_qualities = np.arange(0, 1, self.quality_interval)
+        # possible_qualities = np.arange(0, 1, self.quality_interval)
         average_qualities = []
 
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
@@ -265,11 +265,11 @@ class ContractProgram:
                 # TODO: Finish this up .... (8/25)
 
                 # Get a list of qualities given the time allocation to the contract algorithm
-                queried_qualities =  self.performance_profile.query_quality_list_on_interval(time_allocation.time, node.id, parent_qualities)
+                # queried_qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time, node.id, parent_qualities)
 
-                discretized_qualities = self.performance_profile.discretize_quality_list(queried_qualities)
+                # discretized_qualities = self.performance_profile.discretize_quality_list(queried_qualities)
 
-                # joint_probability = 
+                # joint_probability =
 
                 # Multiply the current probability by the performance profile of the conditional node
                 probability *= probability_and_qualities[0]
@@ -333,7 +333,6 @@ class ContractProgram:
         expected_utility = probability * self.global_utility(average_qualities)
 
         return expected_utility
-
 
     def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """

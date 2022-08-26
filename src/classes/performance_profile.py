@@ -89,11 +89,11 @@ class PerformanceProfile:
                 qualities += dictionary["{}".format(t)]
 
             return qualities
-    
+
     def discretize_quality_list(self, qualities) -> List[float]:
         """
         Discretizes a list of qualities
-        
+
         :param qualities: float[], arbitary qualities
         :return: Discretized qualities
         """
