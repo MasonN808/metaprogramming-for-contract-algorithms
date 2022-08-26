@@ -23,7 +23,7 @@ class PerformanceProfile:
     """
 
     def __init__(self, program_dag, generator_dag, file_name, time_interval, time_limit, time_step_size,
-                 quality_interval):
+                 quality_interval, expected_utility_type):
         self.program_dag = program_dag
         self.generator_dag = generator_dag
         self.dictionary = self.import_quality_mappings(file_name)
@@ -31,6 +31,7 @@ class PerformanceProfile:
         self.time_limit = time_limit
         self.time_step_size = time_step_size
         self.quality_interval = quality_interval
+        self.expected_utility_type = expected_utility_type
 
     @staticmethod
     def import_quality_mappings(file_name) -> dict:
@@ -85,11 +86,18 @@ class PerformanceProfile:
             # Round to get rid of rounding error in division of time
             for t in np.arange(start_step + self.time_step_size, end_step + self.time_step_size, self.time_step_size).round(num_decimals_step_size):
                 # ["{}".format(t)]: The time allocation
-                # print(start_step)
-                # print(end_step)
                 qualities += dictionary["{}".format(t)]
 
             return qualities
+    
+    def discretize_quality_list(self, qualities) -> List[float]:
+        """
+        Discretizes a list of qualities
+        
+        :param qualities: float[], arbitary qualities
+        :return: Discretized qualities
+        """
+        return [self.round_nearest(quality, step=self.quality_interval) for quality in qualities]
 
     def query_average_quality(self, id, time_allocation, parent_qualities) -> float:
         """
@@ -100,7 +108,9 @@ class PerformanceProfile:
         :param time_allocation: TimeAllocation object, The time allocation to the node
         :return: A quality
         """
+
         adjusted_id = id
+
         if Node.is_conditional_node(self.generator_dag.nodes[id]) or Node.is_for_node(self.generator_dag.nodes[id]):
             adjusted_id = id + 1
 

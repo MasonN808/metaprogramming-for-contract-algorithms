@@ -32,6 +32,8 @@ if __name__ == "__main__":
     # For debugging
     VERBOSE = False
     NUMBER_OF_LOOPS = 5
+    # For type of performance profile (exact or appproximate)
+    EXPECTED_UTILITY_TYPE = "approximate"
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (inner subtree)
@@ -159,14 +161,15 @@ if __name__ == "__main__":
     #         print("parents of 0: {}".format([j.id for j in i.parents]))
 
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag)
+                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE)
 
     # Initialize the pointers of the nodes to the program it is in
     initialize_node_pointers_current_program(program_outer)
 
     # Convert to a contract program
     node_outer_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=dag_inner_rolled_out, budget=0, scale=10 ** 6, decimals=3,
-                                                  quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag)
+                                                  quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag,
+                                                  expected_utility_type=EXPECTED_UTILITY_TYPE)
 
     # Initialize the pointers of the nodes to the program it is in
     initialize_node_pointers_current_program(node_outer_1.for_subprogram)
@@ -181,16 +184,7 @@ if __name__ == "__main__":
     # The input should be the outermost program
     test = Test(program_outer)
 
-    # for i in program_dag.nodes:
-    #     print("program_dag: {}, {}".format(i.id, [j.id for j in i.parents]))
-    #     if i.is_last_for_loop:
-    #         print(i.id)
-    # for i in dag_inner_rolled_out.nodes:
-    #     print("dag_inner_rolled_out: {}, {}".format(i.id, [j.id for j in i.parents]))
-    #     if i.is_last_for_loop:
-    #         print(i.id)
-    # for i in dag_outer.nodes:
-    #     print("dag_outer: {}, {}".format(i.id, [j.id for j in i.parents]))
-
     # Test initial vs optimal expected utility and allocations
     test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
+
+    # TODO: For now work on calculating the exact EU of the module (8/25)
