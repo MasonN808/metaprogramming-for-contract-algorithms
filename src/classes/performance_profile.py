@@ -326,13 +326,6 @@ class PerformanceProfile:
 
         return [probability, last_quality]
 
-    def find_exact_expected_utility(depth, probability, parent_qualities, possible_qualities):
-        # TODO: Finish this 8/26
-        # Recursively find the probability given the parent qualities and the current quality
-        # Then find the utility of getting the qualities
-        # Then sum over all possible qualities
-        return None
-
     @staticmethod
     def estimate_rho() -> float:
         """

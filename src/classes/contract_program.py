@@ -68,7 +68,7 @@ class ContractProgram:
         self.initialize_allocations = InitializeAllocations(budget=self.budget, program_dag=self.program_dag,
                                                             generator_dag=self.generator_dag,
                                                             performance_profile=self.performance_profile,
-                                                            in_subtree=self.in_subtree, )
+                                                            in_subtree=self.in_subtree)
         # self.deferred_imports()
         # self.solution_methods = SolutionMethods(self.program_id, self.parent_program, self.child_programs,
         #                                         self.program_dag, self.budget, self.scale, self.decimals,
@@ -333,6 +333,28 @@ class ContractProgram:
         expected_utility = probability * self.global_utility(average_qualities)
 
         return expected_utility
+
+    def find_exact_expected_utility(self, depth, expected_utility, parent_qualities, current_qualities, possible_qualities, sum):
+        # TODO: Finish this 8/26
+        # Recursively find the probability given the parent qualities and the current quality
+        # Then find the utility of getting the qualities
+        # Then sum over all possible qualities
+        # Note: start traversal from the leaf nodes to the root
+
+        # TODO: make sure that the depth == self.program_dag.order is correct when trying to find the utility of the qualitiess
+        if depth == self.program_dag.order:
+            utility = self.global_utility(current_qualities)
+            expected_utility *= utility
+
+            return expected_utility
+
+        for possible_quality in possible_qualities:
+            current_qualities.append(possible_quality)
+            # TODO: Calculate the probability here for the performance profile
+            # .............
+            sum += self.find_exact_expected_utility(depth + 1, expected_utility, parent_qualities, current_qualities, possible_qualities, sum=0)
+
+        return sum
 
     def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
