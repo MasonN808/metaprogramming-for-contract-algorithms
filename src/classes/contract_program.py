@@ -334,8 +334,9 @@ class ContractProgram:
 
         return expected_utility
 
+    # TODO: Finish this 8/27
     def find_exact_expected_utility(self, depth, expected_utility, parent_qualities, current_qualities, possible_qualities, sum):
-        # TODO: Finish this 8/26
+
         # Recursively find the probability given the parent qualities and the current quality
         # Then find the utility of getting the qualities
         # Then sum over all possible qualities
