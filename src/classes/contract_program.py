@@ -382,6 +382,7 @@ class ContractProgram:
 
             return expected_utility
 
+        # Still traverse the dag
         if leafs:
 
             for node in leafs:
@@ -393,7 +394,7 @@ class ContractProgram:
                     current_qualities.append(possible_quality)
 
                     # TODO: Calculate the probability here for the performance profile
-                    # .............
+                    # conditional_probability = 
 
                     # Traverse up the DAG
                     new_leafs = node.children
