@@ -394,7 +394,7 @@ class ContractProgram:
                     current_qualities.append(possible_quality)
 
                     # TODO: Calculate the probability here for the performance profile
-                    # conditional_probability = 
+                    # conditional_probability =
 
                     # Traverse up the DAG
                     new_leafs = node.children
