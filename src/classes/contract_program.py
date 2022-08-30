@@ -402,6 +402,7 @@ class ContractProgram:
                 for possible_quality in possible_qualities:
 
                     # Use the current qualities to calculate the utility for the base case
+                    # TODO: this should be replace rather than append
                     current_qualities.append(possible_quality)
 
                     node_time = time_allocations[node.id]
