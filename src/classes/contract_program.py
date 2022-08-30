@@ -239,6 +239,8 @@ class ContractProgram:
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
 
+        # leafs = self.find_leafs(self.program_dag)
+
         for time_allocation in refactored_allocations:
 
             node = utils.find_node(time_allocation.node_id, self.program_dag)
@@ -335,7 +337,7 @@ class ContractProgram:
         return expected_utility
 
     # TODO: Finish this 8/27
-    def find_exact_expected_utility(self, depth, expected_utility, parent_qualities, current_qualities, possible_qualities, sum):
+    def find_exact_expected_utility(self, depth, expected_utility, current_qualities, possible_qualities, sum):
         # Recursively find the probability given the parent qualities and the current quality
         # Then find the utility of getting the qualities
         # Then sum over all possible qualities
@@ -352,9 +354,51 @@ class ContractProgram:
             current_qualities.append(possible_quality)
             # TODO: Calculate the probability here for the performance profile
             # .............
-            sum += self.find_exact_expected_utility(depth + 1, expected_utility, parent_qualities, current_qualities, possible_qualities, sum=0)
+            sum += self.find_exact_expected_utility(depth + 1, expected_utility, current_qualities, possible_qualities, sum=0)
 
         return sum
+
+    def find_exact_expected_utility_2(self, leafs, node, time_allocations, depth, expected_utility, current_qualities, possible_qualities, sum) -> List[float]:
+        """
+        Returns the parent qualities given the time allocations and node
+
+        :param: depth: The depth of the recursive call
+        :param: node: Node object, finding the parent qualities of this node
+        :param: time_allocations: float[] (order matters), for the entire DAG
+        :return: A list of parent qualities
+        """
+        # Recur down the DAG
+        depth += 1
+        # Pseudo Code:
+        # Start at the leaf nodes
+        # Traverse the tree from leaves to the root
+        # Calculate the probabilities
+        if node.children:
+
+            if depth == self.program_dag.order:
+                utility = self.global_utility(current_qualities)
+                expected_utility *= utility
+
+                return expected_utility
+
+            for possible_quality in possible_qualities:
+                current_qualities.append(possible_quality)
+                # TODO: Calculate the probability here for the performance profile
+                # .............
+                sum += self.find_exact_expected_utility(depth + 1, expected_utility, current_qualities, possible_qualities, sum=0)
+
+        # Base Case (Leaf Nodes in a functional expression)
+        else:
+            # Leaf Node as a trivial functional expression
+            if depth == 1 or Node.is_conditional_node(node) or Node.is_for_node(node):
+                return []
+
+            else:
+                # utils.print_allocations(time_allocations)
+                # print(node.current_program.program_id)
+                quality = self.query_average_quality(node.id, time_allocations[node.id], [])
+
+                return quality
 
     def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
@@ -839,6 +883,16 @@ class ContractProgram:
         """
         self.budget = new_budget
         self.initialize_allocations.budget = new_budget
+
+    def find_leafs(dag):
+        leafs = []
+        root = dag.root
+
+        for parent in root.parents:
+            if parent.parents == [] or parent.parents is None:
+                leafs.append(parent)
+
+        return leafs
 
     # def change_allocations(self, new_allocations) -> None:
     #     self.allocations = new_allocations
