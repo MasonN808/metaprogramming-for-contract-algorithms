@@ -393,7 +393,7 @@ class ContractProgram:
                     # Use the current qualities to calculate the utility for the base case
                     current_qualities.append(possible_quality)
 
-                    # TODO: Calculate the probability here for the performance profile
+                    # TODO: Calculate the probability here for the performance profile CONTINUE HERE (8/29)
                     # conditional_probability =
 
                     # Traverse up the DAG
