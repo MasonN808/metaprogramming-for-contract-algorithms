@@ -461,6 +461,7 @@ class PerformanceProfile:
                     parent_qualities.append(quality)
 
                 if depth == 1:
+
                     return parent_qualities
 
                 else:

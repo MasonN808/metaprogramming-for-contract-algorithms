@@ -358,7 +358,7 @@ class ContractProgram:
 
         return sum
 
-    def find_exact_expected_utility_2(self, leafs, time_allocations, depth, expected_utility, current_qualities, possible_qualities, sum) -> List[float]:
+    def find_exact_expected_utility_2(self, leafs, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> List[float]:
         """
         Returns the parent qualities given the time allocations and node
 
@@ -373,6 +373,7 @@ class ContractProgram:
         # Start at the leaf nodes
         # Traverse the tree from leaves to the root
         # Calculate the probabilities
+        # TODO: we want some sort of breadth first traversal here
 
         # This should catch the root
         if depth == self.program_dag.order:
@@ -387,20 +388,38 @@ class ContractProgram:
 
             for node in leafs:
 
+                if node.parents:
+
+                    # Append the parents using the recently appended qualities to the current_qualities list
+                    for i in len(node.parents) - 1:
+
+                        parent_qualities.append(current_qualities[len(current_qualities) - i - 1])
+
+                # Be sure to not traverse the node more than once during recursion
+                node.traversed = True
+
                 # Loop through all possible qualities on the current node
                 for possible_quality in possible_qualities:
 
                     # Use the current qualities to calculate the utility for the base case
                     current_qualities.append(possible_quality)
 
-                    # TODO: Calculate the probability here for the performance profile CONTINUE HERE (8/29)
-                    # conditional_probability =
+                    node_time = time_allocations[node.id]
+
+                    sample_quality_list = self.performance_profile.query_quality_list_on_interval(
+                        time=node_time, id=node.id, parent_qualities=parent_qualities)
+
+                    conditional_probability = self.performance_profile.query_probability_contract_expression(
+                        queried_quality=possible_quality, quality_list=sample_quality_list)
+
+                    # TODO: Expand the notabiliity equation to see if this is correct (8/30)
+                    expected_utility *= conditional_probability
 
                     # Traverse up the DAG
                     new_leafs = node.children
 
                     sum += self.find_exact_expected_utility(new_leafs, time_allocations, depth + 1,
-                                                            expected_utility, current_qualities, possible_qualities, sum=0)
+                                                            expected_utility, current_qualities, possible_qualities, parent_qualities=[], sum=0)
 
         # The root node was reached
         else:
