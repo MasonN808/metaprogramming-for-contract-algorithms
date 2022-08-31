@@ -336,7 +336,6 @@ class ContractProgram:
 
         return expected_utility
 
-    # TODO: Finish this 8/27
     def find_exact_expected_utility(self, depth, expected_utility, current_qualities, possible_qualities, sum):
         # Recursively find the probability given the parent qualities and the current quality
         # Then find the utility of getting the qualities
@@ -369,11 +368,6 @@ class ContractProgram:
         """
         # Recur down the DAG
         depth += 1
-        # Pseudo Code:
-        # Start at the leaf nodes
-        # Traverse the tree from leaves to the root
-        # Calculate the probabilities
-        # TODO: we want some sort of breadth first traversal here
 
         # This should catch the root
         if depth == self.program_dag.order:
@@ -383,50 +377,97 @@ class ContractProgram:
 
             return expected_utility
 
-        # Still traverse the dag
-        if leafs:
+        for node in leafs:
 
-            for node in leafs:
+            if node.parents:
+                
+                for parent in node.parents:
 
-                if node.parents:
+                    parent_qualities.append(current_qualities[parent.id])
+                    
+            # Be sure to not traverse the node more than once during recursion
+            node.traversed = True
 
-                    # Append the parents using the recently appended qualities to the current_qualities list
-                    for i in len(node.parents) - 1:
-                        # TODO INSTEAD get the parent ids and pull the qualities using the ids and indexes in the current_quality list
-                        parent_qualities.append(current_qualities[len(current_qualities) - i - 1])
+            # TODO: DO a BFS on the tree while doing this recursive call (8/31)
+            # Loop through all possible qualities on the current node
+            for possible_quality in possible_qualities:
 
-                # Be sure to not traverse the node more than once during recursion
-                node.traversed = True
+                current_qualities[node.id] = possible_quality
 
-                # TODO: DO a BFS on the tree while doing this recursive call (8/31)
-                # Loop through all possible qualities on the current node
-                for possible_quality in possible_qualities:
+                node_time = time_allocations[node.id]
 
-                    current_qualities[node.id] = possible_quality
+                sample_quality_list = self.performance_profile.query_quality_list_on_interval(
+                    time=node_time, id=node.id, parent_qualities=parent_qualities)
 
-                    node_time = time_allocations[node.id]
+                conditional_probability = self.performance_profile.query_probability_contract_expression(
+                    queried_quality=possible_quality, quality_list=sample_quality_list)
 
-                    sample_quality_list = self.performance_profile.query_quality_list_on_interval(
-                        time=node_time, id=node.id, parent_qualities=parent_qualities)
+                # TODO: Expand the notabiliity equation to see if this is correct (8/30)
+                expected_utility *= conditional_probability
 
-                    conditional_probability = self.performance_profile.query_probability_contract_expression(
-                        queried_quality=possible_quality, quality_list=sample_quality_list)
+                # Traverse up the DAG
+                new_leafs = node.children
 
-                    # TODO: Expand the notabiliity equation to see if this is correct (8/30)
-                    expected_utility *= conditional_probability
+                sum += self.find_exact_expected_utility(new_leafs, time_allocations, depth + 1,
+                                                        expected_utility, current_qualities, possible_qualities, parent_qualities=[], sum=0)
 
-                    # Traverse up the DAG
-                    new_leafs = node.children
+            node.traversed = False
 
-                    sum += self.find_exact_expected_utility(new_leafs, time_allocations, depth + 1,
-                                                            expected_utility, current_qualities, possible_qualities, parent_qualities=[], sum=0)
+    # def find_exact_expected_utility_recur(self, leafs, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> List[float]:
+    #     """
+    #     Returns the parent qualities given the time allocations and node
 
-                node.traversed = False
+    #     :param: depth: The depth of the recursive call
+    #     :param: node: Node object, finding the parent qualities of this node
+    #     :param: time_allocations: float[] (order matters), for the entire DAG
+    #     :return: A list of parent qualities
+    #     """
+    #     # Recur down the DAG
+    #     depth += 1
 
-        # The root node was reached
-        else:
+    #     # This should catch the root
+    #     if depth == self.program_dag.order:
 
-            return sum
+    #         utility = self.global_utility(current_qualities)
+    #         expected_utility *= utility
+
+    #         return expected_utility
+
+    #     for node in leafs:
+
+    #         if node.parents:
+
+    #             for parent in node.parents:
+
+    #                 parent_qualities.append(current_qualities[parent.id])
+                    
+    #         # Be sure to not traverse the node more than once during recursion
+    #         node.traversed = True
+
+    #         # TODO: DO a BFS on the tree while doing this recursive call (8/31)
+    #         # Loop through all possible qualities on the current node
+    #         for possible_quality in possible_qualities:
+
+    #             current_qualities[node.id] = possible_quality
+
+    #             node_time = time_allocations[node.id]
+
+    #             sample_quality_list = self.performance_profile.query_quality_list_on_interval(
+    #                 time=node_time, id=node.id, parent_qualities=parent_qualities)
+
+    #             conditional_probability = self.performance_profile.query_probability_contract_expression(
+    #                 queried_quality=possible_quality, quality_list=sample_quality_list)
+
+    #             # TODO: Expand the notabiliity equation to see if this is correct (8/30)
+    #             expected_utility *= conditional_probability
+
+    #             # Traverse up the DAG
+    #             new_leafs = node.children
+
+    #             sum += self.find_exact_expected_utility(new_leafs, time_allocations, depth + 1,
+    #                                                     expected_utility, current_qualities, possible_qualities, parent_qualities=[], sum=0)
+
+    #         node.traversed = False
 
     def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
