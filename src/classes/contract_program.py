@@ -380,11 +380,11 @@ class ContractProgram:
         for node in leafs:
 
             if node.parents:
-                
+
                 for parent in node.parents:
 
                     parent_qualities.append(current_qualities[parent.id])
-                    
+
             # Be sure to not traverse the node more than once during recursion
             node.traversed = True
 
@@ -440,7 +440,7 @@ class ContractProgram:
     #             for parent in node.parents:
 
     #                 parent_qualities.append(current_qualities[parent.id])
-                    
+
     #         # Be sure to not traverse the node more than once during recursion
     #         node.traversed = True
 
