@@ -392,18 +392,17 @@ class ContractProgram:
 
                     # Append the parents using the recently appended qualities to the current_qualities list
                     for i in len(node.parents) - 1:
-
+                        # TODO INSTEAD get the parent ids and pull the qualities using the ids and indexes in the current_quality list
                         parent_qualities.append(current_qualities[len(current_qualities) - i - 1])
 
                 # Be sure to not traverse the node more than once during recursion
                 node.traversed = True
 
+                # TODO: DO a BFS on the tree while doing this recursive call (8/31)
                 # Loop through all possible qualities on the current node
                 for possible_quality in possible_qualities:
 
-                    # Use the current qualities to calculate the utility for the base case
-                    # TODO: this should be replace rather than append
-                    current_qualities.append(possible_quality)
+                    current_qualities[node.id] = possible_quality
 
                     node_time = time_allocations[node.id]
 
@@ -421,6 +420,8 @@ class ContractProgram:
 
                     sum += self.find_exact_expected_utility(new_leafs, time_allocations, depth + 1,
                                                             expected_utility, current_qualities, possible_qualities, parent_qualities=[], sum=0)
+
+                node.traversed = False
 
         # The root node was reached
         else:
