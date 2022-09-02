@@ -34,7 +34,8 @@ class ContractProgram:
     POPULOUS_FILE_NAME = "populous.json"
 
     def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals,
-                 quality_interval, time_interval, time_step_size, in_subtree, generator_dag, expected_utility_type):
+                 quality_interval, time_interval, time_step_size, in_subtree, generator_dag, expected_utility_type, possible_qualities,
+                 number_of_loops=None):
 
         self.program_id = program_id
         self.subprogram_expression_type = None
@@ -57,6 +58,10 @@ class ContractProgram:
         self.original_allocations_inner = None
 
         self.expected_utility_type = expected_utility_type
+
+        self.possible_qualities = possible_qualities
+
+        self.number_of_loops = number_of_loops
 
         self.performance_profile = PerformanceProfile(program_dag=self.program_dag, generator_dag=self.generator_dag,
                                                       file_name=self.POPULOUS_FILE_NAME,
@@ -244,6 +249,17 @@ class ContractProgram:
             if (node.expression_type == "conditional" or node.expression_type == "for") and node.in_subtree:
                 continue
 
+            # Takes care of evaluating fixed loops with an exact expected utility in the inner metareasoning problem
+            elif node.in_for and not node.expression_type == "for" and node.first_loop:
+                # print(node.id)
+                # The leaf will be the first node of the first iteration
+                # TODO: edit the parent_qualities pointer to a nonempty node (9/1)
+                parent_qualities = self.performance_profile.find_parent_qualities(
+                    node=node.subprogram_parent_node, time_allocations=node.current_program.parent_program.allocations, depth=0)
+
+                return self.find_exact_expected_utility_2(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
+                                                          current_qualities=[None for i in range(self.number_of_loops)], parent_qualities=parent_qualities, depth=0, leafs=[node], sum=0)
+
             # Calculates the EU of a conditional expression
             elif node.expression_type == "conditional" and not node.in_subtree:
 
@@ -323,28 +339,28 @@ class ContractProgram:
 
         return expected_utility
 
-    def find_exact_expected_utility(self, depth, expected_utility, current_qualities, possible_qualities, sum):
-        # Recursively find the probability given the parent qualities and the current quality
-        # Then find the utility of getting the qualities
-        # Then sum over all possible qualities
-        # Note: start traversal from the leaf nodes to the root
+    # def find_exact_expected_utility(self, depth, expected_utility, current_qualities, possible_qualities, sum):
+    #     # Recursively find the probability given the parent qualities and the current quality
+    #     # Then find the utility of getting the qualities
+    #     # Then sum over all possible qualities
+    #     # Note: start traversal from the leaf nodes to the root
 
-        # TODO: make sure that the depth == self.program_dag.order is correct when trying to find the utility of the qualitiess
-        if depth == self.program_dag.order:
-            utility = self.global_utility(current_qualities)
-            expected_utility *= utility
+    #     # TODO: make sure that the depth == self.program_dag.order is correct when trying to find the utility of the qualitiess
+    #     if depth == self.program_dag.order:
+    #         utility = self.global_utility(current_qualities)
+    #         expected_utility *= utility
 
-            return expected_utility
+    #         return expected_utility
 
-        for possible_quality in possible_qualities:
-            current_qualities.append(possible_quality)
-            # TODO: Calculate the probability here for the performance profile
-            # .............
-            sum += self.find_exact_expected_utility(depth + 1, expected_utility, current_qualities, possible_qualities, sum=0)
+    #     for possible_quality in possible_qualities:
+    #         current_qualities.append(possible_quality)
+    #         # TODO: Calculate the probability here for the performance profile
+    #         # .............
+    #         sum += self.find_exact_expected_utility(depth + 1, expected_utility, current_qualities, possible_qualities, sum=0)
 
-        return sum
+    #     return sum
 
-    def find_exact_expected_utility_2(self, leafs, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> List[float]:
+    def find_exact_expected_utility_2(self, leafs, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> float:
         """
         Returns the parent qualities given the time allocations and node
 
@@ -356,49 +372,52 @@ class ContractProgram:
         # Recur down the DAG
         depth += 1
 
+        # TODO SUBTRACT THE ID FROM THE LAST LOOP INDEX LATER
+        subtracted_index = 2
+
         # This should catch the root
         if depth == self.program_dag.order:
 
             utility = self.global_utility(current_qualities)
             expected_utility *= utility
+            # print("EU: {}".format(expected_utility))
 
             return expected_utility
 
-        for node in leafs:
+        else:
 
-            if node.parents:
+            for node in leafs:
 
-                for parent in node.parents:
+                if node.parents and depth != 1:
+                    # print(node.id)
+                    for parent in node.parents:
+                        # print(parent.id)
+                        parent_qualities.append(current_qualities[parent.id - subtracted_index])
 
-                    parent_qualities.append(current_qualities[parent.id])
+                # Loop through all possible qualities on the current node
+                for possible_quality in possible_qualities:
 
-            # Be sure to not traverse the node more than once during recursion
-            node.traversed = True
+                    current_qualities[node.id - subtracted_index] = possible_quality
 
-            # TODO: DO a BFS on the tree while doing this recursive call (8/31)
-            # Loop through all possible qualities on the current node
-            for possible_quality in possible_qualities:
+                    node_time = time_allocations[node.id].time
+                    # print([i for i in parent_qualities])
+                    sample_quality_list = self.performance_profile.query_quality_list_on_interval(
+                        time=node_time, id=node.id, parent_qualities=parent_qualities)
 
-                current_qualities[node.id] = possible_quality
+                    conditional_probability = self.performance_profile.query_probability_contract_expression(
+                        queried_quality=possible_quality, quality_list=sample_quality_list)
 
-                node_time = time_allocations[node.id]
+                    # TODO: Expand the notabiliity equation to see if this is correct (8/30)
+                    expected_utility *= conditional_probability
 
-                sample_quality_list = self.performance_profile.query_quality_list_on_interval(
-                    time=node_time, id=node.id, parent_qualities=parent_qualities)
+                    # Traverse up the DAG
+                    new_leafs = node.children
 
-                conditional_probability = self.performance_profile.query_probability_contract_expression(
-                    queried_quality=possible_quality, quality_list=sample_quality_list)
+                    sum += self.find_exact_expected_utility_2(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
+                                                              expected_utility=expected_utility, current_qualities=current_qualities,
+                                                              possible_qualities=possible_qualities, parent_qualities=[], sum=0)
 
-                # TODO: Expand the notabiliity equation to see if this is correct (8/30)
-                expected_utility *= conditional_probability
-
-                # Traverse up the DAG
-                new_leafs = node.children
-
-                sum += self.find_exact_expected_utility(new_leafs, time_allocations, depth + 1,
-                                                        expected_utility, current_qualities, possible_qualities, parent_qualities=[], sum=0)
-
-            node.traversed = False
+            return 0
 
     def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
@@ -679,6 +698,7 @@ class ContractProgram:
 
                     # Does hill climbing on the outer metareasoning problem that is a conditional
                     if node_0.expression_type == "for":
+
                         # Reallocate the budgets for the inner metareasoning problems
                         node_0.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_0.id].time))
 
@@ -687,6 +707,7 @@ class ContractProgram:
                         # print("subprogram allocations: {} end".format(utils.print_allocations(node_0.for_subprogram.allocations)))
 
                     if node_1.expression_type == "for":
+
                         # Reallocate the budgets for the inner metareasoning problems
                         node_1.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_1.id].time))
 

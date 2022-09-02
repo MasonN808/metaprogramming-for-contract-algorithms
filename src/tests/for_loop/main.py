@@ -1,5 +1,6 @@
 import copy
 import sys
+import numpy as np
 
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
@@ -33,7 +34,9 @@ if __name__ == "__main__":
     VERBOSE = False
     NUMBER_OF_LOOPS = 5
     # For type of performance profile (exact or appproximate)
-    EXPECTED_UTILITY_TYPE = "approximate"
+    EXPECTED_UTILITY_TYPE = "exact"
+    # Initialize a list of all possible qualities
+    POSSIBLE_QUALITIES = np.arange(0, 1 + QUALITY_INTERVAL, QUALITY_INTERVAL)
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (inner subtree)
@@ -68,6 +71,10 @@ if __name__ == "__main__":
     node_outer_1 = Node(6, [node_outer_2], [], expression_type="for", in_subtree=False)
     node_outer_1.num_loops = NUMBER_OF_LOOPS
     node_outer_1.for_dag = copy.deepcopy(dag_inner)
+    root_inner.subprogram_parent_node = node_outer_1
+
+    for node in dag_inner_rolled_out.nodes:
+        node.subprogram_parent_node = node_outer_1
 
     # Root node
     root_outer = Node(0, [node_outer_1], [], expression_type="contract", in_subtree=False)
@@ -136,7 +143,7 @@ if __name__ == "__main__":
         # Need to initialize it after adjusting program_dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [.1, .2, .2, .2, .2, .2, "for", .1]
+        generator.manual_override = [.1, .6, .5, .4, .3, .2, "for", .1]
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
@@ -161,7 +168,8 @@ if __name__ == "__main__":
     #         print("parents of 0: {}".format([j.id for j in i.parents]))
 
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE)
+                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
+                                    possible_qualities=POSSIBLE_QUALITIES)
 
     # Initialize the pointers of the nodes to the program it is in
     initialize_node_pointers_current_program(program_outer)
@@ -169,7 +177,7 @@ if __name__ == "__main__":
     # Convert to a contract program
     node_outer_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=dag_inner_rolled_out, budget=0, scale=10 ** 6, decimals=3,
                                                   quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag,
-                                                  expected_utility_type=EXPECTED_UTILITY_TYPE)
+                                                  expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, number_of_loops=NUMBER_OF_LOOPS)
 
     # Initialize the pointers of the nodes to the program it is in
     initialize_node_pointers_current_program(node_outer_1.for_subprogram)

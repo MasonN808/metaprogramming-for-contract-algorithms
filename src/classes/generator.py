@@ -516,7 +516,7 @@ class Generator:
 
             # Check for last iteration
             if i == copied_dag.number_of_loops - 2:
-
+                root.first_loop = True
                 previous_leaf.parents = [root]
 
             else:

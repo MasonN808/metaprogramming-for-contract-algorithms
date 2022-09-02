@@ -32,12 +32,15 @@ class Node:
         self.in_true = None
         self.in_false = None
 
+        self.subprogram_parent_node = None
+
         # subtree for the for loop
         self.for_dag = None
         self.for_subprogram = None
         self.in_for = None
         self.is_last_for_loop = None
         self.num_loops = 0
+        self.first_loop = None
 
         # Used for the subtree that doesn't have access to parents
         self.parent_qualities = []
