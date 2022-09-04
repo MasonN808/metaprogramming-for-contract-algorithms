@@ -32,7 +32,7 @@ if __name__ == "__main__":
     QUALITY_INTERVAL = .05
     # For debugging
     VERBOSE = False
-    NUMBER_OF_LOOPS = 5
+    NUMBER_OF_LOOPS = 6
     # For type of performance profile (exact or appproximate)
     EXPECTED_UTILITY_TYPE = "exact"
     # Initialize a list of all possible qualities
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
 
     # Root Node
-    node_inner_1 = Node(6, [], [], expression_type="for", in_subtree=True)
+    node_inner_1 = Node(7, [], [], expression_type="for", in_subtree=True)
     root_inner = Node(1, [node_inner_1], [], expression_type="contract", in_subtree=True)
     root_inner.in_for = True
 
@@ -65,10 +65,10 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
 
     # Leaf nodes
-    node_outer_2 = Node(7, [], [], expression_type="contract", in_subtree=False)
+    node_outer_2 = Node(8, [], [], expression_type="contract", in_subtree=False)
 
     # Conditional Node
-    node_outer_1 = Node(6, [node_outer_2], [], expression_type="for", in_subtree=False)
+    node_outer_1 = Node(7, [node_outer_2], [], expression_type="for", in_subtree=False)
     node_outer_1.num_loops = NUMBER_OF_LOOPS
     node_outer_1.for_dag = copy.deepcopy(dag_inner)
     root_inner.subprogram_parent_node = node_outer_1
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         # Need to initialize it after adjusting program_dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [.1, .6, .5, .4, .3, .2, "for", .1]
+        generator.manual_override = [.1, .5, .5, .5, .5, .5, .5, "for", .1]
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
@@ -194,5 +194,3 @@ if __name__ == "__main__":
 
     # Test initial vs optimal expected utility and allocations
     test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
-
-    # TODO: For now work on calculating the exact EU of the module (8/25)

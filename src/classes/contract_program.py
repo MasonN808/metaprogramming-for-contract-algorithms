@@ -250,16 +250,14 @@ class ContractProgram:
                 continue
 
             # Takes care of evaluating fixed loops with an exact expected utility in the inner metareasoning problem
-            elif node.in_for and not node.expression_type == "for" and node.first_loop:
-                # print(node.id)
+            elif node.in_for and not node.expression_type == "for" and node.first_loop and node.in_subtree:
+
                 # The leaf will be the first node of the first iteration
-                # TODO: edit the parent_qualities pointer to a nonempty node (9/1)
                 parent_qualities = self.performance_profile.find_parent_qualities(
                     node=node.subprogram_parent_node, time_allocations=node.current_program.parent_program.allocations, depth=0)
 
                 return self.find_exact_expected_utility_2(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
                                                           current_qualities=[None for i in range(self.number_of_loops)], parent_qualities=parent_qualities, depth=0, leafs=[node], sum=0)
-
             # Calculates the EU of a conditional expression
             elif node.expression_type == "conditional" and not node.in_subtree:
 
@@ -882,6 +880,8 @@ class ContractProgram:
                 # if local max wasn't found
                 else:
                     time_switched = time_switched / decay
+
+            utils.print_allocations(self.allocations)
 
             return self.allocations
 
