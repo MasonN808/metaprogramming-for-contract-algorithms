@@ -375,16 +375,17 @@ class ContractProgram:
         subtracted_index = 2
 
         # This should catch the root
-        if depth == self.program_dag.order - 1:
+        # if depth == self.program_dag.order - 1:
 
-            utility = self.global_utility(current_qualities)
-            expected_utility *= utility
-            # print("EU: {}".format(expected_utility))
+        # utility = self.global_utility(current_qualities)
+        # expected_utility *= utility
+        # print("EU: {}".format(expected_utility))
 
-            return expected_utility
+        # return expected_utility
+        # pass
 
-        else:
-
+        # else:
+        if leafs:
             for node in leafs:
 
                 if node.parents and depth != 1:
@@ -412,13 +413,23 @@ class ContractProgram:
                     # Traverse up the DAG
                     new_leafs = node.children
 
+                    if depth == self.program_dag.order - 1:
+
+                        utility = self.global_utility(current_qualities)
+
+                        expected_utility *= utility
+
+                        # print("EU: {}".format(expected_utility))
+
                     expected_utility += self.find_exact_expected_utility_2(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
                                                                            expected_utility=expected_utility, current_qualities=current_qualities,
                                                                            possible_qualities=possible_qualities, parent_qualities=[], sum=0)
 
-            if depth == 1:
+            return expected_utility
 
-                return expected_utility
+        else:
+
+            return 0
 
     def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
