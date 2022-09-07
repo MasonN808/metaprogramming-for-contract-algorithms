@@ -256,6 +256,11 @@ class ContractProgram:
                 parent_qualities = self.performance_profile.find_parent_qualities(
                     node=node.subprogram_parent_node, time_allocations=node.current_program.parent_program.allocations, depth=0)
 
+                # for child in node.children:
+                #     print(child.id)
+
+                # quit()
+
                 return self.find_exact_expected_utility_2(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
                                                           current_qualities=[None for i in range(self.number_of_loops)], parent_qualities=parent_qualities, depth=0, leafs=[node], sum=0)
 
@@ -385,20 +390,22 @@ class ContractProgram:
         # pass
 
         # else:
+
         if leafs:
+
             for node in leafs:
 
                 if node.parents and depth != 1:
-                    # print(node.id)
+
                     for parent in node.parents:
-                        # print(parent.id)
+
                         parent_qualities.append(current_qualities[parent.id - subtracted_index])
 
                 # Loop through all possible qualities on the current node
                 for possible_quality in possible_qualities:
 
                     current_qualities[node.id - subtracted_index] = possible_quality
-
+                    # print(current_qualitßies)
                     node_time = time_allocations[node.id].time
                     # print([i for i in parent_qualities])
                     sample_quality_list = self.performance_profile.query_quality_list_on_interval(
