@@ -258,6 +258,7 @@ class ContractProgram:
 
                 return self.find_exact_expected_utility_2(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
                                                           current_qualities=[None for i in range(self.number_of_loops)], parent_qualities=parent_qualities, depth=0, leafs=[node], sum=0)
+
             # Calculates the EU of a conditional expression
             elif node.expression_type == "conditional" and not node.in_subtree:
 
@@ -374,7 +375,7 @@ class ContractProgram:
         subtracted_index = 2
 
         # This should catch the root
-        if depth == self.program_dag.order:
+        if depth == self.program_dag.order - 1:
 
             utility = self.global_utility(current_qualities)
             expected_utility *= utility
@@ -411,11 +412,13 @@ class ContractProgram:
                     # Traverse up the DAG
                     new_leafs = node.children
 
-                    sum += self.find_exact_expected_utility_2(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
-                                                              expected_utility=expected_utility, current_qualities=current_qualities,
-                                                              possible_qualities=possible_qualities, parent_qualities=[], sum=0)
+                    expected_utility += self.find_exact_expected_utility_2(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
+                                                                           expected_utility=expected_utility, current_qualities=current_qualities,
+                                                                           possible_qualities=possible_qualities, parent_qualities=[], sum=0)
 
-            return 0
+            if depth == 1:
+
+                return expected_utility
 
     def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
@@ -767,7 +770,7 @@ class ContractProgram:
 
         return [self.allocations, self.original_allocations_inner[0]]
 
-    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
+    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=True) -> List[float]:
         """
         Does inner naive hill climbing search on one of the branches of a conditional by randomly replacing a set
         amount of time s between two different contract algorithms. If the expected value of the root node of the
