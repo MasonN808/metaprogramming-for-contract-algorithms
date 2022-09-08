@@ -414,8 +414,8 @@ class Generator:
 
                     # Check for last iteration
                     elif i == for_node.num_loops - 1:
-                        leaf.parents = [previous_root]
-                        root.children = [for_node]
+                        leaf.parents = [node]
+                        previous_root.children = [leaf]
 
                         for child in for_node.children:
                             child.parents.extend([root])
@@ -440,7 +440,6 @@ class Generator:
 
                     # Add the nodes to the ndoe list
                     # Use slicing to extend a list at a specified index
-                    # print(node.id)
                     dag.nodes[for_node.id:for_node.id] = for_dag.nodes
 
                     # Go to the end of the internals of the for loop and reinitialize the node pointer
@@ -480,7 +479,7 @@ class Generator:
         for loop_node in roll_out_dag.nodes[0:len(roll_out_dag.nodes) - 1]:
             loop_node.is_last_for_loop = True
 
-        previous_root = copied_dag.nodes[0]
+        # previous_root = copied_dag.nodes[0]
         previous_leaf = copied_dag.nodes[len(copied_dag.nodes) - 1]
 
         # copied_dag.nodes = copied_dag.nodes[0:len(dag.nodes)-1]
@@ -500,7 +499,7 @@ class Generator:
             copied_dag = copy.deepcopy(copied_dag)
 
             if i != 0:
-                previous_root = root
+                # previous_root = root
                 previous_leaf = leaf
 
             # Get the root node and the leaf node of the subprogram
@@ -508,26 +507,33 @@ class Generator:
             leaf = copied_dag.nodes[len(copied_dag.nodes) - 1]
 
             previous_leaf.parents = [root]
+            root.children = [previous_leaf]
 
             # pass on the first iteration to initialize the previous pointers
             if i == 0:
                 # copied_dag = copy.deepcopy(copied_dag)
                 pass
 
-            # Check for last iteration
+            # Check for last iteration (i.e., the first loop)
+            # subtracted two since it is offset from previous node indexes
             if i == copied_dag.number_of_loops - 2:
+                print(i)
                 root.first_loop = True
                 previous_leaf.parents = [root]
+                # previous_root.children = [leaf]
+                root.children = [previous_leaf]
 
             else:
                 # Make the parent the root of the previous iteration
                 previous_leaf.parents = [root]
-                previous_root.children = [leaf]
+                # previous_root.children = [leaf]
+                root.children = [previous_leaf]
 
             added_index = len(copied_dag.nodes) * (copied_dag.number_of_loops - i) - (copied_dag.number_of_loops - i) + 1
 
             # Reinstate the node ids when appending to the current copied_dag
             for node in copied_dag.nodes:
+
                 node.id += added_index
 
             # Add the nodes to the ndoe list
@@ -538,6 +544,7 @@ class Generator:
 
         # Adjust the first node's parent pointer
         roll_out_dag.nodes[0].parents = [roll_out_dag.nodes[1]]
+        roll_out_dag.nodes[len(roll_out_dag.nodes) - 1].children = [roll_out_dag.nodes[len(roll_out_dag.nodes) - 2]]
 
         # Adjust the order
         roll_out_dag.order = len(roll_out_dag.nodes)

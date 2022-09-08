@@ -58,7 +58,9 @@ if __name__ == "__main__":
     dag_inner_rolled_out = Generator.rollout_for_loops(dag_inner)
 
     for i in dag_inner_rolled_out.nodes:
-        print("dag_inner_rolled_out: {}, {}".format(i.id, [j.id for j in i.parents]))
+        print("dag_inner_rolled_out (children): {}, {}".format(i.id, [j.id for j in i.children]))
+    for i in dag_inner_rolled_out.nodes:
+        print("dag_inner_rolled_out (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
@@ -119,7 +121,9 @@ if __name__ == "__main__":
     program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)
 
     for i in program_dag.nodes:
-        print("program_dag: {}, {}".format(i.id, [j.id for j in i.parents]))
+        print("program_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
+    for i in program_dag.nodes:
+        print("program_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
 
     # ----------------------------------------------------------------------------------------
     # Generate the performance profiles

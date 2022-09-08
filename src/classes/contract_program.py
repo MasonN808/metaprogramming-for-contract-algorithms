@@ -256,9 +256,8 @@ class ContractProgram:
                 parent_qualities = self.performance_profile.find_parent_qualities(
                     node=node.subprogram_parent_node, time_allocations=node.current_program.parent_program.allocations, depth=0)
 
-                # for child in node.children:
-                #     print(child.id)
-
+                # print([child.id for child in node.children])
+                # print(node.id)
                 # quit()
 
                 return self.find_exact_expected_utility_2(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
@@ -788,7 +787,7 @@ class ContractProgram:
 
         return [self.allocations, self.original_allocations_inner[0]]
 
-    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=True) -> List[float]:
+    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
         Does inner naive hill climbing search on one of the branches of a conditional by randomly replacing a set
         amount of time s between two different contract algorithms. If the expected value of the root node of the
