@@ -378,18 +378,6 @@ class ContractProgram:
         # TODO SUBTRACT THE ID FROM THE LAST LOOP INDEX LATER
         subtracted_index = 2
 
-        # This should catch the root
-        # if depth == self.program_dag.order - 1:
-
-        # utility = self.global_utility(current_qualities)
-        # expected_utility *= utility
-        # print("EU: {}".format(expected_utility))
-
-        # return expected_utility
-        # pass
-
-        # else:
-
         if leafs:
 
             for node in leafs:
@@ -404,9 +392,9 @@ class ContractProgram:
                 for possible_quality in possible_qualities:
 
                     current_qualities[node.id - subtracted_index] = possible_quality
-                    # print(current_qualitßies)
+
                     node_time = time_allocations[node.id].time
-                    # print([i for i in parent_qualities])
+
                     sample_quality_list = self.performance_profile.query_quality_list_on_interval(
                         time=node_time, id=node.id, parent_qualities=parent_qualities)
 
@@ -418,9 +406,11 @@ class ContractProgram:
 
                     # Traverse up the DAG
                     new_leafs = node.children
-
+                    print([leaf.id for leaf in new_leafs])
+                    print("depth outer: {}".format(depth))
                     if depth == self.program_dag.order - 1:
-
+                        print("traversed")
+                        print("depth inner: {}".format(depth))
                         utility = self.global_utility(current_qualities)
 
                         expected_utility *= utility
@@ -430,9 +420,10 @@ class ContractProgram:
                     expected_utility += self.find_exact_expected_utility_2(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
                                                                            expected_utility=expected_utility, current_qualities=current_qualities,
                                                                            possible_qualities=possible_qualities, parent_qualities=[], sum=0)
-
+            
             return expected_utility
 
+        # If we hit the bottom of the recursion
         else:
 
             return 0
