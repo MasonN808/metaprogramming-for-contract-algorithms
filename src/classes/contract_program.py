@@ -381,7 +381,7 @@ class ContractProgram:
         if leafs:
 
             for node in leafs:
-
+                # print(len(leafs))
                 if node.parents and depth != 1:
 
                     for parent in node.parents:
@@ -402,31 +402,42 @@ class ContractProgram:
                         queried_quality=possible_quality, quality_list=sample_quality_list)
 
                     # TODO: Expand the notabiliity equation to see if this is correct (8/30)
-                    expected_utility *= conditional_probability
+                    # expected_utility *= conditional_probability
 
                     # Traverse up the DAG
                     new_leafs = node.children
-                    print([leaf.id for leaf in new_leafs])
-                    print("depth outer: {}".format(depth))
+                    # print([leaf.id for leaf in new_leafs])
+                    # print("depth outer: {}".format(depth))
+                    # print("EU: {}".format(expected_utility))
+
                     if depth == self.program_dag.order - 1:
-                        print("traversed")
-                        print("depth inner: {}".format(depth))
+                        # print("traversed")
+                        # print("depth inner: {}".format(depth))
                         utility = self.global_utility(current_qualities)
 
-                        expected_utility *= utility
+                        conditional_probability *= utility
+                        sum += conditional_probability
 
-                        # print("EU: {}".format(expected_utility))
+                    else:
 
-                    expected_utility += self.find_exact_expected_utility_2(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
-                                                                           expected_utility=expected_utility, current_qualities=current_qualities,
-                                                                           possible_qualities=possible_qualities, parent_qualities=[], sum=0)
-            
-            return expected_utility
+                        expected_utility += self.find_exact_expected_utility_2(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
+                                                                               expected_utility=expected_utility, current_qualities=current_qualities,
+                                                                               possible_qualities=possible_qualities, parent_qualities=[], sum=0)
+
+                        expected_utility *= conditional_probability
+
+            if depth != 1:
+
+                return sum
+
+            else:
+
+                return sum
 
         # If we hit the bottom of the recursion
         else:
 
-            return 0
+            return sum
 
     def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
@@ -778,7 +789,7 @@ class ContractProgram:
 
         return [self.allocations, self.original_allocations_inner[0]]
 
-    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
+    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=True) -> List[float]:
         """
         Does inner naive hill climbing search on one of the branches of a conditional by randomly replacing a set
         amount of time s between two different contract algorithms. If the expected value of the root node of the
@@ -926,11 +937,3 @@ class ContractProgram:
                 leafs.append(parent)
 
         return leafs
-
-    # def change_allocations(self, new_allocations) -> None:
-    #     self.allocations = new_allocations
-    #     self.solution_methods.allocations = new_allocations
-
-    # @staticmethod
-    # def deferred_imports():
-    #     # from src.classes.solution_methods import SolutionMethods
