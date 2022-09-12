@@ -261,7 +261,8 @@ class ContractProgram:
                 # quit()
 
                 return self.find_exact_expected_utility_2(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
-                                                          current_qualities=[None for i in range(self.number_of_loops)], parent_qualities=parent_qualities, depth=0, leafs=[node], sum=0)
+                                                          current_qualities=[None for i in range(self.number_of_loops)], parent_qualities=parent_qualities,
+                                                          depth=0, leafs=[node], prev_conditional_prob=None, sum=0)
 
             # Calculates the EU of a conditional expression
             elif node.expression_type == "conditional" and not node.in_subtree:
@@ -363,7 +364,7 @@ class ContractProgram:
 
     #     return sum
 
-    def find_exact_expected_utility_2(self, leafs, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> float:
+    def find_exact_expected_utility_2(self, leafs, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, prev_conditional_prob, sum) -> float:
         """
         Returns the parent qualities given the time allocations and node
 
@@ -409,7 +410,7 @@ class ContractProgram:
                     # print([leaf.id for leaf in new_leafs])
                     # print("depth outer: {}".format(depth))
                     # print("EU: {}".format(expected_utility))
-
+                    # print("SUM: {}".format(sum))
                     if depth == self.program_dag.order - 1:
                         # print("traversed")
                         # print("depth inner: {}".format(depth))
@@ -420,19 +421,18 @@ class ContractProgram:
 
                     else:
 
-                        expected_utility += self.find_exact_expected_utility_2(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
-                                                                               expected_utility=expected_utility, current_qualities=current_qualities,
-                                                                               possible_qualities=possible_qualities, parent_qualities=[], sum=0)
+                        expected_utility += conditional_probability * self.find_exact_expected_utility_2(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
+                                                                                                         expected_utility=expected_utility, current_qualities=current_qualities,
+                                                                                                         possible_qualities=possible_qualities, parent_qualities=[],
+                                                                                                         prev_conditional_prob=conditional_probability, sum=0)
 
-                        expected_utility *= conditional_probability
-
-            if depth != 1:
+            if depth == self.program_dag.order - 1:
 
                 return sum
 
             else:
 
-                return sum
+                return expected_utility
 
         # If we hit the bottom of the recursion
         else:
@@ -789,7 +789,7 @@ class ContractProgram:
 
         return [self.allocations, self.original_allocations_inner[0]]
 
-    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=True) -> List[float]:
+    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
         Does inner naive hill climbing search on one of the branches of a conditional by randomly replacing a set
         amount of time s between two different contract algorithms. If the expected value of the root node of the
