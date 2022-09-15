@@ -261,8 +261,8 @@ class ContractProgram:
                 # quit()
 
                 return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
-                                                          current_qualities=[None for i in range(self.number_of_loops)], parent_qualities=parent_qualities,
-                                                          depth=0, leafs=[node], prev_conditional_prob=None, sum=0)
+                                                        current_qualities=[None for i in range(self.number_of_loops)], parent_qualities=parent_qualities,
+                                                        depth=0, leafs=[node], prev_conditional_prob=None, sum=0)
 
             # Calculates the EU of a conditional expression
             elif node.expression_type == "conditional" and not node.in_subtree:
@@ -422,9 +422,9 @@ class ContractProgram:
                     else:
 
                         expected_utility += conditional_probability * self.find_exact_expected_utility(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
-                                                                                                         expected_utility=expected_utility, current_qualities=current_qualities,
-                                                                                                         possible_qualities=possible_qualities, parent_qualities=[],
-                                                                                                         prev_conditional_prob=conditional_probability, sum=0)
+                                                                                                       expected_utility=expected_utility, current_qualities=current_qualities,
+                                                                                                       possible_qualities=possible_qualities, parent_qualities=[],
+                                                                                                       prev_conditional_prob=conditional_probability, sum=0)
 
             if depth == self.program_dag.order - 1:
 
