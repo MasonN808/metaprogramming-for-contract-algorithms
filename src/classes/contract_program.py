@@ -74,11 +74,6 @@ class ContractProgram:
                                                             generator_dag=self.generator_dag,
                                                             performance_profile=self.performance_profile,
                                                             in_subtree=self.in_subtree)
-        # self.deferred_imports()
-        # self.solution_methods = SolutionMethods(self.program_id, self.parent_program, self.child_programs,
-        #                                         self.program_dag, self.budget, self.scale, self.decimals,
-        #                                         self.quality_interval, self.time_interval, self.time_step_size,
-        #                                         self.in_subtree, self.generator_dag)
 
     @staticmethod
     def global_utility(qualities) -> float:
@@ -133,7 +128,6 @@ class ContractProgram:
         average_qualities = []
 
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
-        # print([i.node_id for i in time_allocations])
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
 
         for time_allocation in refactored_allocations:
@@ -151,7 +145,6 @@ class ContractProgram:
                                                  copy.deepcopy(node.false_subprogram.allocations)]
 
                     node.true_subprogram.allocations = original_allocations_inner[0]
-                    # print("subprogram allocations: {}".format(utils.print_allocations(node.true_subprogram.allocations)))
 
                     node.false_subprogram.allocations = original_allocations_inner[1]
 
@@ -179,8 +172,6 @@ class ContractProgram:
 
                     node.for_subprogram.allocations = original_allocations_inner[0]
 
-                    # print("subprogram allocations: {}".format(utils.print_allocations(node.for_subprogram.allocations)))
-
                 # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
                 probability_and_qualities = self.performance_profile.query_probability_and_quality_from_for_expression(node)
 
@@ -207,12 +198,6 @@ class ContractProgram:
                 # Calculates the average quality on the list of qualities for querying
                 average_quality = self.performance_profile.average_quality(qualities)
 
-                # If in for loop, only apply the last loop into out utility function
-                # if node.in_for and not node.is_last_for_loop:
-
-                #     pass
-
-                # else:
                 average_qualities.append(average_quality)
 
                 probability *= self.performance_profile.query_probability_contract_expression(average_quality,
@@ -239,7 +224,6 @@ class ContractProgram:
         average_qualities = []
 
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
-        # print([i.node_id for i in time_allocations])
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
 
         for time_allocation in refactored_allocations:
@@ -257,10 +241,6 @@ class ContractProgram:
                 parent_qualities = self.performance_profile.find_parent_qualities(
                     node=node.subprogram_parent_node, time_allocations=node.current_program.parent_program.allocations, depth=0)
 
-                # print([child.id for child in node.children])
-                # print(node.id)
-                # quit()
-
                 return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
                                                         current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=parent_qualities,
                                                         depth=0, leafs=[node], sum=0)
@@ -273,7 +253,6 @@ class ContractProgram:
                                                  copy.deepcopy(node.false_subprogram.allocations)]
 
                     node.true_subprogram.allocations = original_allocations_inner[0]
-                    # print("subprogram allocations: {}".format(utils.print_allocations(node.true_subprogram.allocations)))
 
                     node.false_subprogram.allocations = original_allocations_inner[1]
 
@@ -329,12 +308,6 @@ class ContractProgram:
                 # Calculates the average quality on the list of qualities for querying
                 average_quality = self.performance_profile.average_quality(qualities)
 
-                # If in for loop, only apply the last loop into out utility function
-                # if node.in_for and not node.is_last_for_loop:
-
-                #     pass
-
-                # else:
                 average_qualities.append(average_quality)
 
                 probability *= self.performance_profile.query_probability_contract_expression(average_quality,
@@ -394,6 +367,7 @@ class ContractProgram:
 
                     else:
 
+                        # The recursion looks funny here, but the += acts as a sum
                         expected_utility += conditional_probability * self.find_exact_expected_utility(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
                                                                                                        expected_utility=expected_utility, current_qualities=current_qualities,
                                                                                                        possible_qualities=possible_qualities, parent_qualities=[], sum=0)
@@ -436,9 +410,6 @@ class ContractProgram:
             # Go through all permutations of the time allocations
             for permutation in permutations(refactored_allocations, 2):
 
-                # node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
-                # node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
-
                 # Makes a deep copy to avoid pointers to the same list
                 adjusted_allocations = copy.deepcopy(self.allocations)
 
@@ -475,7 +446,6 @@ class ContractProgram:
                         eu_adjusted = round(eu_adjusted, self.decimals)
                         eu_original = round(eu_original, self.decimals)
 
-                        # self.global_expected_utility(self.allocations) * self.scale
                         temp_time_switched = round(temp_time_switched, self.decimals)
 
                     if verbose:
