@@ -117,3 +117,7 @@ def remove_nones_time_allocations(allocations):
 
 def remove_nones_times(allocations):
     return [time for time in allocations if time is not None]
+
+
+def remove_nones_list(list):
+    return [element for element in list if element is not None]

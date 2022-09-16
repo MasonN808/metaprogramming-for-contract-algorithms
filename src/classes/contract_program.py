@@ -262,8 +262,8 @@ class ContractProgram:
                 # quit()
 
                 return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
-                                                        current_qualities=[None for i in range(self.number_of_loops)], parent_qualities=parent_qualities,
-                                                        depth=0, leafs=[node], prev_conditional_prob=None, sum=0)
+                                                        current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=parent_qualities,
+                                                        depth=0, leafs=[node], sum=0)
 
             # Calculates the EU of a conditional expression
             elif node.expression_type == "conditional" and not node.in_subtree:
@@ -356,9 +356,6 @@ class ContractProgram:
         # Recur down the DAG
         depth += 1
 
-        # TODO SUBTRACT THE ID FROM THE LAST LOOP INDEX LATER (Hard-coded --> change)
-        subtracted_index = 2
-
         if leafs:
 
             for node in leafs:
@@ -367,12 +364,14 @@ class ContractProgram:
 
                     for parent in node.parents:
 
-                        parent_qualities.append(current_qualities[parent.id - subtracted_index])
+                        # Use the qualities from the previous possible qualities in the parent nodes
+                        # as parent qualities to query from performance profiles
+                        parent_qualities.append(current_qualities[parent.id])
 
                 # Loop through all possible qualities on the current node
                 for possible_quality in possible_qualities:
 
-                    current_qualities[node.id - subtracted_index] = possible_quality
+                    current_qualities[node.id] = possible_quality
 
                     node_time = time_allocations[node.id].time
 
@@ -386,8 +385,9 @@ class ContractProgram:
                     new_leafs = node.children
 
                     if depth == self.program_dag.order - 1:
-
-                        utility = self.global_utility(current_qualities)
+                        # Remove nones from the list since current qualities will have model qualities for
+                        # every node in the generator dag
+                        utility = self.global_utility(utils.remove_nones_list(current_qualities))
 
                         conditional_probability *= utility
                         sum += conditional_probability
