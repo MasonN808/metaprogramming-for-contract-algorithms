@@ -127,7 +127,7 @@ def find_terminal_leaves_in_dag(program_dag):
     leaves = []
 
     for node in program_dag.nodes:
-        if not node.children:
+        if not node.parents:
             leaves.append(node)
 
     return leaves

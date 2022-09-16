@@ -523,14 +523,30 @@ class ContractProgram:
 
         # Recur down the DAG
         depth += 1
+        print("DEPTH: {}".format(depth))
 
         if leaves:
 
             for node in leaves:
+                # TODO: Fix THIS error! child of for is the root node !?
+                print("LEAVES: {}".format([leaf.id for leaf in leaves]))
+                # Check whether the node is a conditional node or a for node
+                # If so, skip it since no relevant performance profile can be queried from stored performance profiles
+                if node.expression_type == "for" or node.expression_type == "conditional":
+
+                    # Continue on with the recursion with its children
+                    leaves.extend(node.children)
+
+                    continue
 
                 if node.parents and depth != 1:
 
                     for parent in node.parents:
+
+                        # Check parents aren't fors or conditionals
+                        if parent.expression_type == "for" or parent.expression_type == "conditional":
+
+                            continue
 
                         # Use the qualities from the previous possible qualities in the parent nodes
                         # as parent qualities to query from performance profiles
@@ -543,6 +559,8 @@ class ContractProgram:
 
                     node_time = time_allocations[node.id].time
 
+                    print(parent_qualities)
+                    print(node.id)
                     sample_quality_list = self.performance_profile.query_quality_list_on_interval(
                         time=node_time, id=node.id, parent_qualities=parent_qualities)
 
@@ -575,7 +593,7 @@ class ContractProgram:
 
                 return expected_utility
 
-        # If we hit the bottom of the recursion
+        # If we hit the bottom of the recursion (i.e., the root)
         else:
 
             return sum
