@@ -344,6 +344,9 @@ class ContractProgram:
         leaves = utils.find_terminal_leaves_in_dag(self.generator_dag)
 
         # TODO: Create a time_allocation vector for all nodes in the contract program (not just the outer program)
+        for child_program in self.child_programs:
+            # TODO: Union all the allocations from the child program allocations (9/16)
+            pass
 
         return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
                                                 current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=[],
