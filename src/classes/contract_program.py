@@ -431,7 +431,6 @@ class ContractProgram:
 
         return expected_utility
 
-
     def find_exact_expected_utility(self, leafs, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> float:
         """
         Returns the parent qualities given the time allocations and node
