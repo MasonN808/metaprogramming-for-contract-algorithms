@@ -458,7 +458,6 @@ class Generator:
 
     #     return dag
 
-
     @staticmethod
     def adjust_dag_structure_with_for_loops(dag) -> DirectedAcyclicGraph:
         """
@@ -549,7 +548,6 @@ class Generator:
         dag.order = len(dag.nodes)
 
         return dag
-
 
     @staticmethod
     def rollout_for_loops(dag) -> DirectedAcyclicGraph:
