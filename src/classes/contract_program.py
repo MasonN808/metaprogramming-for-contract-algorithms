@@ -207,6 +207,118 @@ class ContractProgram:
 
         return expected_utility
 
+    # def global_expected_utility_exact(self, time_allocations, original_allocations_inner) -> float:
+    #     """
+    #     Gives the exact expected utility of the contract program given the performance profiles of the nodes
+    #     (i.e., the probability distribution of each contract program's conditional performance profile) and the
+    #     global utility
+
+    #     Assumption: A time-allocation is given to each node in the contract program
+
+    #     :param original_allocations_inner:
+    #     :param time_allocations: float[], required
+    #             The time allocations for each contract algorithm
+    #     :return: float
+    #     """
+    #     # TODO: Calculate the global expected utility using the exact EU method (9/15)
+
+    #     probability = 1.0
+    #     average_qualities = []
+
+    #     # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
+    #     refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
+
+    #     for time_allocation in refactored_allocations:
+
+    #         node = utils.find_node(time_allocation.node_id, self.program_dag)
+
+    #         # Continue since conditional and for nodes have static times
+    #         if (node.expression_type == "conditional" or node.expression_type == "for") and node.in_subtree:
+    #             continue
+
+    #         # Takes care of evaluating fixed loops with an exact expected utility in the inner metareasoning problem
+    #         elif node.in_for and not node.expression_type == "for" and node.first_loop and node.in_subtree:
+
+    #             # The leaf will be the first node of the first iteration
+    #             parent_qualities = self.performance_profile.find_parent_qualities(
+    #                 node=node.subprogram_parent_node, time_allocations=node.current_program.parent_program.allocations, depth=0)
+
+    #             return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
+    #                                                     current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=parent_qualities,
+    #                                                     depth=0, leafs=[node], sum=0)
+
+    #         # Calculates the EU of a conditional expression
+    #         elif node.expression_type == "conditional" and not node.in_subtree:
+
+    #             if original_allocations_inner:
+    #                 copied_branch_allocations = [copy.deepcopy(node.true_subprogram.allocations),
+    #                                              copy.deepcopy(node.false_subprogram.allocations)]
+
+    #                 node.true_subprogram.allocations = original_allocations_inner[0]
+
+    #                 node.false_subprogram.allocations = original_allocations_inner[1]
+
+    #             # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
+    #             probability_and_qualities = self.performance_profile.query_probability_and_quality_from_conditional_expression(
+    #                 node)
+
+    #             # Multiply the current probability by the performance profile of the conditional node
+    #             probability *= probability_and_qualities[0]
+
+    #             conditional_quality = probability_and_qualities[1]
+
+    #             average_qualities.append(conditional_quality)
+
+    #             if original_allocations_inner:
+    #                 node.true_subprogram.allocations = copied_branch_allocations[0]
+    #                 node.false_subprogram.allocations = copied_branch_allocations[1]
+
+    #         # Calculates the EU of a for expression
+    #         elif node.expression_type == "for" and not node.in_subtree:
+
+    #             if original_allocations_inner:
+
+    #                 copied_branch_allocations = [copy.deepcopy(node.for_subprogram.allocations)]
+
+    #                 node.for_subprogram.allocations = original_allocations_inner[0]
+
+    #                 # print("subprogram allocations: {}".format(utils.print_allocations(node.for_subprogram.allocations)))
+
+    #             # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
+    #             probability_and_qualities = self.performance_profile.query_probability_and_quality_from_for_expression(node)
+
+    #             # Multiply the current probability by the performance profile of the conditional node
+    #             probability *= probability_and_qualities[0]
+
+    #             last_for_quality = probability_and_qualities[1]
+
+    #             average_qualities.append(last_for_quality)
+
+    #             if original_allocations_inner:
+    #                 node.for_subprogram.allocations = copied_branch_allocations[0]
+
+    #         else:
+
+    #             # Get the parents' qualities given their time allocations
+    #             parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
+
+    #             # Outputs a list of qualities from the instances at the specified time given a quality mapping
+    #             qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time,
+    #                                                                                 time_allocation.node_id,
+    #                                                                                 parent_qualities=parent_qualities)
+
+    #             # Calculates the average quality on the list of qualities for querying
+    #             average_quality = self.performance_profile.average_quality(qualities)
+
+    #             average_qualities.append(average_quality)
+
+    #             probability *= self.performance_profile.query_probability_contract_expression(average_quality,
+    #                                                                                           qualities)
+
+    #     expected_utility = probability * self.global_utility(average_qualities)
+
+    #     return expected_utility
+
     def global_expected_utility_exact(self, time_allocations, original_allocations_inner) -> float:
         """
         Gives the exact expected utility of the contract program given the performance profiles of the nodes
@@ -220,6 +332,8 @@ class ContractProgram:
                 The time allocations for each contract algorithm
         :return: float
         """
+        # TODO: Calculate the global expected utility using the exact EU method (9/15)
+
         probability = 1.0
         average_qualities = []
 
@@ -316,6 +430,7 @@ class ContractProgram:
         expected_utility = probability * self.global_utility(average_qualities)
 
         return expected_utility
+
 
     def find_exact_expected_utility(self, leafs, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> float:
         """
