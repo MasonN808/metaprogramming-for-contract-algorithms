@@ -246,6 +246,7 @@ class ContractProgram:
 
             node = utils.find_node(time_allocation.node_id, self.program_dag)
 
+            # Continue since conditional and for nodes have static times
             if (node.expression_type == "conditional" or node.expression_type == "for") and node.in_subtree:
                 continue
 
@@ -343,28 +344,7 @@ class ContractProgram:
 
         return expected_utility
 
-    # def find_exact_expected_utility(self, depth, expected_utility, current_qualities, possible_qualities, sum):
-    #     # Recursively find the probability given the parent qualities and the current quality
-    #     # Then find the utility of getting the qualities
-    #     # Then sum over all possible qualities
-    #     # Note: start traversal from the leaf nodes to the root
-
-    #     # TODO: make sure that the depth == self.program_dag.order is correct when trying to find the utility of the qualitiess
-    #     if depth == self.program_dag.order:
-    #         utility = self.global_utility(current_qualities)
-    #         expected_utility *= utility
-
-    #         return expected_utility
-
-    #     for possible_quality in possible_qualities:
-    #         current_qualities.append(possible_quality)
-    #         # TODO: Calculate the probability here for the performance profile
-    #         # .............
-    #         sum += self.find_exact_expected_utility(depth + 1, expected_utility, current_qualities, possible_qualities, sum=0)
-
-    #     return sum
-
-    def find_exact_expected_utility(self, leafs, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, prev_conditional_prob, sum) -> float:
+    def find_exact_expected_utility(self, leafs, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> float:
         """
         Returns the parent qualities given the time allocations and node
 
@@ -376,13 +356,13 @@ class ContractProgram:
         # Recur down the DAG
         depth += 1
 
-        # TODO SUBTRACT THE ID FROM THE LAST LOOP INDEX LATER
+        # TODO SUBTRACT THE ID FROM THE LAST LOOP INDEX LATER (Hard-coded --> change)
         subtracted_index = 2
 
         if leafs:
 
             for node in leafs:
-                # print(len(leafs))
+
                 if node.parents and depth != 1:
 
                     for parent in node.parents:
@@ -402,18 +382,11 @@ class ContractProgram:
                     conditional_probability = self.performance_profile.query_probability_contract_expression(
                         queried_quality=possible_quality, quality_list=sample_quality_list)
 
-                    # TODO: Expand the notabiliity equation to see if this is correct (8/30)
-                    # expected_utility *= conditional_probability
-
                     # Traverse up the DAG
                     new_leafs = node.children
-                    # print([leaf.id for leaf in new_leafs])
-                    # print("depth outer: {}".format(depth))
-                    # print("EU: {}".format(expected_utility))
-                    # print("SUM: {}".format(sum))
+
                     if depth == self.program_dag.order - 1:
-                        # print("traversed")
-                        # print("depth inner: {}".format(depth))
+
                         utility = self.global_utility(current_qualities)
 
                         conditional_probability *= utility
@@ -423,8 +396,7 @@ class ContractProgram:
 
                         expected_utility += conditional_probability * self.find_exact_expected_utility(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
                                                                                                        expected_utility=expected_utility, current_qualities=current_qualities,
-                                                                                                       possible_qualities=possible_qualities, parent_qualities=[],
-                                                                                                       prev_conditional_prob=conditional_probability, sum=0)
+                                                                                                       possible_qualities=possible_qualities, parent_qualities=[], sum=0)
 
             if depth == self.program_dag.order - 1:
 
