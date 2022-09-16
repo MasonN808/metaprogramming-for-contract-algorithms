@@ -528,7 +528,7 @@ class ContractProgram:
         if leaves:
 
             for node in leaves:
-                
+
                 # TODO: Fix THIS error! child of for is the root node !?
                 print("LEAVES: {}".format([leaf.id for leaf in leaves]))
 
