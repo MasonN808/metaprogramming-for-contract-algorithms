@@ -340,8 +340,10 @@ class ContractProgram:
         # The for-loop is a breadth-first search given that the time-allocations are ordered correctly
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
 
-        # TODO: Find a way to get all the leaves to find the exact (9/15)!!
-        leaves = utils.find_terminal_leaves_in_dag(self.program_dag)
+        # Use the generator_dag since we want the entire program and not the hierarcy of programs (outer and inners)
+        leaves = utils.find_terminal_leaves_in_dag(self.generator_dag)
+
+        # TODO: Create a time_allocation vector for all nodes in the contract program (not just the outer program)
 
         return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
                                                 current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=[],
@@ -535,18 +537,23 @@ class ContractProgram:
                 # Check whether the node is a conditional node or a for node
                 # If so, skip it since no relevant performance profile can be queried from stored performance profiles
                 if node.expression_type == "for" or node.expression_type == "conditional":
-
+                    # print([i.id for i in node.children])
                     # Continue on with the recursion with its children
                     leaves.extend(node.children)
-
+                    leaves.remove(node)
                     continue
 
                 if node.parents and depth != 1:
 
-                    for parent in node.parents:
+                    parents = node.parents
+
+                    for parent in parents:
 
                         # Check parents aren't fors or conditionals
+                        # If so, get its parents instead
                         if parent.expression_type == "for" or parent.expression_type == "conditional":
+
+                            parents.extend(parent.parents)
 
                             continue
 
@@ -563,6 +570,8 @@ class ContractProgram:
 
                     print(parent_qualities)
                     print(node.id)
+                    print(node_time)
+                    print(utils.print_allocations(time_allocations))
                     sample_quality_list = self.performance_profile.query_quality_list_on_interval(
                         time=node_time, id=node.id, parent_qualities=parent_qualities)
 

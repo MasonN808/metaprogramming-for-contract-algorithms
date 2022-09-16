@@ -335,37 +335,37 @@ class Generator:
 
     #     return dag
 
-    # @staticmethod
-    # def adjust_dag_with_fors(dag) -> DirectedAcyclicGraph:
-    #     """
-    #     Changes the structure of the DAG by removing any for nodes and appending its parents to its children
-    #     temporarily for generation. Note that the original structure of the DAG remains intact
+    @staticmethod
+    def adjust_dag_with_fors(dag) -> DirectedAcyclicGraph:
+        """
+        Changes the structure of the DAG by removing any for nodes and appending its parents to its children
+        temporarily for generation. Note that the original structure of the DAG remains intact
 
-    #     :param dag: directedAcyclicGraph Object, original version
-    #     :return: directedAcyclicGraph Object, a trimmed version
-    #     """
-    #     dag = copy.deepcopy(dag)
-    #     for node in dag.nodes:
-    #         if node.expression_type == "for":
-    #             # Append its parents to the children
-    #             # Then remove the node from the parents and children
-    #             # Then remove the node from the nodes list
+        :param dag: directedAcyclicGraph Object, original version
+        :return: directedAcyclicGraph Object, a trimmed version
+        """
+        dag = copy.deepcopy(dag)
+        for node in dag.nodes:
+            if node.expression_type == "for":
+                # Append its parents to the children
+                # Then remove the node from the parents and children
+                # Then remove the node from the nodes list
 
-    #             # for child in node.children:
-    #             #     child.parents.extend(node.parents)
+                # for child in node.children:
+                #     child.parents.extend(node.parents)
 
-    #             #     if node in child.parents:
-    #             #         child.parents.remove(node)
+                #     if node in child.parents:
+                #         child.parents.remove(node)
 
-    #             for parent in node.parents:
-    #                 parent.children.extend(node.children)
+                for parent in node.parents:
+                    parent.children.extend(node.children)
 
-    #                 if node in parent.children:
-    #                     parent.children.remove(node)
+                    if node in parent.children:
+                        parent.children.remove(node)
 
-    #             dag.nodes.remove(node)
+                dag.nodes.remove(node)
 
-    #     return dag
+        return dag
 
     # @staticmethod
     # def adjust_dag_structure_with_for_loops(dag) -> DirectedAcyclicGraph:
@@ -500,7 +500,7 @@ class Generator:
                     # Check for first iteration
                     if i == 0:
                         # Make the parents of the for-node the parents of the first iteration
-                        # for_node.children = [leaf]
+                        for_node.children = [leaf]
                         leaf.parents = [for_node]
 
                     # Check for last iteration
@@ -508,10 +508,17 @@ class Generator:
                         leaf.parents = [node]
                         previous_root.children = [leaf]
 
-                        for child in for_node.children:
-                            child.parents.extend([root])
-                            if for_node in child.parents:
-                                child.parents.remove(for_node)
+                        # Forces the parent of the last for loop to be its parent rather than the for node
+                        # for child in for_node.children:
+                        #     child.parents.extend([root])
+                        #     if for_node in child.parents:
+                        #         child.parents.remove(for_node)
+
+                        # Forces the child of the for node to be its child rather than the child of the last for loop
+                        # for parent in for_node.parents:
+                        #     parent.children.extend([root])
+                        #     if for_node in parent.children:
+                        #         parent.children.remove(for_node)
 
                         for loop_node in for_dag.nodes:
                             loop_node.is_last_for_loop = True
