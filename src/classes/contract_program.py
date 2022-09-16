@@ -245,7 +245,7 @@ class ContractProgram:
 
     #             return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
     #                                                     current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=parent_qualities,
-    #                                                     depth=0, leafs=[node], sum=0)
+    #                                                     depth=0, leaves=[node], sum=0)
 
     #         # Calculates the EU of a conditional expression
     #         elif node.expression_type == "conditional" and not node.in_subtree:
@@ -337,8 +337,15 @@ class ContractProgram:
         probability = 1.0
         average_qualities = []
 
-        # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
+        # The for-loop is a breadth-first search given that the time-allocations are ordered correctly
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
+
+        # TODO: Find a way to get all the leaves to find the exact (9/15)!!
+        leaves = utils.find_terminal_leaves_in_dag(self.program_dag)
+
+        return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
+                                                current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=[],
+                                                depth=0, leaves=leaves, sum=0)
 
         for time_allocation in refactored_allocations:
 
@@ -357,7 +364,7 @@ class ContractProgram:
 
                 return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
                                                         current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=parent_qualities,
-                                                        depth=0, leafs=[node], sum=0)
+                                                        depth=0, leaves=[node], sum=0)
 
             # Calculates the EU of a conditional expression
             elif node.expression_type == "conditional" and not node.in_subtree:
@@ -431,7 +438,7 @@ class ContractProgram:
 
         return expected_utility
 
-    def find_exact_expected_utility(self, leafs, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> float:
+    def find_exact_expected_utility(self, leaves, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> float:
         """
         Returns the parent qualities given the time allocations and node
 
@@ -440,12 +447,15 @@ class ContractProgram:
         :param: time_allocations: float[] (order matters), for the entire DAG
         :return: A list of parent qualities
         """
+
+        # TODO: Make sure that the recursion isnt double counting some branches (9/15)
+
         # Recur down the DAG
         depth += 1
 
-        if leafs:
+        if leaves:
 
-            for node in leafs:
+            for node in leaves:
 
                 if node.parents and depth != 1:
 
@@ -469,7 +479,7 @@ class ContractProgram:
                         queried_quality=possible_quality, quality_list=sample_quality_list)
 
                     # Traverse up the DAG
-                    new_leafs = node.children
+                    new_leaves = node.children
 
                     if depth == self.program_dag.order - 1:
                         # Remove nones from the list since current qualities will have model qualities for
@@ -482,7 +492,7 @@ class ContractProgram:
                     else:
 
                         # The recursion looks funny here, but the += acts as a sum
-                        expected_utility += conditional_probability * self.find_exact_expected_utility(leafs=new_leafs, time_allocations=time_allocations, depth=depth,
+                        expected_utility += conditional_probability * self.find_exact_expected_utility(leaves=new_leaves, time_allocations=time_allocations, depth=depth,
                                                                                                        expected_utility=expected_utility, current_qualities=current_qualities,
                                                                                                        possible_qualities=possible_qualities, parent_qualities=[], sum=0)
 
@@ -984,12 +994,12 @@ class ContractProgram:
         self.initialize_allocations.budget = new_budget
 
     @staticmethod
-    def find_leafs(dag):
-        leafs = []
+    def find_leaves(dag):
+        leaves = []
         root = dag.root
 
         for parent in root.parents:
             if parent.parents == [] or parent.parents is None:
-                leafs.append(parent)
+                leaves.append(parent)
 
-        return leafs
+        return leaves

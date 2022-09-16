@@ -121,3 +121,13 @@ def remove_nones_times(allocations):
 
 def remove_nones_list(list):
     return [element for element in list if element is not None]
+
+
+def find_terminal_leaves_in_dag(program_dag):
+    leaves = []
+
+    for node in program_dag.nodes:
+        if not node.children:
+            leaves.append(node)
+
+    return leaves
