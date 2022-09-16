@@ -528,8 +528,10 @@ class ContractProgram:
         if leaves:
 
             for node in leaves:
+                
                 # TODO: Fix THIS error! child of for is the root node !?
                 print("LEAVES: {}".format([leaf.id for leaf in leaves]))
+
                 # Check whether the node is a conditional node or a for node
                 # If so, skip it since no relevant performance profile can be queried from stored performance profiles
                 if node.expression_type == "for" or node.expression_type == "conditional":
