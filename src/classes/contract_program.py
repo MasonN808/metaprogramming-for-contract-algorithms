@@ -526,12 +526,12 @@ class ContractProgram:
         :return: A list of parent qualities
         """
 
-        # TODO: Make sure that the recursion isnt double counting some branches (9/15)
-
         # Recur down the DAG
         depth += 1
         print("DEPTH: {}".format(depth))
 
+        # Check that the n
+        
         if leaves:
 
             for node in leaves:
@@ -551,20 +551,27 @@ class ContractProgram:
                 if node.parents and depth != 1:
 
                     parents = node.parents
+                    for_and_conditional_nodes = []
 
                     for parent in parents:
 
                         # Check parents aren't fors or conditionals
                         # If so, get its parents instead
                         if parent.expression_type == "for" or parent.expression_type == "conditional":
-
+                            
+                            # TODO: Make this for an arbitrary branch structure not just a P_n graph
                             parents.extend(parent.parents)
+                            for_and_conditional_nodes.append(parent)
 
                             continue
 
                         # Use the qualities from the previous possible qualities in the parent nodes
                         # as parent qualities to query from performance profiles
                         parent_qualities.append(current_qualities[parent.id])
+                    
+                    # remove the for and conditional nodes from the parents list
+                    for node in for_and_conditional_nodes:
+                        parents.remove(node)
 
                 # Loop through all possible qualities on the current node
                 for possible_quality in possible_qualities:
@@ -572,7 +579,7 @@ class ContractProgram:
                     current_qualities[node.id] = possible_quality
 
                     node_time = time_allocations[node.id].time
-
+                    print("PARENT IDS: {}".format([parent.id for parent in node.parents]))
                     print("PARENT QUALITIES: {}".format(parent_qualities))
                     print("NODE ID: {}".format(node.id))
                     print("NODE TIME: {}".format(node_time))
@@ -583,6 +590,14 @@ class ContractProgram:
                     conditional_probability = self.performance_profile.query_probability_contract_expression(
                         queried_quality=possible_quality, quality_list=sample_quality_list)
 
+                    # Check node.children has no for or conditional nodes
+                    for child in node.children:
+                        if child.expression_type == "for" or child.expression_type == "conditional":
+                            
+                            # TODO: Make this for an arbitrary branch structure not just a P_n graph
+                            node.children.extend(child.children)
+                            node.children.remove(child)
+                    
                     # Traverse up the DAG
                     new_leaves = node.children
 
