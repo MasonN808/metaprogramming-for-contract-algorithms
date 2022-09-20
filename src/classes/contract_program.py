@@ -1,3 +1,4 @@
+# from ast import expr_context
 import sys
 from typing import List
 import copy
@@ -525,28 +526,28 @@ class ContractProgram:
         :param: time_allocations: float[] (order matters), for the entire DAG
         :return: A list of parent qualities
         """
-
         # Recur down the DAG
         depth += 1
         print("DEPTH: {}".format(depth))
 
         # Check that the n
-        
+
         if leaves:
 
             for node in leaves:
 
                 # TODO: Fix THIS error! child of for is the root node !?
                 print("LEAVES: {}".format([leaf.id for leaf in leaves]))
+                print("CURRENT LEAF: {}".format(node.id))
 
                 # Check whether the node is a conditional node or a for node
                 # If so, skip it since no relevant performance profile can be queried from stored performance profiles
-                if node.expression_type == "for" or node.expression_type == "conditional":
-                    # print([i.id for i in node.children])
-                    # Continue on with the recursion with its children
-                    leaves.extend(node.children)
-                    leaves.remove(node)
-                    continue
+                # if node.expression_type == "for" or node.expression_type == "conditional":
+                #     # print([i.id for i in node.children])
+                #     # Continue on with the recursion with its children
+                #     leaves.extend(node.children)
+                #     leaves.remove(node)
+                #     continue
 
                 if node.parents and depth != 1:
 
@@ -558,7 +559,7 @@ class ContractProgram:
                         # Check parents aren't fors or conditionals
                         # If so, get its parents instead
                         if parent.expression_type == "for" or parent.expression_type == "conditional":
-                            
+
                             # TODO: Make this for an arbitrary branch structure not just a P_n graph
                             parents.extend(parent.parents)
                             for_and_conditional_nodes.append(parent)
@@ -568,10 +569,10 @@ class ContractProgram:
                         # Use the qualities from the previous possible qualities in the parent nodes
                         # as parent qualities to query from performance profiles
                         parent_qualities.append(current_qualities[parent.id])
-                    
+
                     # remove the for and conditional nodes from the parents list
-                    for node in for_and_conditional_nodes:
-                        parents.remove(node)
+                    for for_node_or_conditional_node in for_and_conditional_nodes:
+                        parents.remove(for_node_or_conditional_node)
 
                 # Loop through all possible qualities on the current node
                 for possible_quality in possible_qualities:
@@ -579,32 +580,37 @@ class ContractProgram:
                     current_qualities[node.id] = possible_quality
 
                     node_time = time_allocations[node.id].time
-                    print("PARENT IDS: {}".format([parent.id for parent in node.parents]))
-                    print("PARENT QUALITIES: {}".format(parent_qualities))
-                    print("NODE ID: {}".format(node.id))
-                    print("NODE TIME: {}".format(node_time))
-                    print("TIME ALLOCATIONS: {}".format(utils.print_allocations(time_allocations)))
+                    # print("PARENT IDS: {}".format([parent.id for parent in node.parents]))
+                    # print("PARENT QUALITIES: {}".format(parent_qualities))
+                    # print("NODE ID: {}".format(node.id))
+                    # print("NODE TIME: {}".format(node_time))
+                    # print("TIME ALLOCATIONS: {}".format(utils.print_allocations(time_allocations)))
                     sample_quality_list = self.performance_profile.query_quality_list_on_interval(
                         time=node_time, id=node.id, parent_qualities=parent_qualities)
 
                     conditional_probability = self.performance_profile.query_probability_contract_expression(
                         queried_quality=possible_quality, quality_list=sample_quality_list)
 
+                    print("PROB: {}".format(conditional_probability))
+
                     # Check node.children has no for or conditional nodes
+                    # If so, skip it since no relevant performance profile can be queried from stored performance profiles
                     for child in node.children:
                         if child.expression_type == "for" or child.expression_type == "conditional":
-                            
+
                             # TODO: Make this for an arbitrary branch structure not just a P_n graph
                             node.children.extend(child.children)
                             node.children.remove(child)
-                    
+
                     # Traverse up the DAG
                     new_leaves = node.children
 
-                    if depth == self.program_dag.order - 1:
+                    # TODO: Subtract by 1 and the number of fors and conditionals in DAG
+                    if depth == self.generator_dag.order - 2:
                         # Remove nones from the list since current qualities will have model qualities for
                         # every node in the generator dag
                         utility = self.global_utility(utils.remove_nones_list(current_qualities))
+                        print("UTILITY: {}".format(utility))
 
                         conditional_probability *= utility
                         sum += conditional_probability
@@ -616,12 +622,12 @@ class ContractProgram:
                                                                                                        expected_utility=expected_utility, current_qualities=current_qualities,
                                                                                                        possible_qualities=possible_qualities, parent_qualities=[], sum=0)
 
-            if depth == self.program_dag.order - 1:
+            if depth == self.generator_dag.order - 2:
 
                 return sum
 
             else:
-
+                print("FINAL EU: {}".format(expected_utility))
                 return expected_utility
 
         # If we hit the bottom of the recursion (i.e., the root)
