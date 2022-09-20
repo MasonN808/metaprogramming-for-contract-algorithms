@@ -346,7 +346,9 @@ class ContractProgram:
         # TODO: Create a time_allocation vector for all nodes in the contract program (not just the outer program)
         for child_program in self.child_programs:
             # TODO: Union all the allocations from the child program allocations (9/16)
-            pass
+            for allocation in child_program.allocations:
+                if allocation.time is not None:
+                    time_allocations[allocation.node_id] = allocation
 
         return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
                                                 current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=[],
@@ -571,10 +573,10 @@ class ContractProgram:
 
                     node_time = time_allocations[node.id].time
 
-                    print(parent_qualities)
-                    print(node.id)
-                    print(node_time)
-                    print(utils.print_allocations(time_allocations))
+                    print("PARENT QUALITIES: {}".format(parent_qualities))
+                    print("NODE ID: {}".format(node.id))
+                    print("NODE TIME: {}".format(node_time))
+                    print("TIME ALLOCATIONS: {}".format(utils.print_allocations(time_allocations)))
                     sample_quality_list = self.performance_profile.query_quality_list_on_interval(
                         time=node_time, id=node.id, parent_qualities=parent_qualities)
 
