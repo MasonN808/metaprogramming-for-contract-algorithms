@@ -1,10 +1,8 @@
-# from ast import expr_context
 import sys
 from typing import List
 import copy
 import math
 from itertools import permutations
-# import numpy as np
 
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
@@ -48,22 +46,15 @@ class ContractProgram:
         self.time_interval = time_interval
         self.time_step_size = time_step_size
         self.allocations = None
-
         self.in_subtree = in_subtree
         # Pointer to the parent program that the subprogram is an induced subgraph of
         self.parent_program = parent_program
         self.child_programs = child_programs
-
         self.generator_dag = generator_dag
-
         self.original_allocations_inner = None
-
         self.expected_utility_type = expected_utility_type
-
         self.possible_qualities = possible_qualities
-
         self.number_of_loops = number_of_loops
-
         self.performance_profile = PerformanceProfile(program_dag=self.program_dag, generator_dag=self.generator_dag,
                                                       file_name=self.POPULOUS_FILE_NAME,
                                                       time_interval=self.time_interval, time_limit=budget,
