@@ -33,7 +33,7 @@ class ContractProgram:
     POPULOUS_FILE_NAME = "populous.json"
 
     def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals,
-                 quality_interval, time_interval, time_step_size, in_subtree, generator_dag, expected_utility_type, possible_qualities,
+                 quality_interval, time_interval, time_step_size, in_child_contract_program, generator_dag, expected_utility_type, possible_qualities,
                  number_of_loops=None):
 
         self.program_id = program_id
@@ -46,7 +46,7 @@ class ContractProgram:
         self.time_interval = time_interval
         self.time_step_size = time_step_size
         self.allocations = None
-        self.in_subtree = in_subtree
+        self.in_child_contract_program = in_child_contract_program
         # Pointer to the parent program that the subprogram is an induced subgraph of
         self.parent_program = parent_program
         self.child_programs = child_programs
@@ -65,18 +65,17 @@ class ContractProgram:
         self.initialize_allocations = InitializeAllocations(budget=self.budget, program_dag=self.program_dag,
                                                             generator_dag=self.generator_dag,
                                                             performance_profile=self.performance_profile,
-                                                            in_subtree=self.in_subtree)
+                                                            in_child_contract_program=self.in_child_contract_program)
 
     @staticmethod
     def global_utility(qualities) -> float:
         """
-        Gives a utility given the qualities of the parents of the current node
+        Gives a utility on a list of qualities
 
         :param qualities: Qualities[], required
                 The qualities that were outputted for each contract algorithm in the DAG
         :return: float
         """
-
         # Flatten the list of qualities
         qualities = utils.flatten(qualities)
 
@@ -85,9 +84,6 @@ class ContractProgram:
     def global_expected_utility(self, time_allocations, original_allocations_inner=None) -> float:
         """
         Uses approximate methods or exact solutions to query the expected utility of the contract program given the time allocations
-        and time allocations of the inner metareasoning problems
-
-        Assumption: A time-allocation is given to each node in the contract program
 
         :param original_allocations_inner:
         :param time_allocations: float[], required
@@ -96,10 +92,8 @@ class ContractProgram:
         """
         if self.expected_utility_type == "exact":
             return (self.global_expected_utility_exact(time_allocations, original_allocations_inner))
-
         elif self.expected_utility_type == "approximate":
             return (self.global_expected_utility_approximate(time_allocations, original_allocations_inner))
-
         else:
             raise ValueError("Improper expected utility type")
 
@@ -108,8 +102,6 @@ class ContractProgram:
         Gives the estimated expected utility of the contract program given the performance profiles of the nodes
         (i.e., the probability distribution of each contract program's conditional performance profile) and the
         global utility
-
-        Assumption: A time-allocation is given to each node in the contract program
 
         :param original_allocations_inner:
         :param time_allocations: float[], required
@@ -120,26 +112,27 @@ class ContractProgram:
         average_qualities = []
 
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
+        # The root of the tree is index 0
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
 
         for time_allocation in refactored_allocations:
             node = utils.find_node(time_allocation.node_id, self.program_dag)
 
-            if (node.expression_type == "conditional" or node.expression_type == "for") and node.in_subtree:
+            # Skip the conditional and for node in a subcontract program since they have no performance profile
+            if (node.expression_type == "conditional" or node.expression_type == "for") and node.in_child_contract_program:
                 continue
 
-            # Calculates the EU of a conditional expression
-            elif node.expression_type == "conditional" and not node.in_subtree:
-
+            # Calculates the EU of a conditional expression in the outermost contract program
+            elif node.expression_type == "conditional" and not node.in_child_contract_program:
                 if original_allocations_inner:
                     copied_branch_allocations = [copy.deepcopy(node.true_subprogram.allocations),
                                                  copy.deepcopy(node.false_subprogram.allocations)]
 
+                    # Replace the allocations with the previous iteration's allocations
                     node.true_subprogram.allocations = original_allocations_inner[0]
-
                     node.false_subprogram.allocations = original_allocations_inner[1]
 
-                # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
+                # Since in conditional, but not in a contract program with , evaluate the inner probability of the subtree
                 probability_and_qualities = self.performance_profile.query_probability_and_quality_from_conditional_expression(
                     node)
 
@@ -155,7 +148,7 @@ class ContractProgram:
                     node.false_subprogram.allocations = copied_branch_allocations[1]
 
             # Calculates the EU of a for expression
-            elif node.expression_type == "for" and not node.in_subtree:
+            elif node.expression_type == "for" and not node.in_child_contract_program:
 
                 if original_allocations_inner:
                     copied_branch_allocations = [copy.deepcopy(node.for_subprogram.allocations)]
@@ -232,6 +225,7 @@ class ContractProgram:
     #         pr(q_1, ..., q_n) = recursion
     #         eu += pr(q_1, ..., q_n) * utility(q_1, ..., q_n)
 
+    # TODO: Fix this (9/22)
     def find_exact_expected_utility(self, leaves, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> float:
         """
         Returns the exact EU

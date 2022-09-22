@@ -3,7 +3,7 @@
 
 # class SolutionMethods(ContractProgram):
 #     def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals,
-#                  quality_interval, time_interval, time_step_size, in_subtree, generator_dag, allocations,
+#                  quality_interval, time_interval, time_step_size, in_child_contract_program, generator_dag, allocations,
 #                  performance_profile, initialize_allocations):
 
 #         self.program_id = program_id
@@ -15,7 +15,7 @@
 #         self.time_interval = time_interval
 #         self.time_step_size = time_step_size
 
-#         self.in_subtree = in_subtree
+#         self.in_child_contract_program = in_child_contract_program
 
 #         # Pointer to the parent program that the subprogram is an induced subgraph of
 #         self.parent_program = parent_program

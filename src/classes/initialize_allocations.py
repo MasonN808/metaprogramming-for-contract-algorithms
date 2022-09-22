@@ -21,16 +21,16 @@ class InitializeAllocations:
         The DAG that unions all inner and outer DAGS
     :param: performance_profile : PerformanceProfile
         The performance_profile of the contract program
-    :param: in_subtree : bool
+    :param: in_child_contract_program : bool
         Determines whether the contract program is a child of another contract program
     """
 
-    def __init__(self, budget, program_dag, generator_dag, performance_profile, in_subtree):
+    def __init__(self, budget, program_dag, generator_dag, performance_profile, in_child_contract_program):
         self.budget = budget
         self.program_dag = program_dag
         self.generator_dag = generator_dag
         self.performance_profile = performance_profile
-        self.in_subtree = in_subtree
+        self.in_child_contract_program = in_child_contract_program
 
     def uniform_budget(self) -> List[TimeAllocation]:
         """
@@ -51,7 +51,7 @@ class InitializeAllocations:
         # Do an initial pass to find the conditionals to adjust the budget and time allocation
         for node_id in list_of_ordered_ids:
 
-            if utils.find_node(node_id, self.program_dag).expression_type == "conditional" and utils.find_node(node_id, self.program_dag).in_subtree:
+            if utils.find_node(node_id, self.program_dag).expression_type == "conditional" and utils.find_node(node_id, self.program_dag).in_child_contract_program:
                 # Assume every conditional takes tau time
                 tau = self.performance_profile.calculate_tau()
                 # Subtract tau from the budget
@@ -59,7 +59,7 @@ class InitializeAllocations:
                 # Add the time allocation at a specified index
                 time_allocations[node_id] = TimeAllocation(node_id, tau)
 
-            if utils.find_node(node_id, self.program_dag).expression_type == "for" and utils.find_node(node_id, self.program_dag).in_subtree:
+            if utils.find_node(node_id, self.program_dag).expression_type == "for" and utils.find_node(node_id, self.program_dag).in_child_contract_program:
                 time_allocations[node_id] = TimeAllocation(node_id, 0)
 
         # Do a second pass to add in the rest of the allocations wrt a uniform allocation
@@ -67,7 +67,7 @@ class InitializeAllocations:
             expression_type = utils.find_node(node_id, self.program_dag).expression_type
 
             # Continue since we already did the initial pass
-            if (expression_type == "conditional" or expression_type == "for") and utils.find_node(node_id, self.program_dag).in_subtree:
+            if (expression_type == "conditional" or expression_type == "for") and utils.find_node(node_id, self.program_dag).in_child_contract_program:
                 continue
 
             allocation = self.find_uniform_allocation(budget)
@@ -211,7 +211,7 @@ class InitializeAllocations:
 
         :return: number of conditionals:
         """
-        if self.in_subtree:
+        if self.in_child_contract_program:
             number_of_conditionals = 0
             # Initialize a list to properly loop through the nodes given that the node ids are not sequenced
             list_of_ordered_ids = [node.id for node in self.program_dag.nodes]
@@ -230,7 +230,7 @@ class InitializeAllocations:
 
         :return: number of fors:
         """
-        if self.in_subtree:
+        if self.in_child_contract_program:
             number_of_fors = 0
             # Initialize a list to properly loop through the nodes given that the node ids are not sequenced
             list_of_ordered_ids = [node.id for node in self.program_dag.nodes]

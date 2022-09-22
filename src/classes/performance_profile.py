@@ -371,7 +371,7 @@ class PerformanceProfile:
                 node_for = node.parents[0]
 
                 # Add a reference to the outer program to pull the qualities of the parents of the conditional
-                if node.in_subtree:
+                if node.in_child_contract_program:
                     # Initialize the parent program since we need to query the qualities from here
                     parent_program = node.current_program.parent_program
 
@@ -404,7 +404,7 @@ class PerformanceProfile:
                 node_conditional = node.parents[0]
 
                 # Add a reference to the outer program to pull the qualities of the parents of the conditional
-                if node.in_subtree:
+                if node.in_child_contract_program:
                     # Initialize the parent program since we need to query the qualities from here
                     parent_program = node.current_program.parent_program
 

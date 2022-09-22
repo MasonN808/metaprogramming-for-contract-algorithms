@@ -43,8 +43,8 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
 
     # Root Node
-    node_inner_1 = Node(4, [], [], expression_type="for", in_subtree=True)
-    root_inner = Node(1, [node_inner_1], [], expression_type="contract", in_subtree=True)
+    node_inner_1 = Node(4, [], [], expression_type="for", in_child_contract_program=True)
+    root_inner = Node(1, [node_inner_1], [], expression_type="contract", in_child_contract_program=True)
     root_inner.in_for = True
 
     # Create a list of the nodes in breadth-first order for the false branch
@@ -67,10 +67,10 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
 
     # Leaf nodes
-    node_outer_2 = Node(5, [], [], expression_type="contract", in_subtree=False)
+    node_outer_2 = Node(5, [], [], expression_type="contract", in_child_contract_program=False)
 
     # Conditional Node
-    node_outer_1 = Node(4, [node_outer_2], [], expression_type="for", in_subtree=False)
+    node_outer_1 = Node(4, [node_outer_2], [], expression_type="for", in_child_contract_program=False)
     node_outer_1.num_loops = NUMBER_OF_LOOPS
     node_outer_1.for_dag = copy.deepcopy(dag_inner)
     root_inner.subprogram_parent_node = node_outer_1
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         node.subprogram_parent_node = node_outer_1
 
     # Root node
-    root_outer = Node(0, [node_outer_1], [], expression_type="contract", in_subtree=False)
+    root_outer = Node(0, [node_outer_1], [], expression_type="contract", in_child_contract_program=False)
 
     # Append the children
     node_outer_2.children = [node_outer_1]
@@ -96,17 +96,17 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
 
     # Leaf node
-    node_2 = Node(2, [], [], expression_type="contract", in_subtree=False)
+    node_2 = Node(2, [], [], expression_type="contract", in_child_contract_program=False)
 
     # Intermediate Nodes
-    node_1 = Node(1, [node_2], [], expression_type="for", in_subtree=False)
+    node_1 = Node(1, [node_2], [], expression_type="for", in_child_contract_program=False)
     node_1.num_loops = NUMBER_OF_LOOPS
     for_dag = copy.deepcopy(dag_inner)
     for_dag.nodes = for_dag.nodes[0:len(for_dag.nodes) - 1]
     node_1.for_dag = copy.deepcopy(for_dag)
 
     # Root Node
-    node_root = Node(0, [node_1], [], expression_type="contract", in_subtree=False)
+    node_root = Node(0, [node_1], [], expression_type="contract", in_child_contract_program=False)
 
     # Append the children
     node_2.children = [node_1]
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     #         print("parents of 0: {}".format([j.id for j in i.parents]))
 
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
+                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
                                     possible_qualities=POSSIBLE_QUALITIES)
 
     # Initialize the pointers of the nodes to the program it is in
@@ -186,7 +186,7 @@ if __name__ == "__main__":
 
     # Convert to a contract program
     node_outer_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=dag_inner_rolled_out, budget=0, scale=10 ** 6, decimals=3,
-                                                  quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag,
+                                                  quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, generator_dag=program_dag,
                                                   expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, number_of_loops=NUMBER_OF_LOOPS)
 
     # Initialize the pointers of the nodes to the program it is in

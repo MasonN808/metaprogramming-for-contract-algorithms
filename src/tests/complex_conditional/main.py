@@ -37,18 +37,18 @@ if __name__ == "__main__":
     # Make sure all ids are the same for all nodes in multiple DAGs
     # ----------------------------------------------------------------------------------------
     # Leaf node
-    node_inner_true_4 = Node(7, [], [], expression_type="conditional", in_subtree=True)
+    node_inner_true_4 = Node(7, [], [], expression_type="conditional", in_child_contract_program=True)
     node_inner_true_4.in_true = True
     # Intermediate Nodes
-    node_inner_true_3 = Node(5, [node_inner_true_4], [], expression_type="contract", in_subtree=True)
+    node_inner_true_3 = Node(5, [node_inner_true_4], [], expression_type="contract", in_child_contract_program=True)
     node_inner_true_3.in_true = True
-    node_inner_true_2 = Node(3, [node_inner_true_3], [], expression_type="contract", in_subtree=True)
+    node_inner_true_2 = Node(3, [node_inner_true_3], [], expression_type="contract", in_child_contract_program=True)
     node_inner_true_2.in_true = True
-    node_inner_true_1 = Node(4, [node_inner_true_3], [], expression_type="contract", in_subtree=True)
+    node_inner_true_1 = Node(4, [node_inner_true_3], [], expression_type="contract", in_child_contract_program=True)
     node_inner_true_1.in_true = True
     # Root Node
     node_inner_true_root = Node(1, [node_inner_true_1, node_inner_true_2], [], expression_type="contract",
-                                in_subtree=True)
+                                in_child_contract_program=True)
     node_inner_true_root.in_true = True
     # Add the children
     node_inner_true_4.children = [node_inner_true_3]
@@ -63,13 +63,13 @@ if __name__ == "__main__":
     # Right (False subtree)
     # ----------------------------------------------------------------------------------------
     # Leaf node
-    node_inner_false_2 = Node(7, [], [], expression_type="conditional", in_subtree=True)
+    node_inner_false_2 = Node(7, [], [], expression_type="conditional", in_child_contract_program=True)
     node_inner_false_2.in_false = True
     # Conditional branch nodes
-    node_inner_false_1 = Node(6, [node_inner_false_2], [], expression_type="contract", in_subtree=True)
+    node_inner_false_1 = Node(6, [node_inner_false_2], [], expression_type="contract", in_child_contract_program=True)
     node_inner_false_1.in_false = True
     # Root nodes
-    node_inner_false_root = Node(2, [node_inner_false_1], [], expression_type="contract", in_subtree=True)
+    node_inner_false_root = Node(2, [node_inner_false_1], [], expression_type="contract", in_child_contract_program=True)
     node_inner_false_root.in_false = True
     # Create a list of the nodes in breadth-first order for the false branch
     nodes_inner_false = [node_inner_false_root, node_inner_false_1, node_inner_false_2]
@@ -77,11 +77,11 @@ if __name__ == "__main__":
     # Create a DAG manually for the first-order metareasoning problem
     # ----------------------------------------------------------------------------------------
     # Leaf nodes
-    node_outer_2 = Node(8, [], [], expression_type="contract", in_subtree=False)
+    node_outer_2 = Node(8, [], [], expression_type="contract", in_child_contract_program=False)
     # Conditional Node
-    node_outer_1 = Node(7, [node_outer_2], [], expression_type="conditional", in_subtree=False)
+    node_outer_1 = Node(7, [node_outer_2], [], expression_type="conditional", in_child_contract_program=False)
     # Root node
-    root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_subtree=False)
+    root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_child_contract_program=False)
     # Nodes
     nodes_outer = [root_outer, node_outer_1, node_outer_2]
     # Create and verify the DAG from the node list
@@ -90,19 +90,19 @@ if __name__ == "__main__":
     # Create a program_dag with expanded subtrees for quality mapping generation
     # ----------------------------------------------------------------------------------------
     # Leaf nodes
-    node_8 = Node(8, [], [], expression_type="contract", in_subtree=False)
+    node_8 = Node(8, [], [], expression_type="contract", in_child_contract_program=False)
     # Conditional node
-    node_7 = Node(7, [node_8], [], expression_type="conditional", in_subtree=False)
+    node_7 = Node(7, [node_8], [], expression_type="conditional", in_child_contract_program=False)
     # Conditional branch nodes
-    node_6 = Node(6, [node_7], [], expression_type="contract", in_subtree=False)
-    node_5 = Node(5, [node_7], [], expression_type="contract", in_subtree=False)
+    node_6 = Node(6, [node_7], [], expression_type="contract", in_child_contract_program=False)
+    node_5 = Node(5, [node_7], [], expression_type="contract", in_child_contract_program=False)
     # Conditional subtrees
-    node_4 = Node(4, [node_5], [], expression_type="contract", in_subtree=False)
-    node_3 = Node(3, [node_5], [], expression_type="contract", in_subtree=False)
-    node_2 = Node(2, [node_6], [], expression_type="contract", in_subtree=False, is_conditional_root=True)
-    node_1 = Node(1, [node_3, node_4], [], expression_type="contract", in_subtree=False, is_conditional_root=True)
+    node_4 = Node(4, [node_5], [], expression_type="contract", in_child_contract_program=False)
+    node_3 = Node(3, [node_5], [], expression_type="contract", in_child_contract_program=False)
+    node_2 = Node(2, [node_6], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
+    node_1 = Node(1, [node_3, node_4], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
     # Root node
-    root = Node(0, [node_1, node_2], [], expression_type="contract", in_subtree=False)
+    root = Node(0, [node_1, node_2], [], expression_type="contract", in_child_contract_program=False)
     # Add the children
     node_1.children = [root]
     node_2.children = [root]
@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     # Create the program with some budget
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=False, generator_dag=program_dag)
+                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag)
 
     # Initialize the pointers of the nodes to the program it is in
     initialize_node_pointers_current_program(program_outer)
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     # Convert to a contract program
     node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
                                                    quality_interval=QUALITY_INTERVAL,
-                                                   time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag)
+                                                   time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, generator_dag=program_dag)
 
     # Initialize the pointers of the nodes to the program it is in
     initialize_node_pointers_current_program(node_outer_1.true_subprogram)
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     # Convert to a contract program
     node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, child_programs=None, program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
                                                     quality_interval=QUALITY_INTERVAL,
-                                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_subtree=True, generator_dag=program_dag)
+                                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, generator_dag=program_dag)
 
     program_outer.child_programs = [node_outer_1.true_subprogram, node_outer_1.false_subprogram]
 

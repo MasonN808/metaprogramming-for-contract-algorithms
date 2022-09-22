@@ -14,7 +14,7 @@ class Node:
         Used directly for contract conditionals
     """
 
-    def __init__(self, id, parents, children, expression_type, in_subtree, is_conditional_root=False, time=None):
+    def __init__(self, id, parents, children, expression_type, in_child_contract_program, is_conditional_root=False, time=None):
         # id of the node in the tree
         self.id = id
         self.parents = parents
@@ -28,7 +28,7 @@ class Node:
         self.true_subprogram = None
         # false subtree for the conditional expression
         self.false_subprogram = None
-        self.in_subtree = in_subtree
+        self.in_child_contract_program = in_child_contract_program
         self.in_true = None
         self.in_false = None
 

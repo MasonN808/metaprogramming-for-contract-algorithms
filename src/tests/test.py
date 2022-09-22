@@ -460,7 +460,7 @@ class Test:
 
         for outer_node in outer_program.program_dag.nodes:
 
-            if not outer_node.in_subtree:
+            if not outer_node.in_child_contract_program:
 
                 if Node.is_for_node(outer_node):
                     # Append its subprograms to the list

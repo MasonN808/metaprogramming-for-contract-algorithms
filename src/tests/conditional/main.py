@@ -19,18 +19,18 @@ if __name__ == "__main__":
 
     # Create a DAG manually for testing
     # Leaf nodes
-    node_4 = Node(4, [], [], expression_type="contract", in_subtree=False)
-    node_5 = Node(5, [], [], expression_type="contract", in_subtree=False)
+    node_4 = Node(4, [], [], expression_type="contract", in_child_contract_program=False)
+    node_5 = Node(5, [], [], expression_type="contract", in_child_contract_program=False)
 
     # Conditional Node
-    node_3 = Node(3, [node_4, node_5], [], expression_type="conditional", in_subtree=True)
+    node_3 = Node(3, [node_4, node_5], [], expression_type="conditional", in_child_contract_program=True)
 
     # Intermediate nodes
-    node_1 = Node(1, [node_3], [], expression_type="contract", in_subtree=True)
-    node_2 = Node(2, [node_3], [], expression_type="contract", in_subtree=True)
+    node_1 = Node(1, [node_3], [], expression_type="contract", in_child_contract_program=True)
+    node_2 = Node(2, [node_3], [], expression_type="contract", in_child_contract_program=True)
 
     # Root node
-    root = Node(0, [node_1, node_2], [], expression_type="contract", in_subtree=False)
+    root = Node(0, [node_1, node_2], [], expression_type="contract", in_child_contract_program=False)
 
     # Add the children
     node_1.children = [root]
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     # Create the program with some budget
     program = ContractProgram(program_dag=dag, budget=BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.1, time_step_size=STEP_SIZE, child_programs=None, generator_dag=dag,
-                              in_subtree=False, parent_program=None, program_id=0)
+                              in_child_contract_program=False, parent_program=None, program_id=0)
 
     # Adjust allocations (hardcode)
     test = Test(program)
