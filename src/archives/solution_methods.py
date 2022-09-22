@@ -5,7 +5,7 @@ class SolutionMethods(ContractProgram):
     def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals,
                  quality_interval, time_interval, time_step_size, in_subtree, generator_dag, allocations,
                  performance_profile, initialize_allocations):
-    
+
         self.program_id = program_id
         self.program_dag = program_dag
         self.budget = budget
@@ -14,19 +14,19 @@ class SolutionMethods(ContractProgram):
         self.quality_interval = quality_interval
         self.time_interval = time_interval
         self.time_step_size = time_step_size
-    
+
         self.in_subtree = in_subtree
-    
+
         # Pointer to the parent program that the subprogram is an induced subgraph of
         self.parent_program = parent_program
         self.child_programs = child_programs
-    
+
         self.generator_dag = generator_dag
-    
+
         self.allocations = allocations
-    
+
         self.original_allocations_conditional_branches = None
-    
+
         self.performance_profile = performance_profile
         self.initialize_allocations = initialize_allocations
 
@@ -94,7 +94,6 @@ class SolutionMethods(ContractProgram):
                         eu_adjusted = round(eu_adjusted, self.decimals)
                         eu_original = round(eu_original, self.decimals)
 
-                        # self.global_expected_utility(self.allocations) * self.scale
                         temp_time_switched = round(temp_time_switched, self.decimals)
 
                     if verbose:
