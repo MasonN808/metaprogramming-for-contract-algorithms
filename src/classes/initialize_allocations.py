@@ -52,7 +52,6 @@ class InitializeAllocations:
         for node_id in list_of_ordered_ids:
 
             if utils.find_node(node_id, self.program_dag).expression_type == "conditional" and utils.find_node(node_id, self.program_dag).in_subtree:
-
                 # Assume every conditional takes tau time
                 tau = self.performance_profile.calculate_tau()
                 # Subtract tau from the budget
@@ -61,12 +60,10 @@ class InitializeAllocations:
                 time_allocations[node_id] = TimeAllocation(node_id, tau)
 
             if utils.find_node(node_id, self.program_dag).expression_type == "for" and utils.find_node(node_id, self.program_dag).in_subtree:
-
                 time_allocations[node_id] = TimeAllocation(node_id, 0)
 
         # Do a second pass to add in the rest of the allocations wrt a uniform allocation
         for node_id in list_of_ordered_ids:
-
             expression_type = utils.find_node(node_id, self.program_dag).expression_type
 
             # Continue since we already did the initial pass
@@ -76,7 +73,6 @@ class InitializeAllocations:
             allocation = self.find_uniform_allocation(budget)
             time_allocations[node_id] = TimeAllocation(node_id, allocation)
 
-        # print("DEBUG-ALLOCATIONS-{}".format(utils.print_allocations(time_allocations)))
         return time_allocations
 
     def dirichlet_budget(self) -> List[TimeAllocation]:
@@ -106,10 +102,10 @@ class InitializeAllocations:
         while index < len(allocations_list):
             # We insert a conditional branch and the conditional node since they were omitted before
             if utils.child_of_conditional(utils.find_node(index)):
+                index += 1
+
                 # Insert the neighbor branch with same time allocation
                 allocations_list.insert(index, allocations_list[index])
-
-                index += 1
 
                 # Insert the conditional node with tau time allocation
                 allocations_list.insert(index + 1, tau)
@@ -217,7 +213,6 @@ class InitializeAllocations:
         """
         if self.in_subtree:
             number_of_conditionals = 0
-
             # Initialize a list to properly loop through the nodes given that the node ids are not sequenced
             list_of_ordered_ids = [node.id for node in self.program_dag.nodes]
 
@@ -237,7 +232,6 @@ class InitializeAllocations:
         """
         if self.in_subtree:
             number_of_fors = 0
-
             # Initialize a list to properly loop through the nodes given that the node ids are not sequenced
             list_of_ordered_ids = [node.id for node in self.program_dag.nodes]
 
