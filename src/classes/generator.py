@@ -482,6 +482,8 @@ class Generator:
                 root = None
                 leaf = None
 
+                for_node_old_children = for_node.children
+
                 # Expand the for subtree into a chain
                 # Edit the parents and children of each added node
                 for i in range(for_node.num_loops):
@@ -506,6 +508,7 @@ class Generator:
                     # Check for last iteration
                     elif i == for_node.num_loops - 1:
                         leaf.parents = [node]
+                        leaf.children = for_node_old_children
                         previous_root.children = [leaf]
 
                         # Forces the parent of the last for loop to be its parent rather than the for node
@@ -542,6 +545,8 @@ class Generator:
 
                     # Go to the end of the internals of the for loop and reinitialize the node pointer
                     node = root
+
+                
 
             elif node.expression_type == "for" or not node.traversed:
                 added_index = largest_added_index
