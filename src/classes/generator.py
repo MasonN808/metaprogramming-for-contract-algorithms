@@ -546,8 +546,6 @@ class Generator:
                     # Go to the end of the internals of the for loop and reinitialize the node pointer
                     node = root
 
-                
-
             elif node.expression_type == "for" or not node.traversed:
                 added_index = largest_added_index
                 node.id += largest_added_index

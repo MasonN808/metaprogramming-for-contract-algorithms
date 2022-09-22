@@ -208,118 +208,6 @@ class ContractProgram:
 
         return expected_utility
 
-    # def global_expected_utility_exact(self, time_allocations, original_allocations_inner) -> float:
-    #     """
-    #     Gives the exact expected utility of the contract program given the performance profiles of the nodes
-    #     (i.e., the probability distribution of each contract program's conditional performance profile) and the
-    #     global utility
-
-    #     Assumption: A time-allocation is given to each node in the contract program
-
-    #     :param original_allocations_inner:
-    #     :param time_allocations: float[], required
-    #             The time allocations for each contract algorithm
-    #     :return: float
-    #     """
-    #     # TODO: Calculate the global expected utility using the exact EU method (9/15)
-
-    #     probability = 1.0
-    #     average_qualities = []
-
-    #     # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
-    #     refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
-
-    #     for time_allocation in refactored_allocations:
-
-    #         node = utils.find_node(time_allocation.node_id, self.program_dag)
-
-    #         # Continue since conditional and for nodes have static times
-    #         if (node.expression_type == "conditional" or node.expression_type == "for") and node.in_subtree:
-    #             continue
-
-    #         # Takes care of evaluating fixed loops with an exact expected utility in the inner metareasoning problem
-    #         elif node.in_for and not node.expression_type == "for" and node.first_loop and node.in_subtree:
-
-    #             # The leaf will be the first node of the first iteration
-    #             parent_qualities = self.performance_profile.find_parent_qualities(
-    #                 node=node.subprogram_parent_node, time_allocations=node.current_program.parent_program.allocations, depth=0)
-
-    #             return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=1,
-    #                                                     current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=parent_qualities,
-    #                                                     depth=0, leaves=[node], sum=0)
-
-    #         # Calculates the EU of a conditional expression
-    #         elif node.expression_type == "conditional" and not node.in_subtree:
-
-    #             if original_allocations_inner:
-    #                 copied_branch_allocations = [copy.deepcopy(node.true_subprogram.allocations),
-    #                                              copy.deepcopy(node.false_subprogram.allocations)]
-
-    #                 node.true_subprogram.allocations = original_allocations_inner[0]
-
-    #                 node.false_subprogram.allocations = original_allocations_inner[1]
-
-    #             # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
-    #             probability_and_qualities = self.performance_profile.query_probability_and_quality_from_conditional_expression(
-    #                 node)
-
-    #             # Multiply the current probability by the performance profile of the conditional node
-    #             probability *= probability_and_qualities[0]
-
-    #             conditional_quality = probability_and_qualities[1]
-
-    #             average_qualities.append(conditional_quality)
-
-    #             if original_allocations_inner:
-    #                 node.true_subprogram.allocations = copied_branch_allocations[0]
-    #                 node.false_subprogram.allocations = copied_branch_allocations[1]
-
-    #         # Calculates the EU of a for expression
-    #         elif node.expression_type == "for" and not node.in_subtree:
-
-    #             if original_allocations_inner:
-
-    #                 copied_branch_allocations = [copy.deepcopy(node.for_subprogram.allocations)]
-
-    #                 node.for_subprogram.allocations = original_allocations_inner[0]
-
-    #                 # print("subprogram allocations: {}".format(utils.print_allocations(node.for_subprogram.allocations)))
-
-    #             # Since in conditional, but not in subtree, evaluate the inner probability of the subtree
-    #             probability_and_qualities = self.performance_profile.query_probability_and_quality_from_for_expression(node)
-
-    #             # Multiply the current probability by the performance profile of the conditional node
-    #             probability *= probability_and_qualities[0]
-
-    #             last_for_quality = probability_and_qualities[1]
-
-    #             average_qualities.append(last_for_quality)
-
-    #             if original_allocations_inner:
-    #                 node.for_subprogram.allocations = copied_branch_allocations[0]
-
-    #         else:
-
-    #             # Get the parents' qualities given their time allocations
-    #             parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
-
-    #             # Outputs a list of qualities from the instances at the specified time given a quality mapping
-    #             qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time,
-    #                                                                                 time_allocation.node_id,
-    #                                                                                 parent_qualities=parent_qualities)
-
-    #             # Calculates the average quality on the list of qualities for querying
-    #             average_quality = self.performance_profile.average_quality(qualities)
-
-    #             average_qualities.append(average_quality)
-
-    #             probability *= self.performance_profile.query_probability_contract_expression(average_quality,
-    #                                                                                           qualities)
-
-    #     expected_utility = probability * self.global_utility(average_qualities)
-
-    #     return expected_utility
-
     def global_expected_utility_exact(self, time_allocations, original_allocations_inner) -> float:
         """
         Gives the exact expected utility of the contract program given the performance profiles of the nodes
@@ -352,8 +240,8 @@ class ContractProgram:
                     time_allocations[allocation.node_id] = allocation
 
         exact_eu = self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=0,
-                                                current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=[],
-                                                depth=0, leaves=leaves, sum=0)
+                                                    current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=[],
+                                                    depth=0, leaves=leaves, sum=0)
 
         print(exact_eu)
 
@@ -527,7 +415,7 @@ class ContractProgram:
                     # Check node.children has no for or conditional nodes
                     # If so, skip it since no relevant performance profile can be queried from stored performance profiles
                     for child in node.children:
-                         if child.expression_type == "for" or child.expression_type == "conditional":
+                        if child.expression_type == "for" or child.expression_type == "conditional":
 
                             # TODO: Make this for an arbitrary branch structure not just a P_n graph
                             node.children.extend(child.children)
@@ -548,10 +436,10 @@ class ContractProgram:
                         # conditional_probability *= utility
                         sum += conditional_probability * utility
                     else:
-                        recur =self.find_exact_expected_utility(leaves=new_leaves, time_allocations=time_allocations, depth=depth,
-                                                                                                       expected_utility=expected_utility, current_qualities=current_qualities,
-                                                                                                       possible_qualities=possible_qualities, parent_qualities=[], sum=0)
-                        
+                        recur = self.find_exact_expected_utility(leaves=new_leaves, time_allocations=time_allocations, depth=depth,
+                                                                 expected_utility=expected_utility, current_qualities=current_qualities,
+                                                                 possible_qualities=possible_qualities, parent_qualities=[], sum=0)
+
                         # The recursion looks funny here, but the += acts as a sum
                         sum += conditional_probability * recur
 
@@ -808,6 +696,106 @@ class ContractProgram:
 
         # Initialize the amount of time to be switched
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
+
+        while time_switched > threshold:
+            # print("self.allocations: {}".format([t.time for t in self.allocations]))
+            # print("original allocations inner: {}".format([t.time for t in self.original_allocations_inner[0]]))
+            possible_local_max = []
+
+            # Remove the Nones in the list before taking permutations
+            refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
+
+            # Go through all permutations of the time allocations
+            for permutation in permutations(refactored_allocations, 2):
+
+                node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
+                node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
+
+                # Makes a deep copy to avoid pointers to the same list
+                adjusted_allocations = copy.deepcopy(self.allocations)
+
+                # Avoids exchanging time with itself
+                if permutation[0].node_id == permutation[1].node_id:
+                    continue
+
+                # Avoids negative time allocation
+                elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
+                    continue
+
+                else:
+                    adjusted_allocations[permutation[0].node_id].time -= time_switched
+                    adjusted_allocations[permutation[1].node_id].time += time_switched
+
+                    # Does hill climbing on the outer metareasoning problem that is a conditional
+                    if node_0.expression_type == "for":
+
+                        # Reallocate the budgets for the inner metareasoning problems
+                        node_0.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_0.id].time))
+
+                        # Do naive hill climbing on the branches
+                        for_allocations = copy.deepcopy(node_0.for_subprogram.naive_hill_climbing_inner())
+                        # print("subprogram allocations: {} end".format(utils.print_allocations(node_0.for_subprogram.allocations)))
+
+                    if node_1.expression_type == "for":
+
+                        # Reallocate the budgets for the inner metareasoning problems
+                        node_1.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_1.id].time))
+
+                        # Do naive hill climbing on the branches
+                        for_allocations = copy.deepcopy(node_1.for_subprogram.naive_hill_climbing_inner())
+                        # print("subprogram allocations: {}".format(utils.print_allocations(node_1.for_subprogram.allocations)))
+
+                    if self.global_expected_utility(adjusted_allocations, [for_allocations]) > self.global_expected_utility(self.allocations, self.original_allocations_inner):
+
+                        possible_local_max.append([adjusted_allocations, for_allocations])
+                        # print("for_allocations: {}".format(utils.print_allocations(for_allocations)))
+
+                    # utils.print_allocations(self.original_allocations_inner[0])
+
+                    eu_adjusted = self.global_expected_utility(adjusted_allocations, [for_allocations]) * self.scale
+                    eu_original = self.global_expected_utility(self.allocations, self.original_allocations_inner) * self.scale
+
+                    adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
+
+                    print_allocations_outer = [i.time for i in adjusted_allocations]
+                    temp_time_switched = time_switched
+
+                    # Check for rounding
+                    if self.decimals is not None:
+                        print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
+
+                        eu_adjusted = round(eu_adjusted, self.decimals)
+                        eu_original = round(eu_original, self.decimals)
+
+                        # self.global_expected_utility(self.allocations) * self.scale
+                        temp_time_switched = round(temp_time_switched, self.decimals)
+
+                    if verbose:
+                        message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
+                        print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations_outer))
+
+                    # Reset the branch of the inner for
+                    if self.original_allocations_inner:
+
+                        for_allocations = self.original_allocations_inner[0]
+
+            # arg max here
+            if possible_local_max:
+                # print("possible local max: {}".format([self.global_expected_utility(j[0]) for j in possible_local_max]))
+
+                best_allocation = max([self.global_expected_utility(j[0]) for j in possible_local_max])
+                # print("Best Allocation: {}".format(best_allocation))
+                for j in possible_local_max:
+
+                    if self.global_expected_utility(j[0]) == best_allocation:
+
+                        # Make a deep copy to avoid pointers to the same list
+                        self.allocations = copy.deepcopy(j[0])
+
+                        self.original_allocations_inner = [copy.deepcopy(j[1])]
+
+            else:
+                time_switched = time_switched / decay
 
         while time_switched > threshold:
             # print("self.allocations: {}".format([t.time for t in self.allocations]))
