@@ -96,7 +96,26 @@ def find_neighbor_branch(node) -> Node:
     conditional_node = node.parents[0]
     for child in conditional_node.children:
         if child != node:
-            return child
+            return
+
+
+@staticmethod
+def find_number_decimals(number):
+    return len(str(number).split(".")[1])
+
+
+@staticmethod
+def has_conditional_roots_as_parents(node):
+    num = 0
+    for parent in node.parents:
+        if parent.is_conditional_root:
+            num += 1
+    if num == 1 or num > 2:
+        raise ValueError("Invalid root pointers from conditionals")
+    elif num == 2:
+        return True
+    else:
+        return False
 
 
 def flatten(arr):
