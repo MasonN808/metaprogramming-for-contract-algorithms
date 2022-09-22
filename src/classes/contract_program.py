@@ -640,7 +640,8 @@ class ContractProgram:
 
     def naive_hill_climbing_outer_for(self, for_allocations, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
-        Hill climbing for outer most 
+        Hill climbing for outer most contract program
+
         :param verbose: Verbose mode
         :param threshold: float, the threshold of the temperature decay during annealing
         :param decay: float, the decay rate of the temperature during annealing
@@ -650,7 +651,7 @@ class ContractProgram:
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
 
         while time_switched > threshold:
-            
+
             possible_local_max = []
             # Remove the Nones in the list before taking permutations
             refactored_allocations = utils.remove_nones_time_allocations(self.allocations)

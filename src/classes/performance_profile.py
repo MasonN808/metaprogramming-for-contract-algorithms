@@ -3,10 +3,8 @@ from typing import List
 import json
 import numpy as np
 
-
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
-# from classes import contract_program # noqa
 from classes import utils  # noqa
 from classes.nodes.node import Node  # noqa
 
@@ -67,7 +65,6 @@ class PerformanceProfile:
                     dictionary = dictionary["{:.2f}".format(parent_quality)]
 
             qualities = []
-
             num_decimals_interval = self.find_number_of_decimals(self.time_interval)
 
             # Initialize the start and end of the time interval for descritization of the prior
@@ -75,7 +72,6 @@ class PerformanceProfile:
             if time == self.time_limit:
                 start_step = round(((time - self.time_interval) // self.time_interval) * self.time_interval, num_decimals_interval)
                 end_step = round(start_step + self.time_interval, num_decimals_interval)
-
             else:
                 start_step = round((time // self.time_interval) * self.time_interval, num_decimals_interval)
                 end_step = round(start_step + self.time_interval, num_decimals_interval)
@@ -108,7 +104,6 @@ class PerformanceProfile:
         :param time_allocation: TimeAllocation object, The time allocation to the node
         :return: A quality
         """
-
         adjusted_id = id
 
         if Node.is_conditional_node(self.generator_dag.nodes[id]) or Node.is_for_node(self.generator_dag.nodes[id]):
@@ -125,8 +120,6 @@ class PerformanceProfile:
             estimated_time = self.round_nearest(time_allocation.time, self.time_interval)
 
             # Use .1f to add a trailing zero
-            # print(adjusted_id)
-            # print("adjusted_id: {}".format(adjusted_id))
             qualities = dictionary["{:.1f}".format(estimated_time)]
 
             average_quality = self.average_quality(qualities)
@@ -171,9 +164,7 @@ class PerformanceProfile:
         """
         # Sort in ascending order
         quality_list = sorted(quality_list)
-
         number_in_interval = 0
-
         number_of_decimals = self.find_number_of_decimals(self.quality_interval)
 
         # Initialize the start and end of the quality interval for the posterior
@@ -216,7 +207,6 @@ class PerformanceProfile:
                 found_embedded_if = True
 
         if not found_embedded_if:
-
             # Create a list with the joint probability distribution of the conditional branch and the last quality of the branch
             true_probability_quality = self.conditional_contract_program_probability_quality(conditional_node.true_subprogram)
             false_probability_quality = self.conditional_contract_program_probability_quality(conditional_node.false_subprogram)
@@ -237,14 +227,11 @@ class PerformanceProfile:
             # TODO: take into account embedded later
             raise ValueError("Found an embedded conditional")
 
-        # print([probability, conditional_quality, true_quality, false_quality])
-
         return [probability, conditional_quality]
 
     def conditional_contract_program_probability_quality(self, contract_program):
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
         # Assume for now that a contract_program is a conditional contract program
-
         probability = 1.0
         last_quality = []
 
@@ -254,9 +241,7 @@ class PerformanceProfile:
 
         # Do an initial pass to find the root of the conditional subbranch for outputting the last quality
         for time_allocation in time_allocations:
-
             if time_allocation.time is not None:
-
                 conditional_root_index = time_allocation.node_id
                 # break, since we found the first index
                 break
@@ -264,35 +249,27 @@ class PerformanceProfile:
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
 
         for time_allocation in refactored_allocations:
-
             node = self.find_node(time_allocation.node_id, contract_program.program_dag)
 
             if node.expression_type != "conditional":
-
                 # Get the parents' qualities given their time allocations
                 parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
 
                 # Outputs a list of qualities from the instances at the specified time given a quality mapping
-
-                qualities = self.query_quality_list_on_interval(time_allocation.time, time_allocation.node_id,
-                                                                parent_qualities=parent_qualities)
+                qualities = self.query_quality_list_on_interval(time_allocation.time, time_allocation.node_id, parent_qualities=parent_qualities)
 
                 # Calculates the average quality on the list of qualities for querying
                 average_quality = self.average_quality(qualities)
 
                 # Keep only the average quality of the last node in the program
                 if node.id == conditional_root_index:
-
                     last_quality.append(average_quality)
-
-                # print([average_quality, qualities])
 
                 probability *= self.query_probability_contract_expression(average_quality, qualities)
 
         return [probability, last_quality[0]]
 
     def query_probability_and_quality_from_for_expression(self, for_node):
-
         probability = 1.0
         last_quality = None
 
@@ -303,17 +280,14 @@ class PerformanceProfile:
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
 
         for time_allocation in refactored_allocations:
-
             node = self.find_node(time_allocation.node_id, contract_program.program_dag)
 
             if node.expression_type != "for":
-
                 # Get the parents' qualities given their time allocations
                 parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
 
                 # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                qualities = self.query_quality_list_on_interval(time_allocation.time, time_allocation.node_id,
-                                                                parent_qualities=parent_qualities)
+                qualities = self.query_quality_list_on_interval(time_allocation.time, time_allocation.node_id, parent_qualities=parent_qualities)
 
                 # Calculates the average quality on the list of qualities for querying
                 average_quality = self.average_quality(qualities)
@@ -357,9 +331,7 @@ class PerformanceProfile:
         depth += 1
 
         if node.parents:
-
             if self.are_conditional_roots(node.parents):
-
                 conditional_node = self.find_conditional_node(self.program_dag)
 
                 parent_quality = self.query_probability_and_quality_from_conditional_expression(conditional_node)[1]
@@ -367,7 +339,6 @@ class PerformanceProfile:
                 return parent_quality
 
             elif self.has_last_for_loop(node.parents):
-
                 for_node = self.find_for_node(self.program_dag)
 
                 parent_quality = self.query_probability_and_quality_from_for_expression(for_node)[1]
@@ -376,7 +347,6 @@ class PerformanceProfile:
 
             # Check that none of the parents are conditional expressions or for expressions
             elif not Node.is_conditional_node(node, "parents") and not Node.is_for_node(node, "parents"):
-
                 parent_qualities = []
 
                 for parent in node.parents:
@@ -387,26 +357,21 @@ class PerformanceProfile:
                     parent_qualities.append(quality)
 
                 if depth == 1:
-
                     return parent_qualities
 
                 else:
-
                     # Return a list of parent-dependent qualities (not a leaf or root)
                     quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
 
                     return quality
 
             elif Node.is_for_node(node, "parents"):
-                # print([node.id])
-                # print([i.id for i in node.parents])
                 # Assumption: Node only has one parent (the for)
                 # Skip the for node since no relevant mapping exists
                 node_for = node.parents[0]
 
                 # Add a reference to the outer program to pull the qualities of the parents of the conditional
                 if node.in_subtree:
-
                     # Initialize the parent program since we need to query the qualities from here
                     parent_program = node.current_program.parent_program
 
@@ -418,14 +383,12 @@ class PerformanceProfile:
                 parent_qualities = []
 
                 for parent in node_for.parents:
-
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
 
                     # Reset the parent qualities for the next node_for
                     parent_qualities.append(quality)
 
                 if depth == 1:
-
                     return parent_qualities
 
                 else:
@@ -443,7 +406,6 @@ class PerformanceProfile:
                 # Add a reference to the outer program to pull the qualities of the parents of the conditional
                 if node.in_subtree:
                     # Initialize the parent program since we need to query the qualities from here
-                    # print(node.id)
                     parent_program = node.current_program.parent_program
 
                     # Repoint the allocations as well
@@ -454,20 +416,17 @@ class PerformanceProfile:
                 parent_qualities = []
 
                 for parent in node_conditional.parents:
-
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
 
                     # Reset the parent qualities for the next node_conditional
                     parent_qualities.append(quality)
 
                 if depth == 1:
-
                     return parent_qualities
 
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
-                    quality = self.query_average_quality(node.id, time_allocations[node_conditional.id],
-                                                         parent_qualities)
+                    quality = self.query_average_quality(node.id, time_allocations[node_conditional.id], parent_qualities)
 
                     return quality
 
