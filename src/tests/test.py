@@ -9,7 +9,7 @@ from geneticalgorithm import geneticalgorithm as ga
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
 from classes import utils  # noqa
-from classes.nodes.node import Node  # noqa
+from classes.node import Node  # noqa
 
 
 class Test:

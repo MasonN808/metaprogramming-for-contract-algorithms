@@ -3,7 +3,7 @@ import sys
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
-from classes.nodes.node import Node  # noqa
+from classes.node import Node  # noqa
 from classes.contract_program import ContractProgram  # noqa
 from classes.generator import Generator  # noqa
 from tests.test import Test  # noqa

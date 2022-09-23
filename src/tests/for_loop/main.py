@@ -5,7 +5,7 @@ import numpy as np
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
-from classes.nodes.node import Node  # noqa
+from classes.node import Node  # noqa
 from classes.contract_program import ContractProgram  # noqa
 from classes.generator import Generator  # noqa
 from tests.test import Test  # noqa
@@ -164,18 +164,6 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
     # Initialize the contract programs
     # ----------------------------------------------------------------------------------------
-
-    # Create the outer program with some budget
-    # TODO FIX THIS (8/18)
-
-    # print([i.id for i in program_dag.nodes])
-    # for i in program_dag.nodes:
-    #     if i.is_last_for_loop:
-    #         print("last loop id: {}".format(i.id))
-    #     if i.expression_type == "for":
-    #         print("for id: {}".format(i.id))
-    #     if i.id == 0:
-    #         print("parents of 0: {}".format([j.id for j in i.parents]))
 
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,

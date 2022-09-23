@@ -9,7 +9,7 @@ sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
 from classes import utils  # noqa
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
-from classes.nodes.node import Node  # noqa
+from classes.node import Node  # noqa
 
 
 class Generator:

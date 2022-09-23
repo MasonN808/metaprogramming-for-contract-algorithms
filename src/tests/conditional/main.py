@@ -2,7 +2,7 @@ from os.path import exists
 from tests.test import Test
 from classes.generator import Generator
 from classes.contract_program import ContractProgram
-from classes.nodes.node import Node
+from classes.node import Node
 from classes.directed_acyclic_graph import DirectedAcyclicGraph
 import sys
 

@@ -7,7 +7,7 @@ from itertools import permutations
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
 from classes import utils  # noqa
-from classes.nodes.node import Node  # noqa
+from classes.node import Node  # noqa
 from classes.performance_profile import PerformanceProfile  # noqa
 from classes.initialize_allocations import InitializeAllocations  # noqa
 

@@ -1,7 +1,7 @@
 from os.path import exists
 from src.tests.test import Test
 from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
-from src.classes.nodes.node import Node
+from src.classes.node import Node
 from src.classes.contract_program import ContractProgram
 from src.classes.generator import Generator
 
