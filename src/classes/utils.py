@@ -94,7 +94,6 @@ def flatten(arr):
                 flattened_list.append(item)
         else:
             flattened_list.append(sublist)
-
     return flattened_list
 
 
@@ -112,9 +111,12 @@ def remove_nones_list(list):
 
 def find_leaves_in_dag(program_dag):
     leaves = []
-
     for node in program_dag.nodes:
         if not node.parents:
             leaves.append(node)
-
     return leaves
+
+
+def initialize_node_pointers_current_program(contract_program):
+    for node in contract_program.program_dag.nodes:
+        node.current_program = contract_program

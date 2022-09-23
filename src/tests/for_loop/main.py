@@ -8,14 +8,9 @@ from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
 from classes.node import Node  # noqa
 from classes.contract_program import ContractProgram  # noqa
 from classes.generator import Generator  # noqa
+from classes import utils  # noqa
 from tests.test import Test  # noqa
 from os.path import exists  # noqa
-
-
-def initialize_node_pointers_current_program(contract_program):
-    for node in contract_program.program_dag.nodes:
-        node.current_program = contract_program
-
 
 if __name__ == "__main__":
     # Total budget for the DAG
@@ -170,7 +165,7 @@ if __name__ == "__main__":
                                     possible_qualities=POSSIBLE_QUALITIES)
 
     # Initialize the pointers of the nodes to the program it is in
-    initialize_node_pointers_current_program(program_outer)
+    utils.initialize_node_pointers_current_program(program_outer)
 
     # Convert to a contract program
     node_outer_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=dag_inner_rolled_out, budget=0, scale=10 ** 6, decimals=3,
@@ -178,7 +173,7 @@ if __name__ == "__main__":
                                                   expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, number_of_loops=NUMBER_OF_LOOPS)
 
     # Initialize the pointers of the nodes to the program it is in
-    initialize_node_pointers_current_program(node_outer_1.for_subprogram)
+    utils.initialize_node_pointers_current_program(node_outer_1.for_subprogram)
 
     program_outer.child_programs = [node_outer_1.for_subprogram]
 

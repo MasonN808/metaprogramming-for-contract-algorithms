@@ -6,14 +6,9 @@ from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
 from classes.node import Node  # noqa
 from classes.contract_program import ContractProgram  # noqa
 from classes.generator import Generator  # noqa
+from classes import utils  # noqa
 from tests.test import Test  # noqa
 from os.path import exists  # noqa
-
-
-def initialize_node_pointers_current_program(contract_program):
-    for node in contract_program.program_dag.nodes:
-        node.current_program = contract_program
-
 
 if __name__ == "__main__":
     # Total budget for the DAG
@@ -142,7 +137,7 @@ if __name__ == "__main__":
                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag)
 
     # Initialize the pointers of the nodes to the program it is in
-    initialize_node_pointers_current_program(program_outer)
+    utils.initialize_node_pointers_current_program(program_outer)
 
     # Add the subtree contract programs to the conditional node
     # Add the left subtree
@@ -154,7 +149,7 @@ if __name__ == "__main__":
                                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, generator_dag=program_dag)
 
     # Initialize the pointers of the nodes to the program it is in
-    initialize_node_pointers_current_program(node_outer_1.true_subprogram)
+    utils.initialize_node_pointers_current_program(node_outer_1.true_subprogram)
 
     # Add the right subtree
     false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
@@ -167,7 +162,7 @@ if __name__ == "__main__":
     program_outer.child_programs = [node_outer_1.true_subprogram, node_outer_1.false_subprogram]
 
     # Initialize the pointers of the nodes to the program it is in
-    initialize_node_pointers_current_program(node_outer_1.false_subprogram)
+    utils.initialize_node_pointers_current_program(node_outer_1.false_subprogram)
 
     # Add the pointers from the parent program to the subprograms
     node_outer_1.true_subprogram.parent_program = program_outer
