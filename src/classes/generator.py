@@ -185,7 +185,6 @@ class Generator:
         return nodes
 
     def valid_manual_override(self):
-        # print([i.id for i in self.program_dag.nodes])
         if len(self.manual_override) != len(self.program_dag.nodes):
             raise ValueError("Manual override list must be same length as DAG")
         else:
@@ -270,7 +269,6 @@ class Generator:
 
                 # Base Case
                 if depth == parents_length - 1:
-                    # populate_dictionary[parent_quality] = {}
                     # To change the parent_quality mapping with respect to the parent qualities
                     for t in dictionary[parent_quality]:
                         try:
@@ -299,15 +297,6 @@ class Generator:
         dag = copy.deepcopy(dag)
         for node in dag.nodes:
             if node.expression_type == "for":
-                # Append its parents to the children
-                # Then remove the node from the parents and children
-                # Then remove the node from the nodes list
-
-                # for child in node.children:
-                #     child.parents.extend(node.parents)
-
-                #     if node in child.parents:
-                #         child.parents.remove(node)
 
                 for parent in node.parents:
                     parent.children.extend(node.children)
@@ -426,7 +415,6 @@ class Generator:
             copied_dag = copy.deepcopy(copied_dag)
 
             if i != 0:
-                # previous_root = root
                 previous_leaf = leaf
 
             # Get the root node and the leaf node of the subprogram

@@ -189,10 +189,6 @@ class PerformanceProfile:
         :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
         allocation
         """
-        # Sort in ascending order
-        # qualities_true_branch = sorted(qualities_branches[0])
-        # qualities_false_branch = sorted(qualities_branches[1])
-
         found_embedded_if = False
 
         # A list of the root qualities from the branches
@@ -358,11 +354,9 @@ class PerformanceProfile:
 
                 if depth == 1:
                     return parent_qualities
-
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
                     quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
-
                     return quality
 
             elif Node.is_for_node(node, "parents"):
@@ -390,12 +384,10 @@ class PerformanceProfile:
 
                 if depth == 1:
                     return parent_qualities
-
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
                     quality = self.query_average_quality(node.id, time_allocations[node_for.id],
                                                          parent_qualities)
-
                     return quality
 
             elif Node.is_conditional_node(node, "parents"):
@@ -435,12 +427,8 @@ class PerformanceProfile:
             # Leaf Node as a trivial functional expression
             if depth == 1 or Node.is_conditional_node(node) or Node.is_for_node(node):
                 return []
-
             else:
-                # utils.print_allocations(time_allocations)
-                # print(node.current_program.program_id)
                 quality = self.query_average_quality(node.id, time_allocations[node.id], [])
-
                 return quality
 
     @staticmethod
@@ -499,7 +487,6 @@ class PerformanceProfile:
     @staticmethod
     def are_conditional_roots(nodes) -> bool:
         result = all(node.is_conditional_root is True for node in nodes)
-
         if result:
             return True
         else:
@@ -508,10 +495,8 @@ class PerformanceProfile:
     @staticmethod
     def has_last_for_loop(nodes) -> bool:
         for node in nodes:
-
             if node.is_last_for_loop:
                 return True
-
         return False
 
     def reset_traversed(self) -> None:
