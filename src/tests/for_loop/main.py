@@ -52,10 +52,10 @@ if __name__ == "__main__":
     # Rollout the for loop in a seperate DAG
     dag_inner_rolled_out = Generator.rollout_for_loops(dag_inner)
 
-    for i in dag_inner_rolled_out.nodes:
-        print("dag_inner_rolled_out (children): {}, {}".format(i.id, [j.id for j in i.children]))
-    for i in dag_inner_rolled_out.nodes:
-        print("dag_inner_rolled_out (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
+    # for i in dag_inner_rolled_out.nodes:
+    #     print("dag_inner_rolled_out (children): {}, {}".format(i.id, [j.id for j in i.children]))
+    # for i in dag_inner_rolled_out.nodes:
+    #     print("dag_inner_rolled_out (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
@@ -115,10 +115,10 @@ if __name__ == "__main__":
     # Rollout the for loop in a seperate DAG
     program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)
 
-    for i in program_dag.nodes:
-        print("program_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
-    for i in program_dag.nodes:
-        print("program_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
+    # for i in program_dag.nodes:
+    #     print("program_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
+    # for i in program_dag.nodes:
+    #     print("program_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
 
     # ----------------------------------------------------------------------------------------
     # Generate the performance profiles
@@ -131,9 +131,6 @@ if __name__ == "__main__":
         generator = Generator(INSTANCES, program_dag=program_dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE,
                               uniform_low=0.05,
                               uniform_high=0.9)
-
-        # Let the root be trivial and not dependent on parents
-        # generator.trivial_root = True
 
         # Adjust the DAG structure that has conditionals for generation
         generator.generator_dag = generator.adjust_dag_with_fors(program_dag)
