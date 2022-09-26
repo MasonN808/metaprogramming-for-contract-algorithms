@@ -1,5 +1,5 @@
 from src.classes.directed_acyclic_graph import DirectedAcyclicGraph
-from src.classes.nodes.node import Node
+from src.classes.node import Node
 from src.classes.contract_program import ContractProgram
 from src.classes.generator import Generator
 from src.tests.test import Test
@@ -86,9 +86,6 @@ if __name__ == "__main__":
 
     # Adjust allocations (hardcode)
     test = Test(program)
-
-    # Print the tree for verification
-    # print(test.print_tree(program_dag.root))
 
     # Test a random distribution on the initial allocations
     # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))

@@ -3,28 +3,14 @@ from typing import List
 
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
-from classes.nodes.node import Node  # noqa
+from classes.node import Node  # noqa
 
 
 def print_allocations(allocations) -> None:
-    """
-    Prints the time allocations in a list of TimeAllocation objects
-
-    :param allocations: TimeAllocations[]
-    :return: None
-    """
     print([i.time for i in allocations])
 
 
 def find_node(node_id, dag) -> Node:
-    """
-    Finds the node in the node list given the id
-
-    :param: node_id: The id of the node
-    :return Node object
-    """
-    # print([i.id for i in dag.nodes])
-    # print(node_id)
     nodes = dag.nodes
     for node in nodes:
         if node.id == node_id:
@@ -33,12 +19,6 @@ def find_node(node_id, dag) -> Node:
 
 
 def child_of_conditional(node) -> bool:
-    """
-    Checks whether the node is a child of a conditional
-
-    :param: node: Node object
-    :return bool
-    """
     for parent in node.parents:
         if parent.expression_type == "conditional":
             return True
@@ -46,12 +26,6 @@ def child_of_conditional(node) -> bool:
 
 
 def child_of_for(node) -> bool:
-    """
-    Checks whether the node is a child of a for-loop
-
-    :param: node: Node object
-    :return bool
-    """
     for parent in node.parents:
         if parent.expression_type == "for":
             return True
@@ -73,12 +47,6 @@ def find_children_fors(node) -> List[Node]:
 
 
 def parent_of_conditional(node) -> bool:
-    """
-    Checks whether the node is a parent of a conditional
-
-    :param: node: Node object
-    :return bool
-    """
     for child in node.children:
         if child.expression_type == "conditional":
             return True
@@ -96,7 +64,26 @@ def find_neighbor_branch(node) -> Node:
     conditional_node = node.parents[0]
     for child in conditional_node.children:
         if child != node:
-            return child
+            return
+
+
+@staticmethod
+def find_number_decimals(number):
+    return len(str(number).split(".")[1])
+
+
+@staticmethod
+def has_conditional_roots_as_parents(node):
+    num = 0
+    for parent in node.parents:
+        if parent.is_conditional_root:
+            num += 1
+    if num == 1 or num > 2:
+        raise ValueError("Invalid root pointers from conditionals")
+    elif num == 2:
+        return True
+    else:
+        return False
 
 
 def flatten(arr):
@@ -107,7 +94,6 @@ def flatten(arr):
                 flattened_list.append(item)
         else:
             flattened_list.append(sublist)
-
     return flattened_list
 
 
@@ -117,3 +103,20 @@ def remove_nones_time_allocations(allocations):
 
 def remove_nones_times(allocations):
     return [time for time in allocations if time is not None]
+
+
+def remove_nones_list(list):
+    return [element for element in list if element is not None]
+
+
+def find_leaves_in_dag(program_dag):
+    leaves = []
+    for node in program_dag.nodes:
+        if not node.parents:
+            leaves.append(node)
+    return leaves
+
+
+def initialize_node_pointers_current_program(contract_program):
+    for node in contract_program.program_dag.nodes:
+        node.current_program = contract_program

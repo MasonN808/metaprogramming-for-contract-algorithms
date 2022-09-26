@@ -9,7 +9,7 @@ sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
 from classes import utils  # noqa
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
-from classes.nodes.node import Node  # noqa
+from classes.node import Node  # noqa
 
 
 class Generator:
@@ -54,21 +54,19 @@ class Generator:
         :param random_number: To produce noise in the quality mappings
         :return:
         """
-
         potential_parent_qualities = [format(i, '.2f') for i in np.arange(0, 1 + self.quality_interval, self.quality_interval).round(2)]
 
         if not node.parents:
-
             velocity = self.parent_dependent_transform(node, qualities, random_number)
 
-            for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(self.find_number_decimals(self.time_step_size)):
+            for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
                 # Use this function to approximate the performance profile
                 dictionary[t] = 1 - math.e ** (-velocity * t)
 
         else:
             parents_length = len(node.parents)
 
-            if self.has_conditional_roots_as_parents(node):
+            if utils.has_conditional_roots_as_parents(node):
                 parents_length -= 1
 
             for quality in potential_parent_qualities:
@@ -81,10 +79,9 @@ class Generator:
                     # To change the quality mapping with respect to the parent qualities
                     velocity = self.parent_dependent_transform(node, qualities, random_number)
 
-                    for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(self.find_number_decimals(self.time_step_size)):
+                    for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
                         # Use this function to approximate the performance profile
                         dictionary[quality][t] = 1 - math.e ** (-velocity * t)
-
                 else:
                     qualities.append(quality)
                     self.recur_build(depth + 1, node, qualities, dictionary[quality], random_number)
@@ -92,15 +89,11 @@ class Generator:
         return dictionary
 
     def parent_dependent_transform(self, node, qualities, random_number):
-
         if self.manual_override and self.valid_manual_override():
-
             if not self.manual_override[node.id] is None:
-
                 average_parent_quality = 1
 
                 if qualities:
-
                     # Convert the list of strings to floats
                     qualities = [float(quality) for quality in qualities]
 
@@ -114,7 +107,6 @@ class Generator:
 
         else:
             if qualities:
-
                 # Convert the list of strings to floats
                 qualities = [float(quality) for quality in qualities]
 
@@ -193,10 +185,8 @@ class Generator:
         return nodes
 
     def valid_manual_override(self):
-        # print([i.id for i in self.program_dag.nodes])
         if len(self.manual_override) != len(self.program_dag.nodes):
             raise ValueError("Manual override list must be same length as DAG")
-
         else:
             return True
 
@@ -208,15 +198,12 @@ class Generator:
         :param out_file: the file to be populated
         :return: An embedded dictionary
         """
-
         with open('{}'.format(out_file), 'w') as f:
             bundle = {}
-
             i = 0
             j = 0
 
             for node in nodes:
-
                 if Node.is_conditional_node(self.program_dag.nodes[i]) or Node.is_for_node(self.program_dag.nodes[i]):
                     i += 1
 
@@ -228,7 +215,6 @@ class Generator:
                 temp_dictionary = self.import_performance_profiles(node)
 
                 for instance in temp_dictionary['instances']:
-
                     # Loop through all the time steps
                     recursion_dictionary = temp_dictionary['instances'][instance]
                     populate_dictionary = bundle["node_{}".format(i)]['qualities']
@@ -236,7 +222,6 @@ class Generator:
                     self.recur_traverse(0, self.generator_dag.nodes[j], [], recursion_dictionary, populate_dictionary)
 
                 bundle["node_{}".format(i)]['parents'] = temp_dictionary['parents']
-
                 j += 1
                 i += 1
 
@@ -259,12 +244,10 @@ class Generator:
         # Node without parents
         if not node.parents:
             for t in dictionary:
-
                 try:
                     # See if a list object exists
                     if not isinstance(populate_dictionary["{}".format(t)], list):
                         populate_dictionary["{}".format(t)] = []
-
                 except KeyError:
                     populate_dictionary["{}".format(t)] = []
 
@@ -274,66 +257,33 @@ class Generator:
         else:
             parents_length = len(node.parents)
 
-            if self.has_conditional_roots_as_parents(node):
+            if utils.has_conditional_roots_as_parents(node):
                 parents_length -= 1
 
             # Loop through layer of the parent qualities
             for parent_quality in dictionary:
-
                 try:
                     populate_dictionary[parent_quality]
-
                 except KeyError:
                     populate_dictionary[parent_quality] = {}
 
                 # Base Case
                 if depth == parents_length - 1:
-                    # populate_dictionary[parent_quality] = {}
                     # To change the parent_quality mapping with respect to the parent qualities
                     for t in dictionary[parent_quality]:
-
                         try:
                             # See if a list object exists
                             if not isinstance(populate_dictionary[parent_quality]["{}".format(t)], list):
                                 populate_dictionary[parent_quality]["{}".format(t)] = []
-
                         except KeyError:
                             populate_dictionary[parent_quality]["{}".format(t)] = []
 
                         populate_dictionary[parent_quality]["{}".format(t)].append(dictionary[parent_quality][t])
-
                 else:
                     self.recur_traverse(depth + 1, node, qualities.append(parent_quality),
                                         dictionary[parent_quality], populate_dictionary[parent_quality])
 
         return populate_dictionary
-
-    @staticmethod
-    def adjust_dag_with_conditionals(dag) -> DirectedAcyclicGraph:
-        """
-        Changes the structure of the DAG by removing any conditional nodes and appending its parents to its children
-        temporarily for generation. Note that the original structure of the DAG remains intact
-
-        :param dag: directedAcyclicGraph Object, original version
-        :return: directedAcyclicGraph Object, a trimmed version
-        """
-        dag = copy.deepcopy(dag)
-        for node in dag.nodes:
-            if node.expression_type == "conditional":
-                # Append its parents to the children
-                # Then remove the node from the parents and children
-                # Then remove the node from the nodes list
-                for child in node.children:
-                    child.parents.extend(node.parents)
-                    child.parents.remove(node)
-
-                for parent in node.parents:
-                    parent.children.extend(node.children)
-                    parent.children.remove(node)
-
-                dag.nodes.remove(node)
-
-        return dag
 
     @staticmethod
     def adjust_dag_with_fors(dag) -> DirectedAcyclicGraph:
@@ -347,15 +297,6 @@ class Generator:
         dag = copy.deepcopy(dag)
         for node in dag.nodes:
             if node.expression_type == "for":
-                # Append its parents to the children
-                # Then remove the node from the parents and children
-                # Then remove the node from the nodes list
-
-                # for child in node.children:
-                #     child.parents.extend(node.parents)
-
-                #     if node in child.parents:
-                #         child.parents.remove(node)
 
                 for parent in node.parents:
                     parent.children.extend(node.children)
@@ -379,24 +320,17 @@ class Generator:
         added_index = 0
         largest_added_index = 0
 
-        # reversed_nodes = reversed(dag.nodes)
-
         for node in dag.nodes:
             if node.expression_type == "for" and not node.traversed:
-
                 node.traversed = True
-
                 for_node = node
-
                 root = None
                 leaf = None
+                for_node_old_children = for_node.children
 
                 # Expand the for subtree into a chain
                 # Edit the parents and children of each added node
                 for i in range(for_node.num_loops):
-
-                    # TODO: Do some sort of recursion HERE
-
                     # Make deep copy to avoid overlapped pointers
                     for_dag = copy.deepcopy(for_node.for_dag)
 
@@ -409,22 +343,16 @@ class Generator:
                     # Check for first iteration
                     if i == 0:
                         # Make the parents of the for-node the parents of the first iteration
-                        # for_node.children = [leaf]
+                        for_node.children = [leaf]
                         leaf.parents = [for_node]
-
                     # Check for last iteration
                     elif i == for_node.num_loops - 1:
-                        leaf.parents = [previous_root]
-                        root.children = [for_node]
-
-                        for child in for_node.children:
-                            child.parents.extend([root])
-                            if for_node in child.parents:
-                                child.parents.remove(for_node)
+                        leaf.parents = [node]
+                        leaf.children = for_node_old_children
+                        previous_root.children = [leaf]
 
                         for loop_node in for_dag.nodes:
                             loop_node.is_last_for_loop = True
-
                     else:
                         # Make the parent the root of the previous iteration
                         leaf.parents = [node]
@@ -440,7 +368,6 @@ class Generator:
 
                     # Add the nodes to the ndoe list
                     # Use slicing to extend a list at a specified index
-                    # print(node.id)
                     dag.nodes[for_node.id:for_node.id] = for_dag.nodes
 
                     # Go to the end of the internals of the for loop and reinitialize the node pointer
@@ -468,11 +395,8 @@ class Generator:
         :return: directedAcyclicGraph Object, a rollout version
         """
         added_index = 0
-        # for_node = dag.nodes[0]
-
         root = None
         leaf = None
-
         roll_out_dag = copy.deepcopy(dag)
         copied_dag = copy.deepcopy(dag)
         copied_dag.nodes = copied_dag.nodes[0:len(dag.nodes) - 1]
@@ -480,27 +404,17 @@ class Generator:
         for loop_node in roll_out_dag.nodes[0:len(roll_out_dag.nodes) - 1]:
             loop_node.is_last_for_loop = True
 
-        previous_root = copied_dag.nodes[0]
+        # previous_root = copied_dag.nodes[0]
         previous_leaf = copied_dag.nodes[len(copied_dag.nodes) - 1]
-
-        # copied_dag.nodes = copied_dag.nodes[0:len(dag.nodes)-1]
-
-        # roll_out_dag.nodes = roll_out_dag.nodes[1:len(roll_out_dag)]
-        # root =
-        # # leaf = roll_out_dag.nodes[len(dag.nodes) - 1]
-        # leaf = for_node
 
         # Expand the for subtree into a chain
         # Edit the parents and children of each added node
         for i in range(dag.number_of_loops - 1):
-            # print("meta: {}".format(i))
-            # TODO: Do some sort of recursion HERE
 
             # Make deep copy to avoid overlapped pointers
             copied_dag = copy.deepcopy(copied_dag)
 
             if i != 0:
-                previous_root = root
                 previous_leaf = leaf
 
             # Get the root node and the leaf node of the subprogram
@@ -508,21 +422,18 @@ class Generator:
             leaf = copied_dag.nodes[len(copied_dag.nodes) - 1]
 
             previous_leaf.parents = [root]
+            root.children = [previous_leaf]
 
-            # pass on the first iteration to initialize the previous pointers
-            if i == 0:
-                # copied_dag = copy.deepcopy(copied_dag)
-                pass
-
-            # Check for last iteration
+            # Check for last iteration (i.e., the first loop)
+            # subtracted two since it is offset from previous node indexes
             if i == copied_dag.number_of_loops - 2:
-
+                root.first_loop = True
                 previous_leaf.parents = [root]
-
+                root.children = [previous_leaf]
             else:
                 # Make the parent the root of the previous iteration
                 previous_leaf.parents = [root]
-                previous_root.children = [leaf]
+                root.children = [previous_leaf]
 
             added_index = len(copied_dag.nodes) * (copied_dag.number_of_loops - i) - (copied_dag.number_of_loops - i) + 1
 
@@ -538,25 +449,9 @@ class Generator:
 
         # Adjust the first node's parent pointer
         roll_out_dag.nodes[0].parents = [roll_out_dag.nodes[1]]
+        roll_out_dag.nodes[len(roll_out_dag.nodes) - 1].children = [roll_out_dag.nodes[len(roll_out_dag.nodes) - 2]]
 
         # Adjust the order
         roll_out_dag.order = len(roll_out_dag.nodes)
 
         return roll_out_dag
-
-    @staticmethod
-    def find_number_decimals(number):
-        return len(str(number).split(".")[1])
-
-    @staticmethod
-    def has_conditional_roots_as_parents(node):
-        num = 0
-        for parent in node.parents:
-            if parent.is_conditional_root:
-                num += 1
-        if num == 1 or num > 2:
-            raise ValueError("Invalid root pointers from conditionals")
-        elif num == 2:
-            return True
-        else:
-            return False

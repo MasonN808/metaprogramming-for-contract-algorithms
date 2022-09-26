@@ -15,7 +15,6 @@ class DirectedAcyclicGraph:
         self.nodes = nodes
         self.order = len(self.nodes)
         self.root = root
-
         # For for-loops
         self.number_of_loops = None
 
@@ -120,7 +119,6 @@ class DirectedAcyclicGraph:
             if not visited[parent.id]:
                 if self.__has_cycles(parent, visited, stack):
                     return True
-
             elif stack[parent.id]:
                 return True
 
@@ -214,12 +212,10 @@ class DirectedAcyclicGraph:
         elif data_type == "node":
             if data is None:
                 raise ValueError("A node must be provided")
-
             else:
                 for node in self.nodes:
                     if node.id == data.id:
                         raise ValueError("The same id is applied to more than one node")
                 return True
-
         else:
             raise ValueError("Received an invalid data type")

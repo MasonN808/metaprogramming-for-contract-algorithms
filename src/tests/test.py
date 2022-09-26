@@ -9,7 +9,7 @@ from geneticalgorithm import geneticalgorithm as ga
 sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
 
 from classes import utils  # noqa
-from classes.nodes.node import Node  # noqa
+from classes.node import Node  # noqa
 
 
 class Test:
@@ -145,7 +145,7 @@ class Test:
             optimal_time_allocations_inner_for = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
 
             eu_optimal = self.contract_program.global_expected_utility(allocations[0],
-                                                                       self.contract_program.original_allocations_inner) * self.contract_program.scale
+                                                                       self.contract_program.best_allocations_inner) * self.contract_program.scale
 
             if self.contract_program.decimals is not None:
 
@@ -275,7 +275,7 @@ class Test:
             optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])
 
             eu_optimal = self.contract_program.global_expected_utility(allocations[0],
-                                                                       self.contract_program.original_allocations_inner) * self.contract_program.scale
+                                                                       self.contract_program.best_allocations_inner) * self.contract_program.scale
 
             if self.contract_program.decimals is not None:
 
@@ -460,7 +460,7 @@ class Test:
 
         for outer_node in outer_program.program_dag.nodes:
 
-            if not outer_node.in_subtree:
+            if not outer_node.in_child_contract_program:
 
                 if Node.is_for_node(outer_node):
                     # Append its subprograms to the list
