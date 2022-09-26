@@ -3,7 +3,7 @@ from typing import List
 from random import random
 import numpy as np
 
-sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
 from classes import utils  # noqa
 from classes.time_allocation import TimeAllocation  # noqa

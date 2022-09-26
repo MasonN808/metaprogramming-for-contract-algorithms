@@ -5,7 +5,7 @@ import json
 import math
 import numpy as np
 
-sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
 from classes import utils  # noqa
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
@@ -303,6 +303,32 @@ class Generator:
 
                     if node in parent.children:
                         parent.children.remove(node)
+
+                dag.nodes.remove(node)
+
+        return dag
+
+    @staticmethod
+    def adjust_dag_with_conditionals(dag) -> DirectedAcyclicGraph:
+        """
+        Changes the structure of the DAG by removing any conditional nodes and appending its parents to its children
+        temporarily for generation. Note that the original structure of the DAG remains intact
+        :param dag: directedAcyclicGraph Object, original version
+        :return: directedAcyclicGraph Object, a trimmed version
+        """
+        dag = copy.deepcopy(dag)
+        for node in dag.nodes:
+            if node.expression_type == "conditional":
+                # Append its parents to the children
+                # Then remove the node from the parents and children
+                # Then remove the node from the nodes list
+                for child in node.children:
+                    child.parents.extend(node.parents)
+                    child.parents.remove(node)
+
+                for parent in node.parents:
+                    parent.children.extend(node.children)
+                    parent.children.remove(node)
 
                 dag.nodes.remove(node)
 

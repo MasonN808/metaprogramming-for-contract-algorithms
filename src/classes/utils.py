@@ -1,7 +1,7 @@
 import sys
 from typing import List
 
-sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
 from classes.node import Node  # noqa
 

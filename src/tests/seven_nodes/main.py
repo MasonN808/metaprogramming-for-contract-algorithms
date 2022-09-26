@@ -1,6 +1,7 @@
 import sys
+import numpy as np
 
-sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
 from classes.node import Node  # noqa
@@ -16,6 +17,10 @@ if __name__ == "__main__":
     STEP_SIZE = 0.1
     QUALITY_INTERVAL = .05
     VERBOSE = False
+    # For type of performance profile (exact or appproximate)
+    EXPECTED_UTILITY_TYPE = "approximate"
+    # Initialize a list of all possible qualities
+    POSSIBLE_QUALITIES = np.arange(0, 1 + QUALITY_INTERVAL, QUALITY_INTERVAL)
 
     # Create a DAG manually for testing
     # Leaf nodes
@@ -66,11 +71,11 @@ if __name__ == "__main__":
 
     # Create the program with some budget
     program = ContractProgram(program_dag=dag, budget=BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.1, time_step_size=STEP_SIZE, child_programs=None, generator_dag=dag,
-                              in_child_contract_program=False, parent_program=None, program_id=0)
+                              in_child_contract_program=False, parent_program=None, program_id=0, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
 
     test = Test(program)
 
     # Test initial vs optimal expected utility and allocations
-    test.find_utility_and_allocations(initial_allocation="uniform", verbose=False, outer_program=program)
-    test.find_utility_and_allocations(initial_allocation="uniform with noise", verbose=False, outer_program=program)
-    test.find_utility_and_allocations(initial_allocation="Dirichlet", verbose=False, outer_program=program)
+    test.find_utility_and_allocations(initial_allocation="uniform", verbose=True, outer_program=program)
+    # test.find_utility_and_allocations(initial_allocation="uniform with noise", verbose=False, outer_program=program)
+    # test.find_utility_and_allocations(initial_allocation="Dirichlet", verbose=False, outer_program=program)

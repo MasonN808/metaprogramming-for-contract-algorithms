@@ -1,6 +1,7 @@
 import sys
+import numpy as np
 
-sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
 from classes.node import Node  # noqa
@@ -25,6 +26,10 @@ if __name__ == "__main__":
     TIME_INTERVAL = 0.1
     # The quality interval when querying for the performance profile
     QUALITY_INTERVAL = .05
+    # For type of performance profile (exact or appproximate)
+    EXPECTED_UTILITY_TYPE = "approximate"
+    # Initialize a list of all possible qualities
+    POSSIBLE_QUALITIES = np.arange(0, 1 + QUALITY_INTERVAL, QUALITY_INTERVAL)
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (conditional subtree)
@@ -134,7 +139,7 @@ if __name__ == "__main__":
 
     # Create the program with some budget
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag)
+                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
 
     # Initialize the pointers of the nodes to the program it is in
     utils.initialize_node_pointers_current_program(program_outer)
@@ -145,8 +150,8 @@ if __name__ == "__main__":
 
     # Convert to a contract program
     node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
-                                                   quality_interval=QUALITY_INTERVAL,
-                                                   time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, generator_dag=program_dag)
+                                                   quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
+                                                    generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
 
     # Initialize the pointers of the nodes to the program it is in
     utils.initialize_node_pointers_current_program(node_outer_1.true_subprogram)
@@ -156,8 +161,8 @@ if __name__ == "__main__":
 
     # Convert to a contract program
     node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, child_programs=None, program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
-                                                    quality_interval=QUALITY_INTERVAL,
-                                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, generator_dag=program_dag)
+                                                    quality_interval=QUALITY_INTERVAL,time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
+                                                    generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
 
     program_outer.child_programs = [node_outer_1.true_subprogram, node_outer_1.false_subprogram]
 

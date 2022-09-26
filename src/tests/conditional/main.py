@@ -6,7 +6,7 @@ from classes.node import Node
 from classes.directed_acyclic_graph import DirectedAcyclicGraph
 import sys
 
-sys.path.append("/Users/masonnakamura/Local-Git/mca/src")
+sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
 
 if __name__ == "__main__":
