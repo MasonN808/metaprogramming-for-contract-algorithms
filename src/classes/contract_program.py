@@ -206,12 +206,14 @@ class ContractProgram:
         # Use the generator_dag since we want the entire program and not the hierarcy of programs (outer and inners)
         leaves = utils.find_leaves_in_dag(self.generator_dag)
 
-        # Unions the time allocation vectors in all the contract programs (does not do embedded yet)
-        for child_program in self.child_programs:
-            for allocation in child_program.allocations:
-                if allocation.time is not None:
-                    time_allocations[allocation.node_id] = allocation
-
+        time_allocations = copy.deepcopy(time_allocations)
+        # Unions the time allocation vectors in all the contract programs (does ßnot do embedded yet)
+        if self.child_programs:
+            for child_program in self.child_programs:
+                for allocation in child_program.allocations:
+                    if allocation.time is not None:
+                        time_allocations[allocation.node_id] = allocation
+        utils.print_allocations(time_allocations)
         return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=0,
                                                 current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=[],
                                                 depth=0, leaves=leaves, sum=0)
@@ -235,17 +237,11 @@ class ContractProgram:
         """
         # Recur down the DAG
         depth += 1
-        print("DEPTH: {}".format(depth))
-
-        # Check that the n
+        # print("DEPTH: {}".format(depth))
 
         if leaves:
 
             for node in leaves:
-
-                # TODO: Fix THIS error! child of for is the root node !?
-                print("LEAVES: {}".format([leaf.id for leaf in leaves]))
-                print("CURRENT LEAF: {}".format(node.id))
 
                 if node.parents and depth != 1:
 
@@ -278,18 +274,16 @@ class ContractProgram:
                     current_qualities[node.id] = possible_quality
 
                     node_time = time_allocations[node.id].time
-                    # print("PARENT IDS: {}".format([parent.id for parent in node.parents]))
-                    # print("PARENT QUALITIES: {}".format(parent_qualities))
-                    # print("NODE ID: {}".format(node.id))
-                    # print("NODE TIME: {}".format(node_time))
-                    # print("TIME ALLOCATIONS: {}".format(utils.print_allocations(time_allocations)))
+
+                    print("TEST: {}, {}".format(node_time, node.id))
+
                     sample_quality_list = self.performance_profile.query_quality_list_on_interval(
                         time=node_time, id=node.id, parent_qualities=parent_qualities)
 
                     conditional_probability = self.performance_profile.query_probability_contract_expression(
                         queried_quality=possible_quality, quality_list=sample_quality_list)
 
-                    print("PROB: {}".format(conditional_probability))
+                    # print("PROB: {}".format(conditional_probability))
 
                     # Check node.children has no for or conditional nodes
                     # If so, skip it since no relevant performance profile can be queried from stored performance profiles
@@ -308,26 +302,18 @@ class ContractProgram:
                         # Remove nones from the list since current qualities will have model qualities for
                         # every node in the generator dag
                         utility = self.global_utility(utils.remove_nones_list(current_qualities))
-                        print("UTILITY: {}".format(utility))
-                        if utility > 0:
-                            pass
-
-                        # conditional_probability *= utility
+                        # print("UTILITY: {}".format(utility))
                         sum += conditional_probability * utility
                     else:
                         recur = self.find_exact_expected_utility(leaves=new_leaves, time_allocations=time_allocations, depth=depth,
                                                                  expected_utility=expected_utility, current_qualities=current_qualities,
                                                                  possible_qualities=possible_qualities, parent_qualities=[], sum=0)
 
-                        # The recursion looks funny here, but the += acts as a sum
                         sum += conditional_probability * recur
 
-            if depth == self.generator_dag.order - 1:
-                return sum
-            else:
-                print("FINAL EU: {}".format(sum))
-                print(depth)
-                return sum
+            # print("FINAL SUM: {}".format(sum))
+            # print(depth)
+            return sum
 
         # If we hit the bottom of the recursion (i.e., the root)
         else:
@@ -415,7 +401,7 @@ class ContractProgram:
         :param decay: float, the decay rate of the temperature during annealing
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
-        # TODO: Integrate this with a contract program that may have conditionals and for nodes (9/22)
+        # TODO: Integrate this with a contract program that may have conditionals and for nodes (i.e., more than one child program) (9/22)
 
         # Check if it has child programs and what type of child programs
         if self.child_programs and self.child_programs[0].subprogram_expression_type == "conditional":
@@ -430,7 +416,6 @@ class ContractProgram:
         elif self.child_programs and self.child_programs[0].subprogram_expression_type == "for":
             for_allocations = copy.deepcopy(self.child_programs[0].allocations)
             self.best_allocations_inner = [copy.deepcopy(self.child_programs[0].allocations)]
-
             return self.naive_hill_climbing_outer_for(for_allocations, verbose=verbose)
 
         else:
@@ -561,6 +546,10 @@ class ContractProgram:
 
             # Go through all permutations of the time allocations
             for permutation in permutations(refactored_allocations, 2):
+                print(permutation[0].node_id)
+                print(permutation[1].node_id)
+                print([node.id for node in self.program_dag.nodes])
+                utils.print_allocations(self.allocations)
                 node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
                 node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
 
