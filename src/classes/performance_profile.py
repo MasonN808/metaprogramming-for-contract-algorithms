@@ -303,7 +303,7 @@ class PerformanceProfile:
         :return: float
         """
         # Assume it's constant for now
-        return 0.4
+        return 0.01
 
     @staticmethod
     def calculate_tau() -> float:

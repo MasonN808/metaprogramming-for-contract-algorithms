@@ -29,7 +29,7 @@ if __name__ == "__main__":
     VERBOSE = False
     NUMBER_OF_LOOPS = 3
     # For type of performance profile (exact or appproximate)
-    EXPECTED_UTILITY_TYPE = "exact"
+    EXPECTED_UTILITY_TYPE = "approximate"
     # Initialize a list of all possible qualities
     POSSIBLE_QUALITIES = np.arange(0, 1 + QUALITY_INTERVAL, QUALITY_INTERVAL)
 

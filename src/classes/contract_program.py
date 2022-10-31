@@ -207,12 +207,18 @@ class ContractProgram:
         leaves = utils.find_leaves_in_dag(self.generator_dag)
 
         time_allocations = copy.deepcopy(time_allocations)
-        # Unions the time allocation vectors in all the contract programs (does ßnot do embedded yet)
+        # Unions the time allocation vectors in all the contract programs (does not do embedded yet)
         if self.child_programs:
             for child_program in self.child_programs:
                 for allocation in child_program.allocations:
                     if allocation.time is not None:
                         time_allocations[allocation.node_id] = allocation
+
+        # if self.parent_program:
+        #     for allocation in self.parent_program.allocations:
+        #         if allocation.time is not None:
+        #             time_allocations[allocation.node_id] = allocation
+
         utils.print_allocations(time_allocations)
         return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=0,
                                                 current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=[],
@@ -235,6 +241,7 @@ class ContractProgram:
         :param: time_allocations: float[] (order matters), for the entire DAG
         :return: A list of parent qualities
         """
+        # sum = copy.deepcopy(sum)
         # Recur down the DAG
         depth += 1
         # print("DEPTH: {}".format(depth))
@@ -275,7 +282,7 @@ class ContractProgram:
 
                     node_time = time_allocations[node.id].time
 
-                    print("TEST: {}, {}".format(node_time, node.id))
+                    # print("TEST: {}, {}".format(node_time, node.id))
 
                     sample_quality_list = self.performance_profile.query_quality_list_on_interval(
                         time=node_time, id=node.id, parent_qualities=parent_qualities)
@@ -289,7 +296,6 @@ class ContractProgram:
                     # If so, skip it since no relevant performance profile can be queried from stored performance profiles
                     for child in node.children:
                         if child.expression_type == "for" or child.expression_type == "conditional":
-
                             # TODO: Make this for an arbitrary branch structure not just a P_n graph
                             node.children.extend(child.children)
                             node.children.remove(child)
@@ -299,17 +305,14 @@ class ContractProgram:
 
                     # TODO: Subtract by 1 and the number of fors and conditionals in DAG
                     if depth == self.generator_dag.order - 1:
-                        # Remove nones from the list since current qualities will have model qualities for
-                        # every node in the generator dag
+                        # Remove nones from the list since current qualities will have model qualities for every node in the generator dag
                         utility = self.global_utility(utils.remove_nones_list(current_qualities))
                         # print("UTILITY: {}".format(utility))
                         sum += conditional_probability * utility
                     else:
-                        recur = self.find_exact_expected_utility(leaves=new_leaves, time_allocations=time_allocations, depth=depth,
+                        sum += conditional_probability * self.find_exact_expected_utility(leaves=new_leaves, time_allocations=time_allocations, depth=depth,
                                                                  expected_utility=expected_utility, current_qualities=current_qualities,
                                                                  possible_qualities=possible_qualities, parent_qualities=[], sum=0)
-
-                        sum += conditional_probability * recur
 
             # print("FINAL SUM: {}".format(sum))
             # print(depth)
@@ -416,6 +419,7 @@ class ContractProgram:
         elif self.child_programs and self.child_programs[0].subprogram_expression_type == "for":
             for_allocations = copy.deepcopy(self.child_programs[0].allocations)
             self.best_allocations_inner = [copy.deepcopy(self.child_programs[0].allocations)]
+            
             return self.naive_hill_climbing_outer_for(for_allocations, verbose=verbose)
 
         else:
@@ -546,10 +550,10 @@ class ContractProgram:
 
             # Go through all permutations of the time allocations
             for permutation in permutations(refactored_allocations, 2):
-                print(permutation[0].node_id)
-                print(permutation[1].node_id)
-                print([node.id for node in self.program_dag.nodes])
-                utils.print_allocations(self.allocations)
+                # print(permutation[0].node_id)
+                # print(permutation[1].node_id)
+                # print([node.id for node in self.program_dag.nodes])
+                # utils.print_allocations(self.allocations)
                 node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
                 node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
 
