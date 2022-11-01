@@ -311,8 +311,8 @@ class ContractProgram:
                         sum += conditional_probability * utility
                     else:
                         sum += conditional_probability * self.find_exact_expected_utility(leaves=new_leaves, time_allocations=time_allocations, depth=depth,
-                                                                 expected_utility=expected_utility, current_qualities=current_qualities,
-                                                                 possible_qualities=possible_qualities, parent_qualities=[], sum=0)
+                                                                                          expected_utility=expected_utility, current_qualities=current_qualities,
+                                                                                          possible_qualities=possible_qualities, parent_qualities=[], sum=0)
 
             # print("FINAL SUM: {}".format(sum))
             # print(depth)
@@ -419,7 +419,7 @@ class ContractProgram:
         elif self.child_programs and self.child_programs[0].subprogram_expression_type == "for":
             for_allocations = copy.deepcopy(self.child_programs[0].allocations)
             self.best_allocations_inner = [copy.deepcopy(self.child_programs[0].allocations)]
-            
+
             return self.naive_hill_climbing_outer_for(for_allocations, verbose=verbose)
 
         else:

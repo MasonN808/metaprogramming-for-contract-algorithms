@@ -1,7 +1,7 @@
 import copy
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
@@ -28,12 +28,11 @@ if __name__ == "__main__":
     TIME_INTERVAL = 0.1
     # The quality interval when querying for the performance profile
     QUALITY_INTERVAL = .05
-    NUMBER_OF_LOOPS = 5
+    NUMBER_OF_LOOPS = 4
     # For type of performance profile (exact or appproximate)
     EXPECTED_UTILITY_TYPE = "approximate"
     # Initialize a list of all possible qualities
     POSSIBLE_QUALITIES = np.arange(0, 1 + QUALITY_INTERVAL, QUALITY_INTERVAL)
-
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (for subtree)
@@ -53,68 +52,27 @@ if __name__ == "__main__":
     # Rollout the for loop in a seperate DAG
     dag_inner_rolled_out = Generator.rollout_for_loops(dag_inner)
 
-    # for i in dag_inner_rolled_out.nodes:
-    #     print("dag_inner_rolled_out (children): {}, {}".format(i.id, [j.id for j in i.children]))
-    # for i in dag_inner_rolled_out.nodes:
-    #     print("dag_inner_rolled_out (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
-
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
     # ----------------------------------------------------------------------------------------
-
     # Leaf nodes
-    node_outer_2 = Node(5, [], [], expression_type="contract", in_child_contract_program=False)
+    node_outer_4 = Node(14, [], [], expression_type="contract", in_child_contract_program=False)
 
-    # Conditional Node
-    node_outer_1 = Node(4, [node_outer_2], [], expression_type="for", in_child_contract_program=False)
-    node_outer_1.num_loops = NUMBER_OF_LOOPS
-    node_outer_1.for_dag = copy.deepcopy(dag_inner)
-    root_inner.subprogram_parent_node = node_outer_1
+    # For Node
+    node_outer_3 = Node(13, [node_outer_4], [], expression_type="for", in_child_contract_program=False)
+    node_outer_3.num_loops = NUMBER_OF_LOOPS
+    node_outer_3.for_dag = copy.deepcopy(dag_inner)
+    root_inner.subprogram_parent_node = node_outer_3
 
     for node in dag_inner_rolled_out.nodes:
-        node.subprogram_parent_node = node_outer_1
+        node.subprogram_parent_node = node_outer_3
 
-    # Root node
-    root_outer = Node(0, [node_outer_1], [], expression_type="contract", in_child_contract_program=False)
-
-    # Append the children
-    node_outer_2.children = [node_outer_1]
-    node_outer_1.children = [root_outer]
-
-    # Nodes
-    nodes_outer = [root_outer, node_outer_1, node_outer_2]
-
-    # Create and verify the DAG from the node list
-    dag_outer = DirectedAcyclicGraph(nodes_outer, root_outer)
-
-    # ----------------------------------------------------------------------------------------
-    # Create a program_dag with expanded subtrees for quality mapping generation
-    # ----------------------------------------------------------------------------------------
-
-    # Leaf node
-    node_2 = Node(2, [], [], expression_type="contract", in_child_contract_program=False)
-
-    # Intermediate Nodes
-    node_1 = Node(1, [node_2], [], expression_type="for", in_child_contract_program=False)
-    node_1.num_loops = NUMBER_OF_LOOPS
-    for_dag = copy.deepcopy(dag_inner)
-    for_dag.nodes = for_dag.nodes[0:len(for_dag.nodes) - 1]
-    node_1.for_dag = copy.deepcopy(for_dag)
-
-    # Root Node
-    node_root = Node(0, [node_1], [], expression_type="contract", in_child_contract_program=False)
+    # Transition node from for to conditional
+    node_outer_2 = Node(8, [node_outer_3], [], expression_type="contract", in_child_contract_program=False)
 
     # Append the children
-    node_2.children = [node_1]
-    node_1.children = [node_root]
-
-    # For a list of nodes for the DAG creation
-    nodes = [node_root, node_1, node_2]
-
-    program_dag = DirectedAcyclicGraph(nodes, node_root)
-
-    # Rollout the for loop in a seperate DAG
-    program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)
+    node_outer_4.children = [node_outer_3]
+    node_outer_3.children = [node_outer_2]
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (conditional subtree)
@@ -163,7 +121,7 @@ if __name__ == "__main__":
     # Create a DAG manually for the first-order metareasoning problem
     # ----------------------------------------------------------------------------------------
     # Leaf nodes
-    node_outer_2 = Node(8, [], [], expression_type="contract", in_child_contract_program=False)
+    # node_outer_2 = Node(8, [], [], expression_type="contract", in_child_contract_program=False)
     # Conditional Node
     node_outer_1 = Node(7, [node_outer_2], [], expression_type="conditional", in_child_contract_program=False)
     # Root node
@@ -172,11 +130,23 @@ if __name__ == "__main__":
     nodes_outer = [root_outer, node_outer_1, node_outer_2]
     # Create and verify the DAG from the node list
     dag_outer = DirectedAcyclicGraph(nodes_outer, root_outer)
+
     # ----------------------------------------------------------------------------------------
     # Create a program_dag with expanded subtrees for quality mapping generation
     # ----------------------------------------------------------------------------------------
-    # Leaf nodes
-    node_8 = Node(8, [], [], expression_type="contract", in_child_contract_program=False)
+    # Leaf node
+    node_14 = Node(14, [], [], expression_type="contract", in_child_contract_program=False)
+
+    # Intermediate Nodes
+    node_13 = Node(1, [node_14], [], expression_type="for", in_child_contract_program=False)
+    node_13.num_loops = NUMBER_OF_LOOPS
+    for_dag = copy.deepcopy(dag_inner)
+    for_dag.nodes = for_dag.nodes[0:len(for_dag.nodes) - 1]
+    node_13.for_dag = copy.deepcopy(for_dag)
+
+    # Transition Node from for to conditional
+    node_8 = Node(8, [node_13], [], expression_type="contract", in_child_contract_program=False)
+
     # Conditional node
     node_7 = Node(7, [node_8], [], expression_type="conditional", in_child_contract_program=False)
     # Conditional branch nodes
@@ -189,6 +159,7 @@ if __name__ == "__main__":
     node_1 = Node(1, [node_3, node_4], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
     # Root node
     root = Node(0, [node_1, node_2], [], expression_type="contract", in_child_contract_program=False)
+
     # Add the children
     node_1.children = [root]
     node_2.children = [root]
@@ -198,9 +169,15 @@ if __name__ == "__main__":
     node_6.children = [node_2]
     node_7.children = [node_5, node_6]
     node_8.children = [node_7]
+    node_13.children = [node_8]
+    node_14.children = [node_13]
+
     # For a list of nodes for the DAG creation
-    nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8]
+    nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8, node_13, node_14]
     program_dag = DirectedAcyclicGraph(nodes, root)
+    # Rollout the for loop in a seperate DA
+    program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)
+
     # Used to create the synthetic data as instances and a populous file
     generate = True
     if not exists("populous.json") or generate:
@@ -208,15 +185,17 @@ if __name__ == "__main__":
         generator = Generator(INSTANCES, program_dag=program_dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE,
                               uniform_low=0.05,
                               uniform_high=0.9)
-        # Let the root be trivial and not dependent on parents
-        # generator.trivial_root = True
+
+        # Adjust the DAG structure that has conditionals for generation
+        generator.generator_dag = generator.adjust_dag_with_fors(program_dag)
         # Adjust the DAG structure that has conditionals for generation
         generator.generator_dag = generator.adjust_dag_with_conditionals(program_dag)
+
         # Initialize the velocities for the quality mappings in a list
         # Need to initialize it after adjusting program_dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
         # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [10, 20, 0.1, 0.1, 0.1, 0.1, 10000, "conditional", 10000]
+        generator.manual_override = [10, 20, 0.1, 0.1, 0.1, 0.1, 10000, "conditional", 10000, .1, .1, .1, .1, "for", 10]
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
@@ -250,21 +229,32 @@ if __name__ == "__main__":
                                                     quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
                                                     generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
 
-    program_outer.child_programs = [node_outer_1.true_subprogram, node_outer_1.false_subprogram]
-
     # Initialize the pointers of the nodes to the program it is in
     utils.initialize_node_pointers_current_program(node_outer_1.false_subprogram)
+
+    # Convert to a contract program
+    node_outer_1.for_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=dag_inner_rolled_out, budget=0, scale=10 ** 6, decimals=3,
+                                                  quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, generator_dag=program_dag,
+                                                  expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, number_of_loops=NUMBER_OF_LOOPS)
+
+    # Initialize the pointers of the nodes to the program it is in
+    utils.initialize_node_pointers_current_program(node_outer_1.for_subprogram)
+
+    program_outer.child_programs = [node_outer_1.true_subprogram, node_outer_1.false_subprogram, node_outer_1.for_subprogram]
 
     # Add the pointers from the parent program to the subprograms
     node_outer_1.true_subprogram.parent_program = program_outer
     node_outer_1.false_subprogram.parent_program = program_outer
+    node_outer_1.for_subprogram.parent_program = program_outer
 
     # Add the pointers from the generator dag to the subprograms
     node_outer_1.true_subprogram.generator_dag = program_dag
     node_outer_1.false_subprogram.generator_dag = program_dag
+    node_outer_1.for_subprogram.generator_dag = program_dag
 
-    node_outer_1.false_subprogram.subprogram_expression_type = "conditional"
     node_outer_1.true_subprogram.subprogram_expression_type = "conditional"
+    node_outer_1.false_subprogram.subprogram_expression_type = "conditional"
+    node_outer_1.for_subprogram.subprogram_expression_type = "for"
 
     # The input should be the outermost program
     test = Test(program_outer)
@@ -286,8 +276,8 @@ if __name__ == "__main__":
     # test.find_utility_and_allocations(initial_allocation="Dirichlet", outer_program=program_outer, verbose=False)
 
     # Plot results
-    fig = plt.figure(figsize =(10, 7))
-    # Creating plot
-    plt.boxplot(data)
-    # show plot
-    plt.show()
+    # fig = plt.figure(figsize =(10, 7))
+    # # Creating plot
+    # plt.boxplot(data)
+    # # show plot
+    # plt.show()
