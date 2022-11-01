@@ -297,15 +297,23 @@ class Generator:
         dag = copy.deepcopy(dag)
         for node in dag.nodes:
             if node.expression_type == "for":
+                # for parent in node.parents:
+                #     parent.children.extend(node.children)
+                #     if node in parent.children:
+                #         parent.children.remove(node)
+                for child in node.children:
+                    child.parents.extend(node.parents)
+                    child.parents.remove(node)
 
                 for parent in node.parents:
                     parent.children.extend(node.children)
-
-                    if node in parent.children:
-                        parent.children.remove(node)
-
+                    parent.children.remove(node)
                 dag.nodes.remove(node)
 
+            if node.is_last_for_loop:
+                # Change the parent pointers of the children since it is not done manually in testing file
+                for child in node.children:
+                    child.parents = [node]
         return dag
 
     @staticmethod

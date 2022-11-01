@@ -120,14 +120,16 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
     # ----------------------------------------------------------------------------------------
-    # Leaf nodes
-    # node_outer_2 = Node(8, [], [], expression_type="contract", in_child_contract_program=False)
     # Conditional Node
     node_outer_1 = Node(7, [node_outer_2], [], expression_type="conditional", in_child_contract_program=False)
     # Root node
     root_outer = Node(0, [node_outer_1, node_outer_2], [], expression_type="contract", in_child_contract_program=False)
+
+    # Append the children
+    node_outer_2.children = [node_outer_1]
+
     # Nodes
-    nodes_outer = [root_outer, node_outer_1, node_outer_2]
+    nodes_outer = [root_outer, node_outer_1, node_outer_2, node_outer_3, node_outer_4]
     # Create and verify the DAG from the node list
     dag_outer = DirectedAcyclicGraph(nodes_outer, root_outer)
 
@@ -175,7 +177,7 @@ if __name__ == "__main__":
     # For a list of nodes for the DAG creation
     nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8, node_13, node_14]
     program_dag = DirectedAcyclicGraph(nodes, root)
-    # Rollout the for loop in a seperate DA
+    # Rollout the for loop in a seperate DAG
     program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)
 
     # Used to create the synthetic data as instances and a populous file
@@ -188,8 +190,13 @@ if __name__ == "__main__":
 
         # Adjust the DAG structure that has conditionals for generation
         generator.generator_dag = generator.adjust_dag_with_fors(program_dag)
+
         # Adjust the DAG structure that has conditionals for generation
-        generator.generator_dag = generator.adjust_dag_with_conditionals(program_dag)
+        generator.generator_dag = generator.adjust_dag_with_conditionals(generator.generator_dag)
+        for i in generator.generator_dag.nodes:
+            print("generator_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
+        for i in generator.generator_dag.nodes:
+            print("generator_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
 
         # Initialize the velocities for the quality mappings in a list
         # Need to initialize it after adjusting program_dag

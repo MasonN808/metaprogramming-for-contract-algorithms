@@ -126,6 +126,13 @@ if __name__ == "__main__":
         # generator.trivial_root = True
         # Adjust the DAG structure that has conditionals for generation
         generator.generator_dag = generator.adjust_dag_with_conditionals(program_dag)
+
+        for i in generator.generator_dag.nodes:
+            print("generator_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
+
+        for i in generator.generator_dag.nodes:
+            print("generator_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
+
         # Initialize the velocities for the quality mappings in a list
         # Need to initialize it after adjusting program_dag
         # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}

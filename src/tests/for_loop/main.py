@@ -42,7 +42,7 @@ if __name__ == "__main__":
     root_inner = Node(1, [node_inner_1], [], expression_type="contract", in_child_contract_program=True)
     root_inner.in_for = True
 
-    # Create a list of the nodes in breadth-first order for the false branch
+    # Create a list of the nodes in breadth-first order for the for tree
     nodes_inner = [root_inner, node_inner_1]
 
     # Create and verify the DAG from the node list
