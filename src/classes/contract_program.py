@@ -81,20 +81,20 @@ class ContractProgram:
 
         return math.prod(qualities)
 
-    def global_expected_utility(self, time_allocations, best_allocations_inner=None, expressionType=None) -> float:
+    def global_expected_utility(self, time_allocations, best_allocations_inner=None, expression_type=None) -> float:
         """
         Uses approximate methods or exact solutions to query the expected utility of the contract program given the time allocations
 
         :param best_allocations_inner: a list of the best allocations to compare with the current allocations
-        :param expressionType: the expression type being optimized
+        :param expression_type: the expression type being optimized
         :param time_allocations: float[], required
                 The time allocations for each contract algorithm
         :return: float
         """
         if self.expected_utility_type == "exact":
-            return (self.global_expected_utility_exact(time_allocations, best_allocations_inner, expressionType))
+            return (self.global_expected_utility_exact(time_allocations, best_allocations_inner, expression_type))
         elif self.expected_utility_type == "approximate":
-            return (self.global_expected_utility_approximate(time_allocations, best_allocations_inner, expressionType))
+            return (self.global_expected_utility_approximate(time_allocations, best_allocations_inner, expression_type))
         else:
             raise ValueError("Improper expected utility type")
 
@@ -738,9 +738,9 @@ class ContractProgram:
                         # Do naive hill climbing on the branches
                         for_allocations = copy.deepcopy(node_1.for_subprogram.naive_hill_climbing_inner())
 
-                    # eu_adjusted = self.global_expected_utility(adjusted_allocations, best_allocations_inner=[for_allocations], expressionType="for")
+                    # eu_adjusted = self.global_expected_utility(adjusted_allocations, best_allocations_inner=[for_allocations], expression_type="for")
                     eu_adjusted = self.global_expected_utility(adjusted_allocations)
-                    eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner, expressionType="for")
+                    eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner, expression_type="for")
 
                     if eu_adjusted > eu_original:
                         possible_local_max.append([adjusted_allocations, for_allocations])
