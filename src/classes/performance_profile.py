@@ -269,14 +269,12 @@ class PerformanceProfile:
         probability = 1.0
         last_quality = None
 
-        contract_program = for_node.for_subprogram
-
-        time_allocations = contract_program.allocations
+        time_allocations = for_node.for_subprogram.allocations
 
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
 
         for time_allocation in refactored_allocations:
-            node = self.find_node(time_allocation.node_id, contract_program.program_dag)
+            node = self.find_node(time_allocation.node_id, for_node.for_subprogram.program_dag)
 
             if node.expression_type != "for":
                 # Get the parents' qualities given their time allocations
