@@ -81,7 +81,7 @@ class ContractProgram:
 
         return math.prod(qualities)
 
-    def global_expected_utility(self, time_allocations, best_allocations_inner=None, expression_type=None) -> float:
+    def global_expected_utility(self, time_allocations, best_allocations_inner=None) -> float:
         """
         Uses approximate methods or exact solutions to query the expected utility of the contract program given the time allocations
 
@@ -92,9 +92,9 @@ class ContractProgram:
         :return: float
         """
         if self.expected_utility_type == "exact":
-            return (self.global_expected_utility_exact(time_allocations, best_allocations_inner, expression_type))
+            return (self.global_expected_utility_exact(time_allocations, best_allocations_inner))
         elif self.expected_utility_type == "approximate":
-            return (self.global_expected_utility_approximate(time_allocations, best_allocations_inner, expression_type))
+            return (self.global_expected_utility_approximate(time_allocations, best_allocations_inner))
         else:
             raise ValueError("Improper expected utility type")
 
@@ -415,10 +415,6 @@ class ContractProgram:
             false_allocations = copy.deepcopy(self.child_programs[1].allocations)
             for_allocations = copy.deepcopy(self.child_programs[2].allocations)
 
-            utils.print_allocations(true_allocations)
-            utils.print_allocations(false_allocations)
-            utils.print_allocations(for_allocations)
-
             self.best_allocations_inner = [copy.deepcopy(self.child_programs[0].allocations),
                                            copy.deepcopy(self.child_programs[1].allocations),
                                            copy.deepcopy(self.child_programs[2].allocations)]
@@ -500,12 +496,12 @@ class ContractProgram:
                         node_0.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_0.id].time))
 
                         # Do naive hill climbing on the branches
-                        print("About to do inner naive hill climbing on for")
+                        # print("About to do inner naive hill climbing on for")
                         for_allocations = copy.deepcopy(node_0.for_subprogram.naive_hill_climbing_inner())
-                        print("after inner hill:")
-                        utils.print_allocations(for_allocations)
-                        print("outer hill self.allocations")
-                        utils.print_allocations(self.allocations)
+                        # print("after inner hill:")
+                        # utils.print_allocations(for_allocations)
+                        # print("outer hill self.allocations")
+                        # utils.print_allocations(self.allocations)
 
                     if node_1.expression_type == "conditional":
                         # Reallocate the budgets for the inner metareasoning problems
@@ -523,17 +519,19 @@ class ContractProgram:
                         # Do naive hill climbing on the branches
                         for_allocations = copy.deepcopy(node_1.for_subprogram.naive_hill_climbing_inner())
 
+                    # best allocations from the previous iterations are needed since the allocations of the subprograms may be adjusted from above
                     eu_adjusted = self.global_expected_utility(adjusted_allocations)
                     eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner)
 
                     if eu_adjusted > eu_original:
                         possible_local_max.append([adjusted_allocations, true_allocations, false_allocations, for_allocations])
-                    else:
-                        # Reset the branches of the inner conditional
-                        if self.best_allocations_inner:
-                            true_allocations = self.best_allocations_inner[0]
-                            false_allocations = self.best_allocations_inner[1]
-                            for_allocations = self.best_allocations_inner[2]
+
+
+                    # Reset the branches of the inner conditional (go back to the original allocations for the next permutation)
+                    if self.best_allocations_inner:
+                        true_allocations = self.best_allocations_inner[0]
+                        false_allocations = self.best_allocations_inner[1]
+                        for_allocations = self.best_allocations_inner[2]
 
                     # scale the EUs
                     eu_adjusted *= self.scale
@@ -561,12 +559,16 @@ class ContractProgram:
             # arg max here
             if possible_local_max:
                 best_allocation = max([self.global_expected_utility(j[0]) for j in possible_local_max])
+                print("OTHER Allocations: {}".format([self.global_expected_utility(j[0])*self.scale for j in possible_local_max]))
+                print("BEST Allocation: {}".format(best_allocation *  self.scale))
                 for j in possible_local_max:
                     if self.global_expected_utility(j[0]) == best_allocation:
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j[0])
-
                         self.best_allocations_inner = [copy.deepcopy(j[1]), copy.deepcopy(j[2]), copy.deepcopy(j[3])]
+                        print("MADE SWITCH HERE")
+                        print("EU Validation: {}".format(self.global_expected_utility(self.allocations, self.best_allocations_inner)))
+                        break
 
             else:
                 time_switched = time_switched / decay
@@ -885,8 +887,8 @@ class ContractProgram:
                 # if local max wasn't found
                 else:
                     time_switched = time_switched / decay
-            print("inner hill self.allocations: ")
-            utils.print_allocations(self.allocations)
+            # print("inner hill self.allocations: ")
+            # utils.print_allocations(self.allocations)
             return self.allocations
 
         else:
