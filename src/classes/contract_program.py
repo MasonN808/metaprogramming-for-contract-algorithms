@@ -526,7 +526,6 @@ class ContractProgram:
                     if eu_adjusted > eu_original:
                         possible_local_max.append([adjusted_allocations, true_allocations, false_allocations, for_allocations])
 
-
                     # Reset the branches of the inner conditional (go back to the original allocations for the next permutation)
                     if self.best_allocations_inner:
                         true_allocations = self.best_allocations_inner[0]
@@ -559,8 +558,8 @@ class ContractProgram:
             # arg max here
             if possible_local_max:
                 best_allocation = max([self.global_expected_utility(j[0]) for j in possible_local_max])
-                print("OTHER Allocations: {}".format([self.global_expected_utility(j[0])*self.scale for j in possible_local_max]))
-                print("BEST Allocation: {}".format(best_allocation *  self.scale))
+                print("OTHER Allocations: {}".format([self.global_expected_utility(j[0]) * self.scale for j in possible_local_max]))
+                print("BEST Allocation: {}".format(best_allocation * self.scale))
                 for j in possible_local_max:
                     if self.global_expected_utility(j[0]) == best_allocation:
                         # Make a deep copy to avoid pointers to the same list
