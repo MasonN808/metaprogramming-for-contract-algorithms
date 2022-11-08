@@ -81,23 +81,24 @@ class ContractProgram:
 
         return math.prod(qualities)
 
-    def global_expected_utility(self, time_allocations, best_allocations_inner=None) -> float:
+    def global_expected_utility(self, time_allocations, best_allocations_inner=None, expressionType=None) -> float:
         """
         Uses approximate methods or exact solutions to query the expected utility of the contract program given the time allocations
 
         :param best_allocations_inner: a list of the best allocations to compare with the current allocations
+        :param expressionType: the expression type being optimized
         :param time_allocations: float[], required
                 The time allocations for each contract algorithm
         :return: float
         """
         if self.expected_utility_type == "exact":
-            return (self.global_expected_utility_exact(time_allocations, best_allocations_inner))
+            return (self.global_expected_utility_exact(time_allocations, best_allocations_inner, expressionType))
         elif self.expected_utility_type == "approximate":
-            return (self.global_expected_utility_approximate(time_allocations, best_allocations_inner))
+            return (self.global_expected_utility_approximate(time_allocations, best_allocations_inner, expressionType))
         else:
             raise ValueError("Improper expected utility type")
 
-    def global_expected_utility_approximate(self, time_allocations, best_allocations_inner) -> float:
+    def global_expected_utility_approximate(self, time_allocations, best_allocations_inner, expressionType) -> float:
         """
         Gives the estimated expected utility of the contract program given the performance profiles of the nodes
         (i.e., the probability distribution of each contract program's conditional performance profile) and the
@@ -125,7 +126,7 @@ class ContractProgram:
 
             # Calculates the EU of a conditional expression in the outermost contract program
             elif node.expression_type == "conditional" and not node.in_child_contract_program:
-                if best_allocations_inner:
+                if (best_allocations_inner and expressionType == "conditional"):
                     copied_branch_allocations = [copy.deepcopy(node.true_subprogram.allocations),
                                                  copy.deepcopy(node.false_subprogram.allocations)]
 
@@ -143,17 +144,19 @@ class ContractProgram:
 
                 average_qualities.append(conditional_quality)
 
-                if best_allocations_inner:
+                if (best_allocations_inner and expressionType == "conditional"):
                     node.true_subprogram.allocations = copied_branch_allocations[0]
                     node.false_subprogram.allocations = copied_branch_allocations[1]
 
             # Calculates the EU of a for expression in the outermost contract program
             elif node.expression_type == "for" and not node.in_child_contract_program:
-                if best_allocations_inner:
+                if (best_allocations_inner and expressionType == "for"):
                     copied_branch_allocations = [copy.deepcopy(node.for_subprogram.allocations)]
 
                     # Replace the allocations with the previous iteration's allocations
                     node.for_subprogram.allocations = best_allocations_inner[0]
+                    # print("Best Allocations innner for: ")
+                    # utils.print_allocations(node.for_subprogram.allocations)
 
                 # Since in for node of the outermost contract program, evaluate the inner probability of the child for subprogram
                 probability_and_qualities = self.performance_profile.query_probability_and_quality_from_for_expression(node)
@@ -166,7 +169,7 @@ class ContractProgram:
                 # We use the last quality of the for loop to calculate our utiltiy
                 average_qualities.append(last_for_quality)
 
-                if best_allocations_inner:
+                if (best_allocations_inner and expressionType == "for"):
                     node.for_subprogram.allocations = copied_branch_allocations[0]
 
             else:
@@ -180,7 +183,6 @@ class ContractProgram:
 
                 # Calculates the average quality on the list of qualities for querying
                 average_quality = self.performance_profile.average_quality(qualities)
-
                 average_qualities.append(average_quality)
 
                 probability *= self.performance_profile.query_probability_contract_expression(average_quality,
@@ -190,7 +192,7 @@ class ContractProgram:
 
         return expected_utility
 
-    def global_expected_utility_exact(self, time_allocations, best_allocations_inner) -> float:
+    def global_expected_utility_exact(self, time_allocations) -> float:
         """
         Gives the exact expected utility of the contract program given the performance profiles of the nodes
         (i.e., the probability distribution of each contract program's conditional performance profile) and the
@@ -219,7 +221,7 @@ class ContractProgram:
         #         if allocation.time is not None:
         #             time_allocations[allocation.node_id] = allocation
 
-        utils.print_allocations(time_allocations)
+        # utils.print_allocations(time_allocations)
         return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=0,
                                                 current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=[],
                                                 depth=0, leaves=leaves, sum=0)
@@ -483,12 +485,15 @@ class ContractProgram:
                         true_allocations = copy.deepcopy(node_1.true_subprogram.naive_hill_climbing_inner())
                         false_allocations = copy.deepcopy(node_1.false_subprogram.naive_hill_climbing_inner())
 
-                    # TODO: make a pointer from an element of the list of time allocations to a pointer to the left and right time allocations for conditional time allocations in the outer program
-                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations, self.best_allocations_inner):
+                    eu_adjusted = self.global_expected_utility(adjusted_allocations)
+                    eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner, "conditional")
+
+                    if eu_adjusted > eu_original:
                         possible_local_max.append([adjusted_allocations, true_allocations, false_allocations])
 
-                    eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
-                    eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner) * self.scale
+                    # scale the EUs
+                    eu_adjusted *= self.scale
+                    eu_original *= self.scale
 
                     adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
 
@@ -587,11 +592,16 @@ class ContractProgram:
                         # Do naive hill climbing on the branches
                         for_allocations = copy.deepcopy(node_1.for_subprogram.naive_hill_climbing_inner())
 
-                    if self.global_expected_utility(adjusted_allocations, [for_allocations]) > self.global_expected_utility(self.allocations, self.best_allocations_inner):
+                    # eu_adjusted = self.global_expected_utility(adjusted_allocations, best_allocations_inner=[for_allocations], expressionType="for")
+                    eu_adjusted = self.global_expected_utility(adjusted_allocations)
+                    eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner, expressionType="for")
+
+                    if eu_adjusted > eu_original:
                         possible_local_max.append([adjusted_allocations, for_allocations])
 
-                    eu_adjusted = self.global_expected_utility(adjusted_allocations, [for_allocations]) * self.scale
-                    eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner) * self.scale
+                    # scale the EUs
+                    eu_adjusted *= self.scale
+                    eu_original *= self.scale
 
                     adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
 
@@ -688,11 +698,14 @@ class ContractProgram:
                         adjusted_allocations[permutation[0].node_id].time -= time_switched
                         adjusted_allocations[permutation[1].node_id].time += time_switched
 
-                        if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
+                        eu_adjusted = self.global_expected_utility(adjusted_allocations)
+                        eu_original = self.global_expected_utility(self.allocations)
+
+                        if eu_adjusted > eu_original:
                             possible_local_max.append(adjusted_allocations)
 
-                        eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
-                        eu_original = self.global_expected_utility(self.allocations) * self.scale
+                        eu_adjusted *= self.scale
+                        eu_original *= self.scale
 
                         adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
 
@@ -731,8 +744,7 @@ class ContractProgram:
 
         else:
             for time_allocation in self.allocations:
-                if time_allocation.time is not None and not Node.is_conditional_node(
-                        utils.find_node(time_allocation.node_id, self.program_dag)):
+                if time_allocation.time is not None and not Node.is_conditional_node(utils.find_node(time_allocation.node_id, self.program_dag)) and not Node.is_for_node(utils.find_node(time_allocation.node_id, self.program_dag)):
                     time_allocation.time = 0
 
             return self.allocations

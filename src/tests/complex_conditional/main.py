@@ -184,8 +184,8 @@ if __name__ == "__main__":
     node_outer_1.true_subprogram.generator_dag = program_dag
     node_outer_1.false_subprogram.generator_dag = program_dag
 
-    node_outer_1.false_subprogram.subprogram_expression_type = "conditional"
     node_outer_1.true_subprogram.subprogram_expression_type = "conditional"
+    node_outer_1.false_subprogram.subprogram_expression_type = "conditional"
 
     # The input should be the outermost program
     test = Test(program_outer)

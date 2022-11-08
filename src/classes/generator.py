@@ -345,8 +345,8 @@ class Generator:
     @staticmethod
     def adjust_dag_structure_with_for_loops(dag) -> DirectedAcyclicGraph:
         """
-        Changes the structure of the DAG by removing any conditional nodes and appending its parents to its children
-        temporarily for generation. Note that the original structure of the DAG remains intact
+        This rolls out the for loop into a chain of contract programs
+
         :param dag: directedAcyclicGraph Object, original version
         :return: directedAcyclicGraph Object, a trimmed version
         """

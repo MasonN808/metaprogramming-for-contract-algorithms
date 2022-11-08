@@ -466,7 +466,8 @@ class PerformanceProfile:
         for node in nodes:
             if node.id == node_id:
                 return node
-        raise IndexError("Node not found with given id")
+        print([node.id for node in dag.nodes])
+        raise IndexError("Node not found with given id --> {}".format(node_id))
 
     @staticmethod
     def find_conditional_node(dag) -> Node:
