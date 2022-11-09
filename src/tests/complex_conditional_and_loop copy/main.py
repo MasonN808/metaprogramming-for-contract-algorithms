@@ -316,10 +316,3 @@ if __name__ == "__main__":
 
     # test.find_utility_and_allocations(initial_allocation="uniform with noise", outer_program=program_outer, verbose=False)
     # test.find_utility_and_allocations(initial_allocation="Dirichlet", outer_program=program_outer, verbose=False)
-
-    # Plot results
-    # fig = plt.figure(figsize =(10, 7))
-    # # Creating plot
-    # plt.boxplot(data)
-    # # show plot
-    # plt.show()

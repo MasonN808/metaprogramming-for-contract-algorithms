@@ -1,4 +1,5 @@
 import sys
+from matplotlib import pyplot as plt
 import numpy as np
 from time import sleep
 from progress.bar import ChargingBar
@@ -72,12 +73,15 @@ class Test:
 
     # For program with both conditionals and fors
     def find_utility_and_allocations_main(self, initial_allocation, outer_program, verbose=False) -> None:
-
+        # Data for plotting
+        data = []
         start = timer()
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
 
         eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
+
+        data.append(eu_initial)
 
         if self.contract_program.decimals is not None:
             initial_time_allocations_outer = []
@@ -149,6 +153,8 @@ class Test:
             eu_optimal = self.contract_program.global_expected_utility(allocations[0],
                                                                        self.contract_program.best_allocations_inner) * self.contract_program.scale
 
+            data.append(eu_optimal)
+
             if self.contract_program.decimals is not None:
                 optimal_time_allocations_outer = [round(time, self.contract_program.decimals) for
                                                   time in optimal_time_allocations_outer]
@@ -192,6 +198,17 @@ class Test:
                   "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
 
             print("{:<62}Execution Time (seconds): {}".format("", end - start))
+
+        # Plot results
+        uniform = np.array([data[0]])
+        ehc = np.array([data[1]])
+        fig, ax = plt.subplots()
+
+        ax.boxplot([uniform, ehc], notch=True)
+
+        plt.xticks([1, 2], ['Uniform', 'EHC'])
+        plt.xlabel("Solution Methods")
+        plt.show()
 
     def find_utility_and_allocations_for(self, initial_allocation, outer_program, verbose=False) -> None:
 
@@ -305,7 +322,6 @@ class Test:
             print("{:<62}Execution Time (seconds): {}".format("", end - start))
 
     def find_utility_and_allocations_conditional(self, initial_allocation, outer_program, verbose=False) -> None:
-
         start = timer()
 
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation

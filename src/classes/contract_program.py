@@ -520,17 +520,16 @@ class ContractProgram:
                         for_allocations = copy.deepcopy(node_1.for_subprogram.naive_hill_climbing_inner())
 
                     # best allocations from the previous iterations are needed since the allocations of the subprograms may be adjusted from above
-                    eu_adjusted = self.global_expected_utility(adjusted_allocations)
+                    eu_adjusted = self.global_expected_utility(adjusted_allocations, [true_allocations, false_allocations, for_allocations])
                     eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner)
 
                     if eu_adjusted > eu_original:
                         possible_local_max.append([adjusted_allocations, true_allocations, false_allocations, for_allocations])
 
                     # Reset the branches of the inner conditional (go back to the original allocations for the next permutation)
-                    if self.best_allocations_inner:
-                        true_allocations = self.best_allocations_inner[0]
-                        false_allocations = self.best_allocations_inner[1]
-                        for_allocations = self.best_allocations_inner[2]
+                    true_allocations = self.best_allocations_inner[0]
+                    false_allocations = self.best_allocations_inner[1]
+                    for_allocations = self.best_allocations_inner[2]
 
                     # scale the EUs
                     eu_adjusted *= self.scale
@@ -557,14 +556,14 @@ class ContractProgram:
 
             # arg max here
             if possible_local_max:
-                best_allocation = max([self.global_expected_utility(j[0]) for j in possible_local_max])
-                print("OTHER Allocations: {}".format([self.global_expected_utility(j[0]) * self.scale for j in possible_local_max]))
+                best_allocation = max([self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) for allocations in possible_local_max])
+                print("OTHER Allocations: {}".format([self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) * self.scale for allocations in possible_local_max]))
                 print("BEST Allocation: {}".format(best_allocation * self.scale))
-                for j in possible_local_max:
-                    if self.global_expected_utility(j[0]) == best_allocation:
+                for allocations in possible_local_max:
+                    if self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) == best_allocation:
                         # Make a deep copy to avoid pointers to the same list
-                        self.allocations = copy.deepcopy(j[0])
-                        self.best_allocations_inner = [copy.deepcopy(j[1]), copy.deepcopy(j[2]), copy.deepcopy(j[3])]
+                        self.allocations = copy.deepcopy(allocations[0])
+                        self.best_allocations_inner = [copy.deepcopy(allocations[1]), copy.deepcopy(allocations[2]), copy.deepcopy(allocations[3])]
                         print("MADE SWITCH HERE")
                         print("EU Validation: {}".format(self.global_expected_utility(self.allocations, self.best_allocations_inner)))
                         break
@@ -573,6 +572,9 @@ class ContractProgram:
                 time_switched = time_switched / decay
 
         return [self.allocations, self.best_allocations_inner[0], self.best_allocations_inner[1], self.best_allocations_inner[2]]
+
+    def proportional_allocation(self, verbose=False) -> List[float]:
+        return
 
     def naive_hill_climbing_outer_conditional(self, true_allocations, false_allocations, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
