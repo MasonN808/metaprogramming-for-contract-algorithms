@@ -1,5 +1,4 @@
 import sys
-from matplotlib import pyplot as plt
 import numpy as np
 from time import sleep
 from progress.bar import ChargingBar
@@ -81,33 +80,32 @@ class Test:
         for beta in betas:
             proportional_allocations = self.contract_program.proportional_allocation_tangent(beta)
             eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], [proportional_allocations[1], proportional_allocations[2], proportional_allocations[3]]) * self.contract_program.scale
-            data.append(eu_proportional) 
+            data.append(eu_proportional)
 
         # proportional_allocations = self.contract_program.proportional_allocation_tangent(beta=.8)
         # eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], [proportional_allocations[1], proportional_allocations[2], proportional_allocations[3]]) * self.contract_program.scale
-        # data.append(eu_proportional) 
+        # data.append(eu_proportional)
 
         # proportional_allocations = self.contract_program.proportional_allocation_tangent(beta=.4)
         # eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], [proportional_allocations[1], proportional_allocations[2], proportional_allocations[3]]) * self.contract_program.scale
-        # data.append(eu_proportional) 
+        # data.append(eu_proportional)
 
         # proportional_allocations = self.contract_program.proportional_allocation_tangent(beta=.1)
         # eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], [proportional_allocations[1], proportional_allocations[2], proportional_allocations[3]]) * self.contract_program.scale
-        # data.append(eu_proportional) 
+        # data.append(eu_proportional)
 
         if self.contract_program.decimals is not None:
             print("         Proportional (inverse Tangent) ==> Expected Utility: {:<5} ==> "
-                            "Time Allocations (outer): {}".format(round(eu_proportional, self.contract_program.decimals), [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[0]])]))
+                  "Time Allocations (outer): {}".format(round(eu_proportional, self.contract_program.decimals), [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[0]])]))
             print("{:<62}Time Allocations (inner-true): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[1]])]))
-            print("{:<62}Time Allocations (inner-false): {}".format("",[round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[2]])]))
+            print("{:<62}Time Allocations (inner-false): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[2]])]))
             print("{:<62}Time Allocations (inner-for): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[3]])]))
         else:
             print("         Proportional (inverse Tangent) ==> Expected Utility: {:<5} ==> "
-                            "Time Allocations (outer): {}".format(eu_proportional, utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[0]])))
+                  "Time Allocations (outer): {}".format(eu_proportional, utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[0]])))
             print("{:<62}Time Allocations (inner-true): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[1]])))
             print("{:<62}Time Allocations (inner-false): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[2]])))
             print("{:<62}Time Allocations (inner-for): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[3]])))
-  
 
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
@@ -176,7 +174,7 @@ class Test:
         allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
 
         if outer_program.child_programs:
-            
+
             optimal_time_allocations_outer = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[0]])
             optimal_time_allocations_inner_true = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
             optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])

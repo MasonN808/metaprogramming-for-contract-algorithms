@@ -227,7 +227,7 @@ if __name__ == "__main__":
     # performance_profile_velocities = [[10000, [20, 0.1, 0.1, 0.1, 0.1, 10000, "conditional"], .1, [.1, 10000, .1, .1, "for"], 10]]
     # [None, [None, None, None, None, None, None, "conditional"], None, [None, None, None, None, "for"], None]
 
-    eu_list = [[] for i in range(0,13)]
+    eu_list = [[] for i in range(0, 13)]
 
     for ppv in performance_profile_velocities:
         # Used to create the synthetic data as instances and a populous file
@@ -328,7 +328,6 @@ if __name__ == "__main__":
 
     print(eu_list)
 
-
     # Plot results
     FILENAME = 'plot.png'
     proportional1 = np.array(eu_list[0])
@@ -354,7 +353,6 @@ if __name__ == "__main__":
 
     # ax = figure.add_axes([.1, .1, .9, .9])
     # ax = figure.add_axes([0, 0, 1, 1])
-
 
     plt.boxplot([proportional1, proportional2, proportional3, proportional4, proportional5, proportional6, proportional7, proportional8, proportional9, proportional10, proportional11, uniform, ehc])
     plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC'])

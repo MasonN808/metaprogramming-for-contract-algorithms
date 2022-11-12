@@ -1,7 +1,5 @@
 import sys
 from typing import List
-from functools import reduce
-
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
 from classes.node import Node  # noqa
@@ -122,9 +120,11 @@ def initialize_node_pointers_current_program(contract_program):
     for node in contract_program.program_dag.nodes:
         node.current_program = contract_program
 
+
 def argsort(seq):
     # http://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
     return sorted(range(len(seq)), key=seq.__getitem__)
+
 
 def flatten_list(nested_list):
     # https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -139,4 +139,3 @@ def flatten_list(nested_list):
             flat_list.append(element)
     return flat_list
     # return reduce(lambda a,b:a+b, nested_list)
-
