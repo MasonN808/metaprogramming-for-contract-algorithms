@@ -1,5 +1,6 @@
 import sys
 from typing import List
+from functools import reduce
 
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
@@ -120,3 +121,22 @@ def find_leaves_in_dag(program_dag):
 def initialize_node_pointers_current_program(contract_program):
     for node in contract_program.program_dag.nodes:
         node.current_program = contract_program
+
+def argsort(seq):
+    # http://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
+    return sorted(range(len(seq)), key=seq.__getitem__)
+
+def flatten_list(nested_list):
+    # https://stackabuse.com/python-how-to-flatten-list-of-lists/
+    flat_list = []
+    # Iterate through the outer list
+    for element in nested_list:
+        if type(element) is list:
+            # If the element is of type list, iterate through the sublist
+            for item in element:
+                flat_list.append(item)
+        else:
+            flat_list.append(element)
+    return flat_list
+    # return reduce(lambda a,b:a+b, nested_list)
+

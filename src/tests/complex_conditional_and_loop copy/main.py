@@ -1,5 +1,6 @@
 # import copy
 import sys
+from matplotlib import pyplot as plt
 import numpy as np
 # import matplotlib.pyplot as plt
 
@@ -209,110 +210,166 @@ if __name__ == "__main__":
     # Rollout the for loop in a seperate DAG
     # program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)  # TODO: FIX THIS
 
-    for i in program_dag.nodes:
-        print("program_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
-    for i in program_dag.nodes:
-        print("program_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
-
-    # Used to create the synthetic data as instances and a populous file
-    generate = True
-    if not exists("populous.json") or generate:
-        # Initialize a generator
-        generator = Generator(INSTANCES, program_dag=program_dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE,
-                              uniform_low=0.05,
-                              uniform_high=0.9)
-
-        # Adjust the DAG structure that has conditionals for generation
-        generator.generator_dag = generator.adjust_dag_with_fors(program_dag)
-
-        # Adjust the DAG structure that has conditionals for generation
-        generator.generator_dag = generator.adjust_dag_with_conditionals(generator.generator_dag)
-
-        for i in generator.generator_dag.nodes:
-            print("generator_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
-        for i in generator.generator_dag.nodes:
-            print("generator_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
-
-        # Initialize the velocities for the quality mappings in a list
-        # Need to initialize it after adjusting program_dag
-        # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
-        # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
-        generator.manual_override = [10000, 20, 0.1, 0.1, 0.1, 0.1, 10000, "conditional", .1, .1, 10000, .1, .1, "for", 10]
-
-        # Generate the nodes' quality mappings
-        nodes = generator.generate_nodes()  # Return a list of file names of the nodes
-        # populate the nodes' quality mappings into one populous file
-        generator.populate(nodes, "populous.json")
-
-    # Create the program with some budget
-    program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
-
-    # Initialize the pointers of the nodes to the program it is in
-    utils.initialize_node_pointers_current_program(program_outer)
-
-    # Add the subtree contract programs to the conditional node
-    # Add the left subtree
-    true_subtree = DirectedAcyclicGraph(nodes_inner_true, root=node_inner_true_root)
-
-    # Convert to a contract program
-    node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
-                                                   quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
-                                                   generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
-
-    # Initialize the pointers of the nodes to the program it is in
-    utils.initialize_node_pointers_current_program(node_outer_1.true_subprogram)
-
-    # Add the right subtree
-    false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
-
-    # Convert to a contract program
-    node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, child_programs=None, program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
-                                                    quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
-                                                    generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
-
-    # Initialize the pointers of the nodes to the program it is in
-    utils.initialize_node_pointers_current_program(node_outer_1.false_subprogram)
-
-    # Convert to a contract program
-    node_outer_3.for_subprogram = ContractProgram(program_id=3, parent_program=program_outer, child_programs=None, program_dag=for_subtree, budget=0, scale=10 ** 6, decimals=3,
-                                                  quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, generator_dag=program_dag,
-                                                  expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, number_of_loops=NUMBER_OF_LOOPS)
-
-    # Initialize the pointers of the nodes to the program it is in
-    utils.initialize_node_pointers_current_program(node_outer_3.for_subprogram)
-
-    program_outer.child_programs = [node_outer_1.true_subprogram, node_outer_1.false_subprogram, node_outer_3.for_subprogram]
-
-    # Add the pointers from the parent program to the subprograms
-    node_outer_1.true_subprogram.parent_program = program_outer
-    node_outer_1.false_subprogram.parent_program = program_outer
-    node_outer_3.for_subprogram.parent_program = program_outer
-
-    # Add the pointers from the generator dag to the subprograms
-    node_outer_1.true_subprogram.generator_dag = program_dag
-    node_outer_1.false_subprogram.generator_dag = program_dag
-    node_outer_3.for_subprogram.generator_dag = program_dag
-
-    node_outer_1.true_subprogram.subprogram_expression_type = "conditional"
-    node_outer_1.false_subprogram.subprogram_expression_type = "conditional"
-    node_outer_3.for_subprogram.subprogram_expression_type = "for"
-
-    # The input should be the outermost program
-    test = Test(program_outer)
-
-    # Test a random distribution on the initial allocations
-    # print(test.test_initial_allocations(iterations=500, initial_is_random=True, verbose=False))
-
     # for i in program_dag.nodes:
-    #     print("program_dag: {}, {}".format(i.id, [j.id for j in i.parents]))
-    # for i in true_subtree.nodes:
-    #     print("true_subtree: {}, {}".format(i.id, [j.id for j in i.parents]))
-    # for i in dag_outer.nodes:
-    #     print("dag_outer: {}, {}".format(i.id, [j.id for j in i.parents]))
+    #     print("program_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
+    # for i in program_dag.nodes:
+    #     print("program_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
 
-    # Test initial vs optimal expected utility and allocations
-    test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
+    performance_profile_velocities = [[10000, [20, 0.1, 2, 0.1, 0.1, 10000, "conditional"], .1, [.1, 10000, .1, .1, "for"], 10],
+                                      [10, [0.1, 2, 100, 0.1, 0.1, 10000, "conditional"], 1, [.1, 1, .1, 10, "for"], .1],
+                                      [.1, [0.1, 0.1, 0.1, 0.1, 0.1, .1, "conditional"], 1, [.1, 1, .1, .1, "for"], .1],
+                                      [.1, [0.1, 0.1, 0.1, 0.1, 0.1, .1, "conditional"], 1, [1000, 1000, 1000, 1000, "for"], .1],
+                                      [.1, [1000, 1000, 1000, 1000, 1000, 1000, "conditional"], 1, [.1, 1, .1, .1, "for"], .1],
+                                      [10, [3, 9, 1000, 100, .1, 1000, "conditional"], 10, [.1, 10, 8, 2, "for"], 4],
+                                      [1000, [2, 5, 3, 2, 5, 8, "conditional"], 2, [34, 3, .1, 2, "for"], 5],
+                                      [.1, [1, 1000, 1, 2, .1, 3, "conditional"], 1, [2, 1, 123, .1, "for"], 100],
+                                      [1000, [.1, .1, .1, .1, .1, .1, "conditional"], 1000, [.1, 1, .1, .1, "for"], 1000]]
+    # performance_profile_velocities = [[10000, [20, 0.1, 0.1, 0.1, 0.1, 10000, "conditional"], .1, [.1, 10000, .1, .1, "for"], 10]]
+    # [None, [None, None, None, None, None, None, "conditional"], None, [None, None, None, None, "for"], None]
+
+    eu_list = [[] for i in range(0,13)]
+
+    for ppv in performance_profile_velocities:
+        # Used to create the synthetic data as instances and a populous file
+        generate = True
+        if not exists("populous.json") or generate:
+            # Initialize a generator
+            generator = Generator(INSTANCES, program_dag=program_dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE,
+                                  uniform_low=0.05,
+                                  uniform_high=0.9)
+
+            # Adjust the DAG structure that has conditionals for generation
+            generator.generator_dag = generator.adjust_dag_with_fors(program_dag)
+
+            # Adjust the DAG structure that has conditionals for generation
+            generator.generator_dag = generator.adjust_dag_with_conditionals(generator.generator_dag)
+
+            for i in generator.generator_dag.nodes:
+                print("generator_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
+            for i in generator.generator_dag.nodes:
+                print("generator_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
+
+            # Initialize the velocities for the quality mappings in a list
+            # Need to initialize it after adjusting program_dag
+            # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
+            # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
+            generator.activate_manual_override(ppv)
+
+            # Generate the nodes' quality mappings
+            nodes = generator.generate_nodes()  # Return a list of file names of the nodes
+            # populate the nodes' quality mappings into one populous file
+            generator.populate(nodes, "populous.json")
+
+        # Create the program with some budget
+        program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
+                                        time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
+                                        possible_qualities=POSSIBLE_QUALITIES, performance_profile_velocities=ppv)
+
+        # Initialize the pointers of the nodes to the program it is in
+        utils.initialize_node_pointers_current_program(program_outer)
+
+        # Add the subtree contract programs to the conditional node
+        # Add the left subtree
+        true_subtree = DirectedAcyclicGraph(nodes_inner_true, root=node_inner_true_root)
+
+        # Convert to a contract program
+        node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
+                                                       quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
+                                                       generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
+
+        # Initialize the pointers of the nodes to the program it is in
+        utils.initialize_node_pointers_current_program(node_outer_1.true_subprogram)
+
+        # Add the right subtree
+        false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
+
+        # Convert to a contract program
+        node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, child_programs=None, program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
+                                                        quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
+                                                        generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
+
+        # Initialize the pointers of the nodes to the program it is in
+        utils.initialize_node_pointers_current_program(node_outer_1.false_subprogram)
+
+        # Convert to a contract program
+        node_outer_3.for_subprogram = ContractProgram(program_id=3, parent_program=program_outer, child_programs=None, program_dag=for_subtree, budget=0, scale=10 ** 6, decimals=3,
+                                                      quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, generator_dag=program_dag,
+                                                      expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, number_of_loops=NUMBER_OF_LOOPS)
+
+        # Initialize the pointers of the nodes to the program it is in
+        utils.initialize_node_pointers_current_program(node_outer_3.for_subprogram)
+
+        program_outer.child_programs = [node_outer_1.true_subprogram, node_outer_1.false_subprogram, node_outer_3.for_subprogram]
+
+        # Add the pointers from the parent program to the subprograms
+        node_outer_1.true_subprogram.parent_program = program_outer
+        node_outer_1.false_subprogram.parent_program = program_outer
+        node_outer_3.for_subprogram.parent_program = program_outer
+
+        # Add the pointers from the generator dag to the subprograms
+        node_outer_1.true_subprogram.generator_dag = program_dag
+        node_outer_1.false_subprogram.generator_dag = program_dag
+        node_outer_3.for_subprogram.generator_dag = program_dag
+
+        node_outer_1.true_subprogram.subprogram_expression_type = "conditional"
+        node_outer_1.false_subprogram.subprogram_expression_type = "conditional"
+        node_outer_3.for_subprogram.subprogram_expression_type = "for"
+
+        # The input should be the outermost program
+        test = Test(program_outer)
+
+        # Test initial vs optimal expected utility and allocations
+        # output_eu[0] is the eu from uniform allocation
+        # output_eu[1] is the eu from EHC
+        output_eu = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
+        # Append the EUs appropriately to list in outer scope
+        for index in range(0, 13):
+            eu_list[index].append(output_eu[index])
+
+    print(eu_list)
+
+
+    # Plot results
+    FILENAME = 'plot.png'
+    proportional1 = np.array(eu_list[0])
+    proportional2 = np.array(eu_list[1])
+    proportional3 = np.array(eu_list[2])
+    proportional4 = np.array(eu_list[3])
+    proportional5 = np.array(eu_list[4])
+    proportional6 = np.array(eu_list[5])
+    proportional7 = np.array(eu_list[6])
+    proportional8 = np.array(eu_list[7])
+    proportional9 = np.array(eu_list[8])
+    proportional10 = np.array(eu_list[9])
+    proportional11 = np.array(eu_list[10])
+
+    uniform = np.array(eu_list[11])
+    ehc = np.array(eu_list[12])
+
+    figure = plt.figure(figsize=(12, 6))
+
+    plt.title("Solution Method Variation on Expected Utility")
+    plt.ylabel("Expected Utility")
+    plt.xlabel("Solution Methods")
+
+    # ax = figure.add_axes([.1, .1, .9, .9])
+    # ax = figure.add_axes([0, 0, 1, 1])
+
+
+    plt.boxplot([proportional1, proportional2, proportional3, proportional4, proportional5, proportional6, proportional7, proportional8, proportional9, proportional10, proportional11, uniform, ehc])
+    plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC'])
+
+    plt.rcParams["font.family"] = "Times New Roman"
+    plt.rcParams["font.size"] = 11
+    plt.rcParams["grid.linestyle"] = "-"
+    plt.grid(True)
+
+    axis = plt.gca()
+    axis.spines["top"].set_visible(False)
+
+    plt.tight_layout()
+    figure.savefig(FILENAME)
+    plt.show()
 
     # test.find_utility_and_allocations(initial_allocation="uniform with noise", outer_program=program_outer, verbose=False)
     # test.find_utility_and_allocations(initial_allocation="Dirichlet", outer_program=program_outer, verbose=False)

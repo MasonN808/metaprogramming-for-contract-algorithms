@@ -60,22 +60,55 @@ class Test:
         """
 
         if self.contract_program.child_programs:
-            self.find_utility_and_allocations_main(initial_allocation, outer_program, verbose)
+            return self.find_utility_and_allocations_main(initial_allocation, outer_program, verbose)
         # THESE are not reachable (might delete)
-        elif self.contract_program.child_programs[0].subprogram_expression_type == "for":
-            self.find_utility_and_allocations_for(initial_allocation, outer_program, verbose)
+        # elif self.contract_program.child_programs[0].subprogram_expression_type == "for":
+        #     self.find_utility_and_allocations_for(initial_allocation, outer_program, verbose)
 
-        elif self.contract_program.child_programs[0].subprogram_expression_type == "conditional":
-            self.find_utility_and_allocations_conditional(initial_allocation, outer_program, verbose)
+        # elif self.contract_program.child_programs[0].subprogram_expression_type == "conditional":
+        #     self.find_utility_and_allocations_conditional(initial_allocation, outer_program, verbose)
 
         else:
             self.find_utility_and_allocations_default(initial_allocation, outer_program, verbose)
 
     # For program with both conditionals and fors
-    def find_utility_and_allocations_main(self, initial_allocation, outer_program, verbose=False) -> None:
+    def find_utility_and_allocations_main(self, initial_allocation, outer_program, verbose=False):
         # Data for plotting
         data = []
         start = timer()
+        betas = [1, .9, .8, .7, .6, .5, .4, .3, .2, .1, 0]
+        # Get the data (EU) for the proportional allocation method
+        for beta in betas:
+            proportional_allocations = self.contract_program.proportional_allocation_tangent(beta)
+            eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], [proportional_allocations[1], proportional_allocations[2], proportional_allocations[3]]) * self.contract_program.scale
+            data.append(eu_proportional) 
+
+        # proportional_allocations = self.contract_program.proportional_allocation_tangent(beta=.8)
+        # eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], [proportional_allocations[1], proportional_allocations[2], proportional_allocations[3]]) * self.contract_program.scale
+        # data.append(eu_proportional) 
+
+        # proportional_allocations = self.contract_program.proportional_allocation_tangent(beta=.4)
+        # eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], [proportional_allocations[1], proportional_allocations[2], proportional_allocations[3]]) * self.contract_program.scale
+        # data.append(eu_proportional) 
+
+        # proportional_allocations = self.contract_program.proportional_allocation_tangent(beta=.1)
+        # eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], [proportional_allocations[1], proportional_allocations[2], proportional_allocations[3]]) * self.contract_program.scale
+        # data.append(eu_proportional) 
+
+        if self.contract_program.decimals is not None:
+            print("         Proportional (inverse Tangent) ==> Expected Utility: {:<5} ==> "
+                            "Time Allocations (outer): {}".format(round(eu_proportional, self.contract_program.decimals), [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[0]])]))
+            print("{:<62}Time Allocations (inner-true): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[1]])]))
+            print("{:<62}Time Allocations (inner-false): {}".format("",[round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[2]])]))
+            print("{:<62}Time Allocations (inner-for): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[3]])]))
+        else:
+            print("         Proportional (inverse Tangent) ==> Expected Utility: {:<5} ==> "
+                            "Time Allocations (outer): {}".format(eu_proportional, utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[0]])))
+            print("{:<62}Time Allocations (inner-true): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[1]])))
+            print("{:<62}Time Allocations (inner-false): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[2]])))
+            print("{:<62}Time Allocations (inner-for): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[3]])))
+  
+
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
 
@@ -117,17 +150,15 @@ class Test:
                 for child_index in range(0, len(self.contract_program.child_programs)):
                     initial_time_allocations_inner[child_index] = [time_allocation.time for time_allocation in
                                                                    self.contract_program.child_programs[child_index].allocations]
-                # initial_time_allocations_inner_for = [time_allocation.time for time_allocation in
-                #                                     self.contract_program.child_programs[0].allocations]
 
             else:
                 initial_time_allocations_outer = [time_allocation.time for time_allocation in
                                                   self.contract_program.allocations]
 
         if outer_program.child_programs:
-            print(" {} \n ----------------------".format(initial_allocation))
+            # print(" {} \n ----------------------".format(initial_allocation))
             # The initial time allocations for each contract algorithm
-            print("                   Initial ==> Expected Utility: {:<5} ==> "
+            print("         Initial (Uniform) ==> Expected Utility: {:<5} ==> "
                   "Time Allocations (outer): {}".format(eu_initial, initial_time_allocations_outer))
 
             print("{:<62}Time Allocations (inner-true): {}".format("", initial_time_allocations_inner[0]))
@@ -145,11 +176,11 @@ class Test:
         allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
 
         if outer_program.child_programs:
+            
             optimal_time_allocations_outer = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[0]])
             optimal_time_allocations_inner_true = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
             optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])
             optimal_time_allocations_inner_for = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[3]])
-
             eu_optimal = self.contract_program.global_expected_utility(allocations[0],
                                                                        self.contract_program.best_allocations_inner) * self.contract_program.scale
 
@@ -199,16 +230,7 @@ class Test:
 
             print("{:<62}Execution Time (seconds): {}".format("", end - start))
 
-        # Plot results
-        uniform = np.array([data[0]])
-        ehc = np.array([data[1]])
-        fig, ax = plt.subplots()
-
-        ax.boxplot([uniform, ehc], notch=True)
-
-        plt.xticks([1, 2], ['Uniform', 'EHC'])
-        plt.xlabel("Solution Methods")
-        plt.show()
+        return data
 
     def find_utility_and_allocations_for(self, initial_allocation, outer_program, verbose=False) -> None:
 

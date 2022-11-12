@@ -20,7 +20,7 @@ class Generator:
     :param generator_dag: the program_dag to be used for performance profile simulation
     """
 
-    def __init__(self, instances, program_dag, time_limit, time_step_size, uniform_low, uniform_high, generator_dag=None, quality_interval=.05, manual_override=None):
+    def __init__(self, instances, program_dag, time_limit, time_step_size, uniform_low, uniform_high, generator_dag=None, quality_interval=.05):
         self.instances = instances
         self.generator_dag = generator_dag
         self.program_dag = program_dag
@@ -29,8 +29,9 @@ class Generator:
         self.uniform_low = uniform_low
         self.uniform_high = uniform_high
         self.quality_interval = quality_interval
-        self.manual_override = manual_override
+        # Flatten all the embedded lists in manual_override
         self.manual_override_index = -1
+        self.manual_override = None
 
     def simulate_performance_profile(self, random_number, node):
         """
@@ -189,6 +190,10 @@ class Generator:
             raise ValueError("Manual override list must be same length as DAG")
         else:
             return True
+
+    def activate_manual_override(self, performance_profile_velocities):
+        # Flatten all the embedded lists in manual_override
+        self.manual_override = utils.flatten_list(performance_profile_velocities)
 
     def populate(self, nodes, out_file):
         """
