@@ -659,114 +659,6 @@ class ContractProgram:
         #         proportional_allocations_outer.append(TimeAllocation(node_index, order*budget_proportion))
         #     node_index += 1
 
-    def proportional_allocation_sigmoid(self, verbose=False) -> List[float]:
-        STRETCH_FACTOR = 1
-        budget = copy.deepcopy(self.budget)
-        taxed_budget = budget - self.initialize_allocations.count_conditionals() * self.performance_profile.calculate_tau()
-
-        ppv = copy.deepcopy(self.performance_profile_velocities)
-        flattend_ppv = utils.flatten_list(ppv)
-
-        ppv_no_strings = [velocity for velocity in flattend_ppv if not isinstance(velocity, str)]
-
-        # Use the inverse tangent function to transform coefficients from (0, infinity) -> (0,1)
-        ppv_transformed = [STRETCH_FACTOR * 1 - math.atan(c) / (math.pi / 2) for c in ppv_no_strings]
-
-        true_indices = [1, 3, 4, 5]
-        false_indices = [2, 6]
-        for_indices = [9, 10, 11, 12, 13]
-
-        # Make sure that the left and right branches get the same time allocation
-        true_sum = 0
-        false_sum = 0
-
-        for index in true_indices:
-            true_sum += ppv_transformed[index]
-        for index in false_indices:
-            false_sum += ppv_transformed[index]
-
-        if (false_sum > true_sum):
-            difference = false_sum - true_sum
-            for index in true_indices:
-                # Add the difference
-                ppv_transformed[index] += difference / len(true_indices)
-        else:
-            difference = true_sum - false_sum
-            for index in false_indices:
-                # Add the difference
-                ppv_transformed[index] += difference / len(false_indices)
-
-        # Get the coefficients proportinal to the budget
-        budget_proportion = taxed_budget / sum(ppv_transformed)
-
-        # Append the conditional node to the lists
-        true_indices.append(7)
-        false_indices.append(7)
-
-        # TODO: This is hardcoded
-        # Note: the indices in ppv_ordering are different from the node_ids since srings are removed prior to ordering
-        proportional_allocations_true = []
-        for i in range(0, 15):
-            if (i in true_indices):
-                # Check if its the last element in the list
-                if (true_indices.index(i) == len(true_indices) - 1):
-                    proportional_allocations_true.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
-                else:
-                    proportional_allocations_true.append(TimeAllocation(i, ppv_transformed[i] * budget_proportion))
-            else:
-                proportional_allocations_true.append(TimeAllocation(i, None))
-
-        proportional_allocations_false = []
-        for i in range(0, 15):
-            if (i in false_indices):
-                if (false_indices.index(i) == len(false_indices) - 1):
-                    proportional_allocations_false.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
-                else:
-                    proportional_allocations_false.append(TimeAllocation(i, ppv_transformed[i] * budget_proportion))
-            else:
-                proportional_allocations_false.append(TimeAllocation(i, None))
-
-        proportional_allocations_for = []
-        for i in range(0, 15):
-            if (i in for_indices):
-                if (for_indices.index(i) == len(for_indices) - 1):
-                    proportional_allocations_for.append(TimeAllocation(i, 0))
-                else:
-                    # subtract 1 from the index since we encountered a conditional prior
-                    proportional_allocations_for.append(TimeAllocation(i, ppv_transformed[i - 1] * budget_proportion))
-            else:
-                proportional_allocations_for.append(TimeAllocation(i, None))
-
-        # proportional_allocations_true = [TimeAllocation(0, None), TimeAllocation(1, ppv_ordering[1]*budget_proportion), TimeAllocation(2, None), TimeAllocation(3, ppv_ordering[3]*budget_proportion),
-        #                                  TimeAllocation(4, ppv_ordering[4]*budget_proportion), TimeAllocation(5, ppv_ordering[5]*budget_proportion), TimeAllocation(6, None),
-        #                                  TimeAllocation(7, self.performance_profile.calculate_tau()), TimeAllocation(8, None), TimeAllocation(9, None), TimeAllocation(10, None),
-        #                                  TimeAllocation(11, None), TimeAllocation(12, None), TimeAllocation(13, None), TimeAllocation(14, None)]
-        # proportional_allocations_false = [TimeAllocation(0, None), TimeAllocation(1, None), TimeAllocation(2, ppv_ordering[2]*budget_proportion), TimeAllocation(3, None),
-        #                                   TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, ppv_ordering[6]*budget_proportion),
-        #                                   TimeAllocation(7, self.performance_profile.calculate_tau()), TimeAllocation(8, None), TimeAllocation(9, None),
-        #                                   TimeAllocation(10, None), TimeAllocation(11, None), TimeAllocation(12, None), TimeAllocation(13, None), TimeAllocation(14, None)]
-        # proportional_allocations_for = [TimeAllocation(0, None), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None), TimeAllocation(4, None),
-        #                                 TimeAllocation(5, None), TimeAllocation(6, None), TimeAllocation(7, None), TimeAllocation(8, None),
-        #                                 TimeAllocation(9, ppv_ordering[8]*budget_proportion), TimeAllocation(10, ppv_ordering[9]*budget_proportion),
-        #                                 TimeAllocation(11, ppv_ordering[10]*budget_proportion), TimeAllocation(12, ppv_ordering[11]*budget_proportion),
-        #                                 TimeAllocation(13, 0), TimeAllocation(14, None)]
-        proportional_allocations_outer = [TimeAllocation(0, ppv_transformed[0] * budget_proportion), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None),
-                                          TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, None),
-                                          TimeAllocation(7, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_true)])),
-                                          TimeAllocation(8, ppv_transformed[7] * budget_proportion), TimeAllocation(9, None), TimeAllocation(10, None), TimeAllocation(11, None),
-                                          TimeAllocation(12, None), TimeAllocation(13, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])),
-                                          TimeAllocation(14, ppv_transformed[12] * budget_proportion)]
-        allocations = [proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
-
-        # Assign the allocations
-
-        for child_index in range(0, len(self.child_programs)):
-            self.child_programs[child_index].allocations = allocations[child_index]
-
-        self.allocations = proportional_allocations_outer
-
-        return [proportional_allocations_outer, proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
-
     def proportional_allocation_tangent(self, beta=1, verbose=False) -> List[float]:
         # Must be < 1 and >0
         budget = copy.deepcopy(self.budget)
@@ -853,20 +745,6 @@ class ContractProgram:
                     proportional_allocations_for.append(TimeAllocation(i, ppv_transformed[i - 1] * budget_proportion))
             else:
                 proportional_allocations_for.append(TimeAllocation(i, None))
-
-        # proportional_allocations_true = [TimeAllocation(0, None), TimeAllocation(1, ppv_ordering[1]*budget_proportion), TimeAllocation(2, None), TimeAllocation(3, ppv_ordering[3]*budget_proportion),
-        #                                  TimeAllocation(4, ppv_ordering[4]*budget_proportion), TimeAllocation(5, ppv_ordering[5]*budget_proportion), TimeAllocation(6, None),
-        #                                  TimeAllocation(7, self.performance_profile.calculate_tau()), TimeAllocation(8, None), TimeAllocation(9, None), TimeAllocation(10, None),
-        #                                  TimeAllocation(11, None), TimeAllocation(12, None), TimeAllocation(13, None), TimeAllocation(14, None)]
-        # proportional_allocations_false = [TimeAllocation(0, None), TimeAllocation(1, None), TimeAllocation(2, ppv_ordering[2]*budget_proportion), TimeAllocation(3, None),
-        #                                   TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, ppv_ordering[6]*budget_proportion),
-        #                                   TimeAllocation(7, self.performance_profile.calculate_tau()), TimeAllocation(8, None), TimeAllocation(9, None),
-        #                                   TimeAllocation(10, None), TimeAllocation(11, None), TimeAllocation(12, None), TimeAllocation(13, None), TimeAllocation(14, None)]
-        # proportional_allocations_for = [TimeAllocation(0, None), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None), TimeAllocation(4, None),
-        #                                 TimeAllocation(5, None), TimeAllocation(6, None), TimeAllocation(7, None), TimeAllocation(8, None),
-        #                                 TimeAllocation(9, ppv_ordering[8]*budget_proportion), TimeAllocation(10, ppv_ordering[9]*budget_proportion),
-        #                                 TimeAllocation(11, ppv_ordering[10]*budget_proportion), TimeAllocation(12, ppv_ordering[11]*budget_proportion),
-        #                                 TimeAllocation(13, 0), TimeAllocation(14, None)]
 
         proportional_allocations_outer = [TimeAllocation(0, ppv_transformed[0] * budget_proportion), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None),
                                           TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, None),

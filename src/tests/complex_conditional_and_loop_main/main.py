@@ -207,13 +207,7 @@ if __name__ == "__main__":
     nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8, node_9, node_10, node_11, node_12, node_13, node_14]
     program_dag = DirectedAcyclicGraph(nodes, root)
 
-    # Rollout the for loop in a seperate DAG
-    # program_dag = Generator.adjust_dag_structure_with_for_loops(program_dag)  # TODO: FIX THIS
-
-    # for i in program_dag.nodes:
-    #     print("program_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
-    # for i in program_dag.nodes:
-    #     print("program_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
+    # Create Dirchilete initial ppv
 
     performance_profile_velocities = [[10000, [20, 0.1, 2, 0.1, 0.1, 10000, "conditional"], .1, [.1, 10000, .1, .1, "for"], 10],
                                       [10, [0.1, 2, 100, 0.1, 0.1, 10000, "conditional"], 1, [.1, 1, .1, 10, "for"], .1],
@@ -329,7 +323,7 @@ if __name__ == "__main__":
     print(eu_list)
 
     # Plot results
-    FILENAME = 'plot.png'
+    FILENAME = 'results.png'
     proportional1 = np.array(eu_list[0])
     proportional2 = np.array(eu_list[1])
     proportional3 = np.array(eu_list[2])
