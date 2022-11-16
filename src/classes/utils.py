@@ -1,5 +1,7 @@
 import sys
 from typing import List
+
+import numpy as np
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
 from classes.node import Node  # noqa
@@ -139,3 +141,76 @@ def flatten_list(nested_list):
             flat_list.append(element)
     return flat_list
     # return reduce(lambda a,b:a+b, nested_list)
+
+
+def dirichlet_ppv(iterations, dag, constant):
+    # Create Dirichlet initial ppv
+    accumulated_ppv = []
+    number_conditionals_and_fors = number_of_fors_conditionals(dag)
+    number_conditionals = number_conditionals_and_fors[0]
+    number_fors = number_conditionals_and_fors[1]
+    conditional_indices = find_conditional_indices(dag)
+    for_indices = find_for_indices(dag)
+
+    for iteration in range(0, iterations):
+        # Remove the one of the branches and the conditional node before applying the Dirichlet distribution
+        velocities_array = np.random.dirichlet(np.repeat(.25, len(dag.nodes) - number_conditionals - number_fors), size=1).squeeze() * constant
+        velocities_list = velocities_array.tolist()
+
+        # Create the sublist for conditional
+        accumlated_velocities = []
+        for index in range(0, len(conditional_indices) + 1):
+            if index == len(conditional_indices):
+                accumlated_velocities.append("conditional")
+            else:
+                accumlated_velocities.append(velocities_list[conditional_indices[index]])
+        # Place the sublist in the list
+        velocities_list[conditional_indices[0]] = accumlated_velocities
+        # Remove the duplicates in outer list
+        for i in range(0, len(conditional_indices) - 1):
+            velocities_list.pop(conditional_indices[0] + 1)
+
+        # Place the sublist in the list
+        accumlated_velocities = []
+        for index in range(0, len(for_indices) + 1):
+            if index == len(for_indices):
+                accumlated_velocities.append("for")
+            else:
+                accumlated_velocities.append(velocities_list[for_indices[index] - len(conditional_indices) + 1])
+        # Place the sublist in the list
+        velocities_list[for_indices[0] - len(conditional_indices)] = accumlated_velocities
+        # Remove the duplicates in outer list
+        for i in range(0, len(for_indices) - 1):
+            velocities_list.pop(for_indices[0] - len(conditional_indices) + 1)
+
+        accumulated_ppv.append(velocities_list)
+        print(velocities_list)
+    return accumulated_ppv
+
+
+def number_of_fors_conditionals(dag):
+    # Get the number of fors and conditionals in a dag object
+    conditional_count = 0
+    for_count = 0
+    for node in dag.nodes:
+        if (node.expression_type == "conditional"):
+            conditional_count += 1
+        elif (node.expression_type == "for"):
+            for_count += 1
+    return [conditional_count, for_count]
+
+
+def find_conditional_indices(dag):
+    indices = []
+    for node in dag.nodes:
+        if (node.in_true or node.in_false):
+            indices.append(node.id)
+    return indices
+
+
+def find_for_indices(dag):
+    indices = []
+    for node in dag.nodes:
+        if (node.in_for):
+            indices.append(node.id)
+    return indices

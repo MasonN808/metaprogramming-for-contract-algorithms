@@ -178,11 +178,19 @@ if __name__ == "__main__":
     node_6 = Node(6, [node_7], [], expression_type="contract", in_child_contract_program=False)
     node_5 = Node(5, [node_7], [], expression_type="contract", in_child_contract_program=False)
 
+    node_6.in_true = True
+    node_5.in_true = True
+
     # Conditional subtrees
     node_4 = Node(4, [node_5], [], expression_type="contract", in_child_contract_program=False)
     node_3 = Node(3, [node_5], [], expression_type="contract", in_child_contract_program=False)
     node_2 = Node(2, [node_6], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
     node_1 = Node(1, [node_3, node_4], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
+
+    node_4.in_true = True
+    node_3.in_true = True
+    node_2.in_true = True
+    node_1.in_true = True
 
     # Root node
     root = Node(0, [node_1, node_2], [], expression_type="contract", in_child_contract_program=False)
@@ -207,17 +215,18 @@ if __name__ == "__main__":
     nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8, node_9, node_10, node_11, node_12, node_13, node_14]
     program_dag = DirectedAcyclicGraph(nodes, root)
 
-    # Create Dirchilete initial ppv
+    # TODO PUT DIRCHILET ALLOCATION HERE
+    performance_profile_velocities = utils.dirichlet_ppv(iterations=1, dag=program_dag, constant=1000)
 
-    performance_profile_velocities = [[10000, [20, 0.1, 2, 0.1, 0.1, 10000, "conditional"], .1, [.1, 10000, .1, .1, "for"], 10],
-                                      [10, [0.1, 2, 100, 0.1, 0.1, 10000, "conditional"], 1, [.1, 1, .1, 10, "for"], .1],
-                                      [.1, [0.1, 0.1, 0.1, 0.1, 0.1, .1, "conditional"], 1, [.1, 1, .1, .1, "for"], .1],
-                                      [.1, [0.1, 0.1, 0.1, 0.1, 0.1, .1, "conditional"], 1, [1000, 1000, 1000, 1000, "for"], .1],
-                                      [.1, [1000, 1000, 1000, 1000, 1000, 1000, "conditional"], 1, [.1, 1, .1, .1, "for"], .1],
-                                      [10, [3, 9, 1000, 100, .1, 1000, "conditional"], 10, [.1, 10, 8, 2, "for"], 4],
-                                      [1000, [2, 5, 3, 2, 5, 8, "conditional"], 2, [34, 3, .1, 2, "for"], 5],
-                                      [.1, [1, 1000, 1, 2, .1, 3, "conditional"], 1, [2, 1, 123, .1, "for"], 100],
-                                      [1000, [.1, .1, .1, .1, .1, .1, "conditional"], 1000, [.1, 1, .1, .1, "for"], 1000]]
+    # performance_profile_velocities = [[10000, [20, 0.1, 2, 0.1, 0.1, 10000, "conditional"], .1, [.1, 10000, .1, .1, "for"], 10],
+    #                                   [10, [0.1, 2, 100, 0.1, 0.1, 10000, "conditional"], 1, [.1, 1, .1, 10, "for"], .1],
+    #                                   [.1, [0.1, 0.1, 0.1, 0.1, 0.1, .1, "conditional"], 1, [.1, 1, .1, .1, "for"], .1],
+    #                                   [.1, [0.1, 0.1, 0.1, 0.1, 0.1, .1, "conditional"], 1, [1000, 1000, 1000, 1000, "for"], .1],
+    #                                   [.1, [1000, 1000, 1000, 1000, 1000, 1000, "conditional"], 1, [.1, 1, .1, .1, "for"], .1],
+    #                                   [10, [3, 9, 1000, 100, .1, 1000, "conditional"], 10, [.1, 10, 8, 2, "for"], 4],
+    #                                   [1000, [2, 5, 3, 2, 5, 8, "conditional"], 2, [34, 3, .1, 2, "for"], 5],
+    #                                   [.1, [1, 1000, 1, 2, .1, 3, "conditional"], 1, [2, 1, 123, .1, "for"], 100],
+    #                                   [1000, [.1, .1, .1, .1, .1, .1, "conditional"], 1000, [.1, 1, .1, .1, "for"], 1000]]
     # performance_profile_velocities = [[10000, [20, 0.1, 0.1, 0.1, 0.1, 10000, "conditional"], .1, [.1, 10000, .1, .1, "for"], 10]]
     # [None, [None, None, None, None, None, None, "conditional"], None, [None, None, None, None, "for"], None]
 
@@ -310,7 +319,7 @@ if __name__ == "__main__":
         node_outer_3.for_subprogram.subprogram_expression_type = "for"
 
         # The input should be the outermost program
-        test = Test(program_outer)
+        test = Test(program_outer, ppv)
 
         # Test initial vs optimal expected utility and allocations
         # output_eu[0] is the eu from uniform allocation

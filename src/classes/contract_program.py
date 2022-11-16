@@ -705,8 +705,8 @@ class ContractProgram:
         # Get the coefficients proportinal to the budget and ...
         # Subtract one of the sums of the branches since that double count is put into the budget
         budget_proportion = taxed_budget / (sum(ppv_transformed) - transformed_branch_sum)
-        print(budget_proportion)
-        print(sum([ppv_transformed[i] * budget_proportion for i in range(0, len(ppv_transformed))]))
+        # print(budget_proportion)
+        # print(sum([ppv_transformed[i] * budget_proportion for i in range(0, len(ppv_transformed))]))
 
         # Append the conditional node to the lists
         true_indices.append(7)

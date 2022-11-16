@@ -13,8 +13,9 @@ from classes.node import Node  # noqa
 
 
 class Test:
-    def __init__(self, contract_program):
+    def __init__(self, contract_program, ppv):
         self.contract_program = contract_program
+        self.ppv = ppv
 
     def test_initial_allocations(self, iterations, initial_allocation, verbose=False):
         """
@@ -95,12 +96,22 @@ class Test:
         # data.append(eu_proportional)
 
         if self.contract_program.decimals is not None:
+            # ppvs = []
+            # for ppv in self.ppv:
+            #     v = '{:9.3f}'.format(ppv)
+            #     ppvs.append(v)
+            print("PPV ==> ", *self.ppv)
             print("         Proportional (inverse Tangent) ==> Expected Utility: {:<5} ==> "
                   "Time Allocations (outer): {}".format(round(eu_proportional, self.contract_program.decimals), [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[0]])]))
             print("{:<62}Time Allocations (inner-true): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[1]])]))
             print("{:<62}Time Allocations (inner-false): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[2]])]))
             print("{:<62}Time Allocations (inner-for): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[3]])]))
         else:
+            # ppvs = []
+            # for ppv in self.ppv:
+            #     v = '{:9.3f}'.format(ppv)
+            #     ppvs.append(v)
+            # print("                                                          PPV ==> ", *ppvs)
             print("         Proportional (inverse Tangent) ==> Expected Utility: {:<5} ==> "
                   "Time Allocations (outer): {}".format(eu_proportional, utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[0]])))
             print("{:<62}Time Allocations (inner-true): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[1]])))
