@@ -215,12 +215,26 @@ if __name__ == "__main__":
     nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8, node_9, node_10, node_11, node_12, node_13, node_14]
     program_dag = DirectedAcyclicGraph(nodes, root)
 
-    iterations = 2
+    iterations = 1
 
     # Use a Dirichlet distribution to generate random ppvs
     performance_profile_velocities = utils.dirichlet_ppv(iterations=iterations, dag=program_dag, alpha=.9, constant=10)
 
+    # Plot types:
+    #   - "box_whisker" => a box and whisker plot of EU for our contract program on differing solution methods
+    #   - "bar" => a bar graph of the average time allocation over N simulations for a particular node n_i on differing solution methods
+
+    # Plot methods:
+    #   - "all" => use all solution methods
+    #   - "subset" => use PA(1), PA(.5), PA(0), Uniform, and EHC
+
+    plot_type = "box_whisker"
+    # Nodes to plot (only for bar plot types):
+    plot_nodes = [4, 8, 11]
+    plot_methods = "subset"
+
     eu_list = [[] for i in range(0, 13)]
+    time_list = [[] for i in range(0, 13)]
 
     for ppv in performance_profile_velocities:
         # Used to create the synthetic data as instances and a populous file
@@ -308,57 +322,178 @@ if __name__ == "__main__":
         node_outer_1.false_subprogram.subprogram_expression_type = "conditional"
         node_outer_3.for_subprogram.subprogram_expression_type = "for"
 
+        # Verify we have valid plot params
+        if (plot_type != "box_whisker" and plot_type != "bar"):
+            ValueError("Invalid plot type")
+        if (plot_methods != "all" and plot_methods != "subset"):
+            ValueError("Invalid plot methods value")
+
         # The input should be the outermost program
-        test = Test(program_outer, ppv)
+        test = Test(program_outer, ppv, plot_type, plot_methods, plot_nodes)
 
-        # Test initial vs optimal expected utility and allocations
-        # output_eu[0] is the eu from uniform allocation
-        # output_eu[1] is the eu from EHC
-        output_eu = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
-        # Append the EUs appropriately to list in outer scope
-        for index in range(0, 13):
-            eu_list[index].append(output_eu[index])
+        if (plot_type == "box_whisker"):
+            if (plot_methods == "all"):
+                # Test solution method expected utilities and allocations
+                eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
+                # Append the EUs appropriately to list in outer scope
+                for index in range(0, 13):
+                    eu_list[index].append(eu_time[0][index])
+            elif (plot_methods == "subset"):
+                eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
+                for index in range(0, 5):
+                    eu_list[index].append(eu_time[0][index])
 
-    print(eu_list)
+        elif (plot_type == "bar"):
+            if (plot_methods == "all"):
+                # Test solution method expected utilities and allocations
+                eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
+                # Append the EUs appropriately to list in outer scope
+                for index in range(0, 13):
+                    time_list[index].append(eu_time[1][index])
+                pass
+            elif (plot_methods == "subset"):
+                eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
+                for index in range(0, 5):
+                    time_list[index].append(eu_time[1][index])
 
-    # Plot results
-    FILENAME = 'plot_{}-Itertions.png'.format(iterations)
-    proportional1 = np.array(eu_list[0])
-    proportional2 = np.array(eu_list[1])
-    proportional3 = np.array(eu_list[2])
-    proportional4 = np.array(eu_list[3])
-    proportional5 = np.array(eu_list[4])
-    proportional6 = np.array(eu_list[5])
-    proportional7 = np.array(eu_list[6])
-    proportional8 = np.array(eu_list[7])
-    proportional9 = np.array(eu_list[8])
-    proportional10 = np.array(eu_list[9])
-    proportional11 = np.array(eu_list[10])
+    # print(eu_list)
 
-    uniform = np.array(eu_list[11])
-    ehc = np.array(eu_list[12])
+    FILENAME = '{}-{}-{}.png'.format(plot_type, plot_methods, iterations)
 
-    figure = plt.figure(figsize=(12, 6))
+    if (plot_type == "box_whisker"):
+        if (plot_methods == "all"):
+            # Plot results
+            proportional1 = np.array(eu_list[0])
+            proportional2 = np.array(eu_list[1])
+            proportional3 = np.array(eu_list[2])
+            proportional4 = np.array(eu_list[3])
+            proportional5 = np.array(eu_list[4])
+            proportional6 = np.array(eu_list[5])
+            proportional7 = np.array(eu_list[6])
+            proportional8 = np.array(eu_list[7])
+            proportional9 = np.array(eu_list[8])
+            proportional10 = np.array(eu_list[9])
+            proportional11 = np.array(eu_list[10])
 
-    plt.title("Solution Method Variation on Expected Utility")
-    plt.ylabel("Expected Utility")
-    plt.xlabel("Solution Methods")
+            uniform = np.array(eu_list[11])
+            ehc = np.array(eu_list[12])
 
-    # ax = figure.add_axes([.1, .1, .9, .9])
-    # ax = figure.add_axes([0, 0, 1, 1])
+            figure = plt.figure(figsize=(12, 6))
 
-    plt.boxplot([proportional1, proportional2, proportional3, proportional4, proportional5, proportional6, proportional7, proportional8, proportional9, proportional10, proportional11, uniform, ehc])
-    plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC'])
-    # plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=inf)', 'Uniform', 'EHC'])
+            plt.title("Expected Utility Variation on Solution Methods")
+            plt.ylabel("Expected Utility")
+            plt.xlabel("Solution Methods")
 
-    plt.rcParams["font.family"] = "Times New Roman"
-    plt.rcParams["font.size"] = 11
-    plt.rcParams["grid.linestyle"] = "-"
-    plt.grid(True)
+            plt.boxplot([proportional1, proportional2, proportional3, proportional4, proportional5, proportional6, proportional7, proportional8, proportional9, proportional10, proportional11, uniform, ehc])
+            plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC'])
 
-    axis = plt.gca()
-    axis.spines["top"].set_visible(False)
+            plt.rcParams["font.family"] = "Times New Roman"
+            plt.rcParams["font.size"] = 11
+            plt.rcParams["grid.linestyle"] = "-"
+            plt.grid(True)
 
-    plt.tight_layout()
-    figure.savefig(FILENAME)
-    plt.show()
+            axis = plt.gca()
+            axis.spines["top"].set_visible(False)
+
+            plt.tight_layout()
+            figure.savefig(FILENAME)
+            plt.show()
+
+        else:
+            # Plot results
+            proportional1 = np.array(eu_list[0])
+            proportional2 = np.array(eu_list[1])
+            proportional3 = np.array(eu_list[2])
+
+            uniform = np.array(eu_list[3])
+            ehc = np.array(eu_list[4])
+
+            figure = plt.figure(figsize=(12, 6))
+
+            plt.title("Expected Utility Variation on Solution Methods")
+            plt.ylabel("Expected Utility")
+            plt.xlabel("Solution Methods")
+
+            plt.boxplot([proportional1, proportional2, proportional3, uniform, ehc])
+            plt.xticks([1, 2, 3, 4, 5], ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'EHC'])
+
+            plt.rcParams["font.family"] = "Times New Roman"
+            plt.rcParams["font.size"] = 11
+            plt.rcParams["grid.linestyle"] = "-"
+            plt.grid(True)
+
+            axis = plt.gca()
+            axis.spines["top"].set_visible(False)
+
+            plt.tight_layout()
+            figure.savefig(FILENAME)
+            plt.show()
+
+    elif (plot_type == "bar"):
+        if (plot_methods == "all"):
+            # Plot results
+            proportional1 = np.array(eu_list[0])
+            proportional2 = np.array(eu_list[1])
+            proportional3 = np.array(eu_list[2])
+            proportional4 = np.array(eu_list[3])
+            proportional5 = np.array(eu_list[4])
+            proportional6 = np.array(eu_list[5])
+            proportional7 = np.array(eu_list[6])
+            proportional8 = np.array(eu_list[7])
+            proportional9 = np.array(eu_list[8])
+            proportional10 = np.array(eu_list[9])
+            proportional11 = np.array(eu_list[10])
+
+            uniform = np.array(eu_list[11])
+            ehc = np.array(eu_list[12])
+
+            figure = plt.figure(figsize=(12, 6))
+
+            plt.title("Expected Utility Variation on Solution Methods")
+            plt.ylabel("Expected Utility")
+            plt.xlabel("Solution Methods")
+
+            plt.boxplot([proportional1, proportional2, proportional3, proportional4, proportional5, proportional6, proportional7, proportional8, proportional9, proportional10, proportional11, uniform, ehc])
+            plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC'])
+
+            plt.rcParams["font.family"] = "Times New Roman"
+            plt.rcParams["font.size"] = 11
+            plt.rcParams["grid.linestyle"] = "-"
+            plt.grid(True)
+
+            axis = plt.gca()
+            axis.spines["top"].set_visible(False)
+
+            plt.tight_layout()
+            figure.savefig(FILENAME)
+            plt.show()
+
+        else:
+            # Plot results
+            proportional1 = np.array(eu_list[0])
+            proportional2 = np.array(eu_list[1])
+            proportional3 = np.array(eu_list[2])
+
+            uniform = np.array(eu_list[3])
+            ehc = np.array(eu_list[4])
+
+            figure = plt.figure(figsize=(12, 6))
+
+            plt.title("Expected Utility Variation on Solution Methods")
+            plt.ylabel("Expected Utility")
+            plt.xlabel("Solution Methods")
+
+            plt.boxplot([proportional1, proportional2, proportional3, uniform, ehc])
+            plt.xticks([1, 2, 3, 4, 5], ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'EHC'])
+
+            plt.rcParams["font.family"] = "Times New Roman"
+            plt.rcParams["font.size"] = 11
+            plt.rcParams["grid.linestyle"] = "-"
+            plt.grid(True)
+
+            axis = plt.gca()
+            axis.spines["top"].set_visible(False)
+
+            plt.tight_layout()
+            figure.savefig(FILENAME)
+            plt.show()

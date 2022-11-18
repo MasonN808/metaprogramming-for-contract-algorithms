@@ -595,7 +595,7 @@ class ContractProgram:
         #     node_index += 1
 
     def proportional_allocation_tangent(self, beta=1) -> List[float]:
-        # Must be < 1 and >0
+        # Must be < 1 and > 0
         budget = copy.deepcopy(self.budget)
         # TODO: This does not work -> fix
         # taxed_budget = budget - self.initialize_allocations.count_conditionals()*self.performance_profile.calculate_tau()
@@ -686,12 +686,9 @@ class ContractProgram:
                                           TimeAllocation(12, None), TimeAllocation(13, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])),
                                           TimeAllocation(14, ppv_transformed[12] * budget_proportion)]
 
-        # print("T2: {}".format(sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_outer)])))
-
         allocations = [proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
 
         # Assign the allocations
-
         for child_index in range(0, len(self.child_programs)):
             self.child_programs[child_index].allocations = allocations[child_index]
 
@@ -700,7 +697,7 @@ class ContractProgram:
         return [proportional_allocations_outer, proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
 
     def proportional_allocation_division(self, beta=.2) -> List[float]:
-        # Must be < 1 and >0
+        # Must be < 1 and > 0
         budget = copy.deepcopy(self.budget)
         # TODO: This does not work -> fix
         # taxed_budget = budget - self.initialize_allocations.count_conditionals()*self.performance_profile.calculate_tau()
