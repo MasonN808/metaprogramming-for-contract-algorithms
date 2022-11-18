@@ -143,7 +143,7 @@ def flatten_list(nested_list):
     # return reduce(lambda a,b:a+b, nested_list)
 
 
-def dirichlet_ppv(iterations, dag, constant):
+def dirichlet_ppv(iterations, dag, alpha=1, constant=10):
     # Create Dirichlet initial ppv
     accumulated_ppv = []
     number_conditionals_and_fors = number_of_fors_conditionals(dag)
@@ -154,7 +154,7 @@ def dirichlet_ppv(iterations, dag, constant):
 
     for iteration in range(0, iterations):
         # Remove the one of the branches and the conditional node before applying the Dirichlet distribution
-        velocities_array = np.random.dirichlet(np.repeat(.25, len(dag.nodes) - number_conditionals - number_fors), size=1).squeeze() * constant
+        velocities_array = np.random.dirichlet(np.repeat(alpha, len(dag.nodes) - number_conditionals - number_fors), size=1).squeeze() * constant
         velocities_list = velocities_array.tolist()
 
         # Create the sublist for conditional

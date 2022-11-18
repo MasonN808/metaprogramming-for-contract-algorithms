@@ -215,20 +215,10 @@ if __name__ == "__main__":
     nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8, node_9, node_10, node_11, node_12, node_13, node_14]
     program_dag = DirectedAcyclicGraph(nodes, root)
 
-    # TODO PUT DIRCHILET ALLOCATION HERE
-    performance_profile_velocities = utils.dirichlet_ppv(iterations=1, dag=program_dag, constant=1000)
+    iterations = 2
 
-    # performance_profile_velocities = [[10000, [20, 0.1, 2, 0.1, 0.1, 10000, "conditional"], .1, [.1, 10000, .1, .1, "for"], 10],
-    #                                   [10, [0.1, 2, 100, 0.1, 0.1, 10000, "conditional"], 1, [.1, 1, .1, 10, "for"], .1],
-    #                                   [.1, [0.1, 0.1, 0.1, 0.1, 0.1, .1, "conditional"], 1, [.1, 1, .1, .1, "for"], .1],
-    #                                   [.1, [0.1, 0.1, 0.1, 0.1, 0.1, .1, "conditional"], 1, [1000, 1000, 1000, 1000, "for"], .1],
-    #                                   [.1, [1000, 1000, 1000, 1000, 1000, 1000, "conditional"], 1, [.1, 1, .1, .1, "for"], .1],
-    #                                   [10, [3, 9, 1000, 100, .1, 1000, "conditional"], 10, [.1, 10, 8, 2, "for"], 4],
-    #                                   [1000, [2, 5, 3, 2, 5, 8, "conditional"], 2, [34, 3, .1, 2, "for"], 5],
-    #                                   [.1, [1, 1000, 1, 2, .1, 3, "conditional"], 1, [2, 1, 123, .1, "for"], 100],
-    #                                   [1000, [.1, .1, .1, .1, .1, .1, "conditional"], 1000, [.1, 1, .1, .1, "for"], 1000]]
-    # performance_profile_velocities = [[10000, [20, 0.1, 0.1, 0.1, 0.1, 10000, "conditional"], .1, [.1, 10000, .1, .1, "for"], 10]]
-    # [None, [None, None, None, None, None, None, "conditional"], None, [None, None, None, None, "for"], None]
+    # Use a Dirichlet distribution to generate random ppvs
+    performance_profile_velocities = utils.dirichlet_ppv(iterations=iterations, dag=program_dag, alpha=.9, constant=10)
 
     eu_list = [[] for i in range(0, 13)]
 
@@ -332,7 +322,7 @@ if __name__ == "__main__":
     print(eu_list)
 
     # Plot results
-    FILENAME = 'results.png'
+    FILENAME = 'plot_{}-Itertions.png'.format(iterations)
     proportional1 = np.array(eu_list[0])
     proportional2 = np.array(eu_list[1])
     proportional3 = np.array(eu_list[2])
@@ -359,6 +349,7 @@ if __name__ == "__main__":
 
     plt.boxplot([proportional1, proportional2, proportional3, proportional4, proportional5, proportional6, proportional7, proportional8, proportional9, proportional10, proportional11, uniform, ehc])
     plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC'])
+    # plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=inf)', 'Uniform', 'EHC'])
 
     plt.rcParams["font.family"] = "Times New Roman"
     plt.rcParams["font.size"] = 11
@@ -371,6 +362,3 @@ if __name__ == "__main__":
     plt.tight_layout()
     figure.savefig(FILENAME)
     plt.show()
-
-    # test.find_utility_and_allocations(initial_allocation="uniform with noise", outer_program=program_outer, verbose=False)
-    # test.find_utility_and_allocations(initial_allocation="Dirichlet", outer_program=program_outer, verbose=False)
