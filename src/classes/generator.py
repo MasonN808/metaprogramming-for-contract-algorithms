@@ -81,8 +81,19 @@ class Generator:
                     velocity = self.parent_dependent_transform(node, qualities, random_number)
 
                     for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
+                        # Add some noise to the qualities for each instance
+                        noise = np.random.normal(loc=0, scale=.025)
+
+                        generated_quality = (1 - math.e ** (-velocity * t)) + noise
+
+                        # Check bounds and truncate
+                        if generated_quality < 0:
+                            generated_quality = 0
+                        if generated_quality > 1:
+                            generated_quality = 1
+                            
                         # Use this function to approximate the performance profile
-                        dictionary[quality][t] = 1 - math.e ** (-velocity * t)
+                        dictionary[quality][t] = generated_quality
                 else:
                     qualities.append(quality)
                     self.recur_build(depth + 1, node, qualities, dictionary[quality], random_number)
@@ -97,13 +108,14 @@ class Generator:
                 if qualities:
                     # Convert the list of strings to floats
                     qualities = [float(quality) for quality in qualities]
-
                     # Get the average parent quality (this may not be what we want)
                     average_parent_quality = sum(qualities) / len(node.parents)
+                    print("Sum: {} -- Average: {} -- # Parents: {} -- NODE ID: {}".format(sum(qualities), average_parent_quality, len(node.parents), node.id))
 
                 return self.manual_override[node.id] * average_parent_quality
 
             else:
+                print("BAD")
                 return random_number
 
         else:
@@ -142,10 +154,11 @@ class Generator:
         :return: dictionary
         """
         dictionary = {'instances': {}}
-        # Take a random value from a uniform distribution; used for nodes without parents
-        c = np.random.uniform(low=self.uniform_low, high=self.uniform_high)
 
         for i in range(self.instances):
+            # Take a random value from a uniform distribution; used for nodes without parents
+            c = np.random.uniform(low=self.uniform_low, high=self.uniform_high)
+
             # Add some noise to the random value
             c = c + abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
 

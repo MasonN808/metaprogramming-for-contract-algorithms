@@ -1,3 +1,4 @@
+import copy
 import sys
 import numpy as np
 from time import sleep
@@ -6,8 +7,10 @@ from timeit import default_timer as timer
 from geneticalgorithm import geneticalgorithm as ga
 
 
+
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
+from classes.initialize_allocations import InitializeAllocations # noqa
 from classes import utils  # noqa
 from classes.node import Node  # noqa
 
@@ -103,7 +106,7 @@ class Test:
             # Sort the flattened list in ascending order
             sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=True)
 
-            for index, node_id in self.plot_nodes:
+            for index, node_id in enumerate(self.plot_nodes):
                 TIME[index].append(sorted_allocations_list[node_id].time)
 
         if self.contract_program.decimals is not None:
@@ -126,24 +129,36 @@ class Test:
         eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
 
         EU.append(eu_initial)
+        
+        # Take the outer allocations and declare any expression types with None allocations
+        copy_uniform_allocations = copy.deepcopy(self.contract_program.allocations)
 
-        # uniform_allocations_list = self.contract_program.allocations
-        # # TODO: This code is redundant (refactor)
-        # cleaned_allocations_list = []
-        # # Remove all none time allocations and append to list
-        # for allocations in uniform_allocations_list:
-        #     # remove nones
-        #     cleaned_allocations = utils.remove_nones_time_allocations(allocations)
-        #     cleaned_allocations_list.append(cleaned_allocations)
+        uniform_allocations_list = [copy_uniform_allocations, self.contract_program.child_programs[0].allocations,
+                                    self.contract_program.child_programs[1].allocations[:-1], self.contract_program.child_programs[2].allocations[:-1]]
 
-        # # Flatten all the allocations
-        # flattened_allocations_list = utils.flatten_list(cleaned_allocations_list)
+        # TODO: This code is redundant (refactor)
+        cleaned_allocations_list = []
+        # Remove all none time allocations and append to list
+        for index, allocations in enumerate(uniform_allocations_list):
+            # Remove nones
+            # Also remove the last time allocations of the different expressions
+            cleaned_allocations = utils.remove_nones_time_allocations(allocations)
+            if index != 0:
+                # Truncate the last element for all non functional expressions
+                cleaned_allocations = cleaned_allocations[:-1]
+            # utils.print_allocations(allocations)
+            cleaned_allocations_list.append(cleaned_allocations)
 
-        # # Sort the flattened list in ascending order
-        # sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=True)
+        # Flatten all the allocations
+        flattened_allocations_list = utils.flatten_list(cleaned_allocations_list)
 
-        for index, node_id in self.plot_nodes:
-            TIME[index].append(self.contract_program.allocations[node_id].time)
+        # Sort the flattened list in ascending order
+        sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=False)
+        print("SORTED ALLOCATIONS lIST: ")
+        utils.print_allocations(sorted_allocations_list)
+
+        for index, node_id in enumerate(self.plot_nodes):
+            TIME[index].append(sorted_allocations_list[node_id].time)
 
         if self.contract_program.decimals is not None:
             initial_time_allocations_outer = []
@@ -215,7 +230,7 @@ class Test:
 
             EU.append(eu_optimal)
 
-            EHC_allocations_list = [optimal_time_allocations_outer, optimal_time_allocations_inner_true, optimal_time_allocations_inner_false, optimal_time_allocations_inner_for]
+            EHC_allocations_list = [allocations[0], allocations[1], allocations[2], allocations[3]]
             # TODO: This code is redundant (refactor)
             cleaned_allocations_list = []
             # Remove all none time allocations and append to list
@@ -228,9 +243,11 @@ class Test:
             flattened_allocations_list = utils.flatten_list(cleaned_allocations_list)
 
             # Sort the flattened list in ascending order
-            sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=True)
+            sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=False)
+            print("SORTED ALLOCATIONS lIST: ")
+            utils.print_allocations(sorted_allocations_list)
 
-            for index, node_id in self.plot_nodes:
+            for index, node_id in enumerate(self.plot_nodes):
                 TIME[index].append(sorted_allocations_list[node_id].time)
 
             if self.contract_program.decimals is not None:

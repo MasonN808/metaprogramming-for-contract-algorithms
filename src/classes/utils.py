@@ -16,7 +16,7 @@ def find_node(node_id, dag) -> Node:
     for node in nodes:
         if node.id == node_id:
             return node
-    raise IndexError("Node not found with given id")
+    raise IndexError("Node not found with given id -> {}".format(node_id))
 
 
 def child_of_conditional(node) -> bool:
