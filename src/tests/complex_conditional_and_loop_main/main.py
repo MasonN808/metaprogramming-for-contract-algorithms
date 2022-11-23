@@ -487,7 +487,7 @@ if __name__ == "__main__":
                         print(sublist[method_index])
                         total[method_index] += sublist[method_index]
 
-            average_times = [total_time/ITERATIONS for total_time in total]
+            average_times = [total_time / ITERATIONS for total_time in total]
 
             # Plot results
             for node_index in range(0, len(plot_nodes)):

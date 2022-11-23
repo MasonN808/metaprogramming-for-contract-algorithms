@@ -7,10 +7,9 @@ from timeit import default_timer as timer
 from geneticalgorithm import geneticalgorithm as ga
 
 
-
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
-from classes.initialize_allocations import InitializeAllocations # noqa
+from classes.initialize_allocations import InitializeAllocations  # noqa
 from classes import utils  # noqa
 from classes.node import Node  # noqa
 
@@ -129,7 +128,7 @@ class Test:
         eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
 
         EU.append(eu_initial)
-        
+
         # Take the outer allocations and declare any expression types with None allocations
         copy_uniform_allocations = copy.deepcopy(self.contract_program.allocations)
 

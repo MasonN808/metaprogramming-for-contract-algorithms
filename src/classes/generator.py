@@ -91,7 +91,7 @@ class Generator:
                             generated_quality = 0
                         if generated_quality > 1:
                             generated_quality = 1
-                            
+
                         # Use this function to approximate the performance profile
                         dictionary[quality][t] = generated_quality
                 else:
