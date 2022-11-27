@@ -15,7 +15,7 @@ from classes.node import Node  # noqa
 
 
 class Test:
-    def __init__(self, contract_program, ppv, plot_type, plot_methods, plot_nodes):
+    def __init__(self, contract_program, ppv, plot_type=None, plot_methods=None, plot_nodes=None):
         self.contract_program = contract_program
         self.ppv = ppv
         self.plot_type = plot_type
@@ -74,8 +74,10 @@ class Test:
     def find_utility_and_allocations_main(self, initial_allocation, outer_program, verbose=False):
         # Data for plotting
         EU = []
+        # Get all the node_ids that aren't fors or conditionals
+        node_list = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
         # To monitor times for specific nodes
-        TIME = [[] for i in self.plot_nodes]
+        TIME = [[] for i in range(0, len(node_list))] # Remove 2 (TODO: THIS IS HARD CODED) for the for node and conditional node that are not anytime algos
         start = timer()
 
         betas = [1, .9, .8, .7, .6, .5, .4, .3, .2, .1, 0]
@@ -107,7 +109,7 @@ class Test:
             # Sort the flattened list in ascending order
             sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=True)
 
-            for index, node_id in enumerate(self.plot_nodes):
+            for index, node_id in enumerate(range(0, len(node_list))):
                 TIME[index].append(sorted_allocations_list[node_id].time)
 
         if self.contract_program.decimals is not None:
@@ -159,7 +161,7 @@ class Test:
         print("SORTED ALLOCATIONS lIST: ")
         utils.print_allocations(sorted_allocations_list)
 
-        for index, node_id in enumerate(self.plot_nodes):
+        for index, node_id in enumerate(range(0, len(node_list))):
             TIME[index].append(sorted_allocations_list[node_id].time)
 
         if self.contract_program.decimals is not None:
@@ -249,7 +251,7 @@ class Test:
             print("SORTED ALLOCATIONS lIST: ")
             utils.print_allocations(sorted_allocations_list)
 
-            for index, node_id in enumerate(self.plot_nodes):
+            for index, node_id in enumerate(range(0, len(node_list))):
                 TIME[index].append(sorted_allocations_list[node_id].time)
 
             if self.contract_program.decimals is not None:

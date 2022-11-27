@@ -111,7 +111,7 @@ class Generator:
                     # Get the average parent quality (this may not be what we want)
                     average_parent_quality = sum(qualities) / len(node.parents)
 
-                print("Sum: {} -- Average: {} -- # Parents: {} -- NODE ID: {}".format(sum(qualities), average_parent_quality, len(node.parents), node.id))
+                # print("Sum: {} -- Average: {} -- # Parents: {} -- NODE ID: {}".format(sum(qualities), average_parent_quality, len(node.parents), node.id))
                 return self.manual_override[node.id] * average_parent_quality
 
             else:

@@ -227,16 +227,17 @@ if __name__ == "__main__":
     #   - "all" => use all solution methods
     #   - "subset" => use PA(1), PA(.5), PA(0), Uniform, and EHC
 
-    plot_type = "box_whisker"
-    # Nodes to plot (only for bar plot types):
-    plot_nodes = [4, 8, 11]
-    plot_methods = "subset"
+    # plot_type = "box_whisker"
+    # # Nodes to plot (only for bar plot types):
+    # plot_nodes = [4, 8, 11]
+    # plot_methods = "subset"]
 
-    NUM_METHODS = 0
-    if (plot_methods == "subset"):
-        NUM_METHODS = 5
-    elif (plot_methods == "all"):
-        NUM_METHODS = 13
+    NUM_METHODS = 13
+
+    # NUM_METHODS = 0
+    # if (plot_methods == "subset"):
+    #     NUM_METHODS = 5
+    # elif (plot_methods == "all"):
 
     eu_list = [[] for i in range(0, NUM_METHODS)]
     time_list = [[] for i in range(0, NUM_METHODS)]
@@ -328,39 +329,56 @@ if __name__ == "__main__":
         node_outer_3.for_subprogram.subprogram_expression_type = "for"
 
         # Verify we have valid plot params
-        if (plot_type != "box_whisker" and plot_type != "bar"):
-            ValueError("Invalid plot type")
-        if (plot_methods != "all" and plot_methods != "subset"):
-            ValueError("Invalid plot methods value")
+        # if (plot_type != "box_whisker" and plot_type != "bar"):
+        #     ValueError("Invalid plot type")
+        # if (plot_methods != "all" and plot_methods != "subset"):
+        #     ValueError("Invalid plot methods value")
 
         # The input should be the outermost program
-        test = Test(program_outer, ppv, plot_type, plot_methods, plot_nodes)
+        #TODO: Get rid of None params later
+        test = Test(program_outer, ppv, plot_type=None, plot_methods=None, plot_nodes=None)
 
-        if (plot_type == "box_whisker"):
-            # if (plot_methods == "all"):
+        # Outputs embeded list of expected utilities and allocations
+        eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
 
-            # Test solution method expected utilities and allocations
-            eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
-            # Append the EUs appropriately to list in outer scope
-            for index in range(0, NUM_METHODS):
-                eu_list[index].append(eu_time[0][index])
-                time_list[index].append(eu_time[1][index])
+        file_eus = open('data/eu_data', 'w')
+        file_times = open('data/time_data', 'w')
 
-            # elif (plot_methods == "subset"):
-            #     eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
-            #     for index in range(0, NUM_METHODS):
-            #         eu_list[index].append(eu_time[0][index])
-            #         time_list[index].append(eu_time[1][index])
+        # create the csv writer
+        eu_writer = csv.writer(file_eus)
+        time_writer = csv.writer(file_eus)
 
-        elif (plot_type == "bar"):
-            # if (plot_methods == "all"):
-                # Test solution method expected utilities and allocations
+        # write a row to the csv file
+        eu_writer.writerow(eu_time[0])
+        time_writer.writerow(eu_time[1])
+
+        # close the file
+        file_eus.close()
+        file_times.close()
+        
+        # if (plot_type == "box_whisker"):
+        #     # if (plot_methods == "all"):
+
+        #     # Append the EUs appropriately to list in outer scope
+        #     for index in range(0, NUM_METHODS):
+        #         eu_list[index].append(eu_time[0][index])
+        #         time_list[index].append(eu_time[1][index])
+
+        #     # elif (plot_methods == "subset"):
+        #     #     eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
+        #     #     for index in range(0, NUM_METHODS):
+        #     #         eu_list[index].append(eu_time[0][index])
+        #     #         time_list[index].append(eu_time[1][index])
+
+        # elif (plot_type == "bar"):
+        #     # if (plot_methods == "all"):
+        #         # Test solution method expected utilities and allocations
                 
-            eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
-                # Append the EUs appropriately to list in outer scope
-            for index in range(0, len(plot_nodes)):
-                eu_list[index].append(eu_time[0][index])
-                time_list[index].append(eu_time[1][index])
+        #     eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
+        #         # Append the EUs appropriately to list in outer scope
+        #     for index in range(0, len(plot_nodes)):
+        #         eu_list[index].append(eu_time[0][index])
+        #         time_list[index].append(eu_time[1][index])
 
             # elif (plot_methods == "subset"):
             #     eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)

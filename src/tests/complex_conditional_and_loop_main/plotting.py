@@ -11,6 +11,19 @@ if __name__ == "__main__":
     # Nodes to plot (only for bar plot types):
     plot_nodes = [4, 8, 11]
     plot_methods = "subset"
+    NUM_METHODS
+
+    if (plot_type == "box_whisker"):
+        # Append the EUs appropriately to list in outer scope
+        for index in range(0, NUM_METHODS):
+            eu_list[index].append(eu_time[0][index])
+            time_list[index].append(eu_time[1][index])
+
+    elif (plot_type == "bar"):
+        # Append the EUs appropriately to list in outer scope
+        for index in range(0, len(plot_nodes)):
+            eu_list[index].append(eu_time[0][index])
+            time_list[index].append(eu_time[1][index])
 
     # File to put plot
     FILENAME = '{}-{}-iterations{}.png'.format(plot_type, plot_methods, ITERATIONS)
