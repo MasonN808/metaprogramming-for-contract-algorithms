@@ -74,14 +74,16 @@ class Test:
     def find_utility_and_allocations_main(self, initial_allocation, outer_program, verbose=False):
         # Data for plotting
         EU = []
+        # To monitor times for specific nodes
         TIME = [[] for i in self.plot_nodes]
         start = timer()
 
+        betas = [1, .9, .8, .7, .6, .5, .4, .3, .2, .1, 0]
         # Betas for tangent
-        if (self.plot_methods == "all"):
-            betas = [1, .9, .8, .7, .6, .5, .4, .3, .2, .1, 0]
-        elif (self.plot_methods == "subset"):
-            betas = [1, .5, 0]
+        # if (self.plot_methods == "all"):
+        #     betas = [1, .9, .8, .7, .6, .5, .4, .3, .2, .1, 0]
+        # elif (self.plot_methods == "subset"):
+        #     betas = [1, .5, 0]
 
         # Get the EU for the proportional allocation method
         for beta in betas:
@@ -153,6 +155,7 @@ class Test:
 
         # Sort the flattened list in ascending order
         sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=False)
+
         print("SORTED ALLOCATIONS lIST: ")
         utils.print_allocations(sorted_allocations_list)
 

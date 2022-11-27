@@ -84,7 +84,7 @@ class Generator:
                         # Add some noise to the qualities for each instance
                         noise = np.random.normal(loc=0, scale=.025)
 
-                        generated_quality = (1 - math.e ** (-velocity * t)) + noise
+                        generated_quality = (1 - math.e ** (-velocity * t))
 
                         # Check bounds and truncate
                         if generated_quality < 0:
@@ -110,12 +110,11 @@ class Generator:
                     qualities = [float(quality) for quality in qualities]
                     # Get the average parent quality (this may not be what we want)
                     average_parent_quality = sum(qualities) / len(node.parents)
-                    print("Sum: {} -- Average: {} -- # Parents: {} -- NODE ID: {}".format(sum(qualities), average_parent_quality, len(node.parents), node.id))
 
+                print("Sum: {} -- Average: {} -- # Parents: {} -- NODE ID: {}".format(sum(qualities), average_parent_quality, len(node.parents), node.id))
                 return self.manual_override[node.id] * average_parent_quality
 
             else:
-                print("BAD")
                 return random_number
 
         else:
@@ -157,10 +156,11 @@ class Generator:
 
         for i in range(self.instances):
             # Take a random value from a uniform distribution; used for nodes without parents
-            c = np.random.uniform(low=self.uniform_low, high=self.uniform_high)
+            # c = np.random.uniform(low=self.uniform_low, high=self.uniform_high)
 
             # Add some noise to the random value
-            c = c + abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
+            # c = c + abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
+            c = abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
 
             # Make an embedded dictionary for each instance of the node in the DAG
             dictionary_inner = self.simulate_performance_profile(c, node)

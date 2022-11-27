@@ -156,10 +156,8 @@ class ContractProgram:
                 if (best_allocations_inner):
                     copied_branch_allocations = [copy.deepcopy(node.for_subprogram.allocations)]
                     # Replace the allocations with the previous iteration's allocations
-                    # This is hard coded for a program with one conditional and a for
+                    # TODO: This is hard coded for a program with one conditional and a for
                     node.for_subprogram.allocations = best_allocations_inner[2]
-                    # print("Best Allocations innner for: ")
-                    # utils.print_allocations(node.for_subprogram.allocations)
 
                 # Since in for node of the outermost contract program, evaluate the inner probability of the child for subprogram
                 probability_and_qualities = self.performance_profile.query_probability_and_quality_from_for_expression(node)
@@ -564,11 +562,20 @@ class ContractProgram:
                 print("BEST Allocation: {}".format(best_allocation * self.scale))
                 for allocations in possible_local_max:
                     if self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) == best_allocation:
+                        utils.print_allocations(allocations[0])
+                        utils.print_allocations(allocations[1])
+                        utils.print_allocations(allocations[2])
+                        utils.print_allocations(allocations[3])
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(allocations[0])
                         self.best_allocations_inner = [copy.deepcopy(allocations[1]), copy.deepcopy(allocations[2]), copy.deepcopy(allocations[3])]
-                        print("MADE SWITCH HERE")
+                        utils.print_allocations(allocations[0])
+                        utils.print_allocations(allocations[1])
+                        utils.print_allocations(allocations[2])
+                        utils.print_allocations(allocations[3])
                         print(self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]))
+                        print(best_allocation)
+                        print("MADE SWITCH HERE")
                         print("EU Validation: {}".format(self.global_expected_utility(self.allocations, self.best_allocations_inner)))
                         break
 
