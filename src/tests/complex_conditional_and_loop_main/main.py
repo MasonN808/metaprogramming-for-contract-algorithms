@@ -1,3 +1,6 @@
+import json
+import os
+import pickle
 import sys
 from matplotlib import pyplot as plt
 import numpy as np
@@ -32,6 +35,11 @@ if __name__ == "__main__":
     EXPECTED_UTILITY_TYPE = "approximate"
     # Initialize a list of all possible qualities
     POSSIBLE_QUALITIES = np.arange(0, 1 + QUALITY_INTERVAL, QUALITY_INTERVAL)
+    # The number of methods for experimentation
+    NUM_METHODS = 13
+    # For number of different performance profiles for experiments
+    ITERATIONS = 89
+
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (for subtree)
@@ -82,7 +90,7 @@ if __name__ == "__main__":
     node_inner_true_1 = Node(4, [node_inner_true_3], [], expression_type="contract", in_child_contract_program=True)
     node_inner_true_1.in_true = True
     # Root Node
-    node_inner_true_root = Node(1, [node_inner_true_1, node_inner_true_2], [], expression_type="contract",
+    node_inner_true_root = Node(1, [node_inner_true_2, node_inner_true_3], [], expression_type="contract",
                                 in_child_contract_program=True)
     node_inner_true_root.in_true = True
     # Add the children
@@ -214,8 +222,6 @@ if __name__ == "__main__":
     nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8, node_9, node_10, node_11, node_12, node_13, node_14]
     program_dag = DirectedAcyclicGraph(nodes, root)
 
-    ITERATIONS = 1
-
     # Use a Dirichlet distribution to generate random ppvs
     performance_profile_velocities = utils.dirichlet_ppv(iterations=ITERATIONS, dag=program_dag, alpha=.9, constant=10)
 
@@ -232,7 +238,7 @@ if __name__ == "__main__":
     # plot_nodes = [4, 8, 11]
     # plot_methods = "subset"]
 
-    NUM_METHODS = 13
+
 
     # NUM_METHODS = 0
     # if (plot_methods == "subset"):
@@ -328,63 +334,40 @@ if __name__ == "__main__":
         node_outer_1.false_subprogram.subprogram_expression_type = "conditional"
         node_outer_3.for_subprogram.subprogram_expression_type = "for"
 
-        # Verify we have valid plot params
-        # if (plot_type != "box_whisker" and plot_type != "bar"):
-        #     ValueError("Invalid plot type")
-        # if (plot_methods != "all" and plot_methods != "subset"):
-        #     ValueError("Invalid plot methods value")
+        # Get all the node_ids that aren't fors or conditionals
+        node_indicies_list = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
 
-        # The input should be the outermost program
         #TODO: Get rid of None params later
-        test = Test(program_outer, ppv, plot_type=None, plot_methods=None, plot_nodes=None)
+        test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, plot_type=None, plot_methods=None, plot_nodes=None)
 
         # Outputs embeded list of expected utilities and allocations
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
 
-        file_eus = open('data/eu_data', 'w')
-        file_times = open('data/time_data', 'w')
+        # Check if data files exist
+        if not os.path.isfile("data/eu_data.txt"):
+            with open('data/eu_data.txt', 'wb') as file_eus:
+                pickle.dump([[] for i in range(0, NUM_METHODS)], file_eus)
 
-        # create the csv writer
-        eu_writer = csv.writer(file_eus)
-        time_writer = csv.writer(file_eus)
+        if not os.path.isfile("data/time_data.txt"):
+            with open('data/time_data.txt', 'wb') as file_times:
+                pickle.dump([[[] for j in range(0, len(node_indicies_list))] for i in range(0, NUM_METHODS)], file_times)
 
-        # write a row to the csv file
-        eu_writer.writerow(eu_time[0])
-        time_writer.writerow(eu_time[1])
-
-        # close the file
-        file_eus.close()
-        file_times.close()
+        # Open files in binary mode with wb instead of w
+        file_eus = open('data/eu_data.txt', 'rb')
+        file_times = open('data/time_data.txt', 'rb')
         
-        # if (plot_type == "box_whisker"):
-        #     # if (plot_methods == "all"):
+        # Load the saved embedded lists to append new data
+        pickled_eu_list = pickle.load(file_eus)
+        pickled_time_list = pickle.load(file_times)
 
-        #     # Append the EUs appropriately to list in outer scope
-        #     for index in range(0, NUM_METHODS):
-        #         eu_list[index].append(eu_time[0][index])
-        #         time_list[index].append(eu_time[1][index])
+        # Append the EUs appropriately to list in outer scope
+        for index in range(0, NUM_METHODS):
+            pickled_eu_list[index].append(eu_time[0][index])
+            for node in range(0, len(node_indicies_list)):
+                pickled_time_list[index][node].append(eu_time[1][index][node])
 
-        #     # elif (plot_methods == "subset"):
-        #     #     eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
-        #     #     for index in range(0, NUM_METHODS):
-        #     #         eu_list[index].append(eu_time[0][index])
-        #     #         time_list[index].append(eu_time[1][index])
+        with open('data/eu_data.txt', 'wb') as file_eus:
+            pickle.dump(pickled_eu_list, file_eus)
 
-        # elif (plot_type == "bar"):
-        #     # if (plot_methods == "all"):
-        #         # Test solution method expected utilities and allocations
-                
-        #     eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
-        #         # Append the EUs appropriately to list in outer scope
-        #     for index in range(0, len(plot_nodes)):
-        #         eu_list[index].append(eu_time[0][index])
-        #         time_list[index].append(eu_time[1][index])
-
-            # elif (plot_methods == "subset"):
-            #     eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
-            #     # print(eu_time[1])
-            #     for index in range(0, len(plot_nodes)):
-            #         eu_list[index].append(eu_time[0][index])
-            #         time_list[index].append(eu_time[1][index])
-
-    # print(eu_list)
+        with open('data/time_data.txt', 'wb') as file_times:
+            pickle.dump(pickled_time_list, file_times)

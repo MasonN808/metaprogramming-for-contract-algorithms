@@ -558,25 +558,25 @@ class ContractProgram:
             # arg max here
             if possible_local_max:
                 best_allocation = max([self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) for allocations in possible_local_max])
-                print("OTHER Allocations: {}".format([self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) * self.scale for allocations in possible_local_max]))
-                print("BEST Allocation: {}".format(best_allocation * self.scale))
+                # print("OTHER Allocations: {}".format([self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) * self.scale for allocations in possible_local_max]))
+                # print("BEST Allocation: {}".format(best_allocation * self.scale))
                 for allocations in possible_local_max:
                     if self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) == best_allocation:
-                        utils.print_allocations(allocations[0])
-                        utils.print_allocations(allocations[1])
-                        utils.print_allocations(allocations[2])
-                        utils.print_allocations(allocations[3])
+                        # utils.print_allocations(allocations[0])
+                        # utils.print_allocations(allocations[1])
+                        # utils.print_allocations(allocations[2])
+                        # utils.print_allocations(allocations[3])
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(allocations[0])
                         self.best_allocations_inner = [copy.deepcopy(allocations[1]), copy.deepcopy(allocations[2]), copy.deepcopy(allocations[3])]
-                        utils.print_allocations(allocations[0])
-                        utils.print_allocations(allocations[1])
-                        utils.print_allocations(allocations[2])
-                        utils.print_allocations(allocations[3])
-                        print(self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]))
-                        print(best_allocation)
-                        print("MADE SWITCH HERE")
-                        print("EU Validation: {}".format(self.global_expected_utility(self.allocations, self.best_allocations_inner)))
+                        # utils.print_allocations(allocations[0])
+                        # utils.print_allocations(allocations[1])
+                        # utils.print_allocations(allocations[2])
+                        # utils.print_allocations(allocations[3])
+                        # print(self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]))
+                        # print(best_allocation)
+                        # print("MADE SWITCH HERE")
+                        # print("EU Validation: {}".format(self.global_expected_utility(self.allocations, self.best_allocations_inner)))
                         break
 
             else:
