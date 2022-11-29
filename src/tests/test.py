@@ -80,7 +80,7 @@ class Test:
         TIME = [[] for i in range(0, len(self.node_indicies_list))] # Remove 2 (TODO: THIS IS HARD CODED) for the for node and conditional node that are not anytime algos
         start = timer()
 
-        betas = [1, .9, .8, .7, .6, .5, .4, .3, .2, .1, 0]
+        betas = [10, 5, 4, 3, 2, 1, .8, .6, .5, .1, 0]
         # Betas for tangent
         # if (self.plot_methods == "all"):
         #     betas = [1, .9, .8, .7, .6, .5, .4, .3, .2, .1, 0]
@@ -109,7 +109,7 @@ class Test:
             # Sort the flattened list in ascending order
             sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=True)
 
-            for index, node_id in enumerate(range(0, len(self.node_indicies_list))):
+            for index, node_id in enumerate(self.node_indicies_list):
                 TIME[index].append(sorted_allocations_list[node_id].time)
 
         if self.contract_program.decimals is not None:
@@ -158,10 +158,10 @@ class Test:
         # Sort the flattened list in ascending order
         sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=False)
 
-        print("SORTED ALLOCATIONS lIST: ")
-        utils.print_allocations(sorted_allocations_list)
+        # print("SORTED ALLOCATIONS lIST: ")
+        # utils.print_allocations(sorted_allocations_list)
 
-        for index, node_id in enumerate(range(0, len(self.node_indicies_list))):
+        for index, node_id in enumerate(self.node_indicies_list):
             TIME[index].append(sorted_allocations_list[node_id].time)
 
         if self.contract_program.decimals is not None:
@@ -248,10 +248,10 @@ class Test:
 
             # Sort the flattened list in ascending order
             sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=False)
-            print("SORTED ALLOCATIONS lIST: ")
-            utils.print_allocations(sorted_allocations_list)
+            # print("SORTED ALLOCATIONS lIST: ")
+            # utils.print_allocations(sorted_allocations_list)
 
-            for index, node_id in enumerate(range(0, len(self.node_indicies_list))):
+            for index, node_id in enumerate(self.node_indicies_list):
                 TIME[index].append(sorted_allocations_list[node_id].time)
 
             if self.contract_program.decimals is not None:

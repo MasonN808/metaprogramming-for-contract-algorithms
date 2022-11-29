@@ -177,6 +177,7 @@ def dirichlet_ppv(iterations, dag, alpha=1, constant=10):
                 accumlated_velocities.append("for")
             else:
                 accumlated_velocities.append(velocities_list[for_indices[index] - len(conditional_indices) + 1])
+                
         # Place the sublist in the list
         velocities_list[for_indices[0] - len(conditional_indices)] = accumlated_velocities
         # Remove the duplicates in outer list
@@ -184,7 +185,7 @@ def dirichlet_ppv(iterations, dag, alpha=1, constant=10):
             velocities_list.pop(for_indices[0] - len(conditional_indices) + 1)
 
         accumulated_ppv.append(velocities_list)
-        print(velocities_list)
+
     return accumulated_ppv
 
 

@@ -38,8 +38,7 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 89
-
+    ITERATIONS = 3
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (for subtree)
@@ -225,25 +224,14 @@ if __name__ == "__main__":
     # Use a Dirichlet distribution to generate random ppvs
     performance_profile_velocities = utils.dirichlet_ppv(iterations=ITERATIONS, dag=program_dag, alpha=.9, constant=10)
 
-    # Plot types:
-    #   - "box_whisker" => a box and whisker plot of EU for our contract program on differing solution methods
-    #   - "bar" => a bar graph of the average time allocation over N simulations for a particular node n_i on differing solution methods
+    # Initialize the velocities for the quality mappings in a list
+    # Need to initialize it after adjusting program_dag
+    # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
+    # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
+    # performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10],
+    #                                   [10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
 
-    # Plot methods:
-    #   - "all" => use all solution methods
-    #   - "subset" => use PA(1), PA(.5), PA(0), Uniform, and EHC
-
-    # plot_type = "box_whisker"
-    # # Nodes to plot (only for bar plot types):
-    # plot_nodes = [4, 8, 11]
-    # plot_methods = "subset"]
-
-
-
-    # NUM_METHODS = 0
-    # if (plot_methods == "subset"):
-    #     NUM_METHODS = 5
-    # elif (plot_methods == "all"):
+    # performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
 
     eu_list = [[] for i in range(0, NUM_METHODS)]
     time_list = [[] for i in range(0, NUM_METHODS)]
@@ -273,6 +261,8 @@ if __name__ == "__main__":
             # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
             # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
             generator.activate_manual_override(ppv)
+            # print("PPV LENGTH {}".format(len(ppv)))
+            # print("PPV {}".format(ppv))
 
             # Generate the nodes' quality mappings
             nodes = generator.generate_nodes()  # Return a list of file names of the nodes
@@ -341,33 +331,38 @@ if __name__ == "__main__":
         test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, plot_type=None, plot_methods=None, plot_nodes=None)
 
         # Outputs embeded list of expected utilities and allocations
-        eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=False)
+        eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
+        # print("TIMES:")
+        # print(eu_time[1])
 
-        # Check if data files exist
-        if not os.path.isfile("data/eu_data.txt"):
-            with open('data/eu_data.txt', 'wb') as file_eus:
-                pickle.dump([[] for i in range(0, NUM_METHODS)], file_eus)
+        save_to_external = True
 
-        if not os.path.isfile("data/time_data.txt"):
-            with open('data/time_data.txt', 'wb') as file_times:
-                pickle.dump([[[] for j in range(0, len(node_indicies_list))] for i in range(0, NUM_METHODS)], file_times)
+        if save_to_external:
+            # Check if data files exist
+            if not os.path.isfile("data/eu_data_2.txt"):
+                with open('data/eu_data_2.txt', 'wb') as file_eus:
+                    pickle.dump([[] for i in range(0, NUM_METHODS)], file_eus)
 
-        # Open files in binary mode with wb instead of w
-        file_eus = open('data/eu_data.txt', 'rb')
-        file_times = open('data/time_data.txt', 'rb')
-        
-        # Load the saved embedded lists to append new data
-        pickled_eu_list = pickle.load(file_eus)
-        pickled_time_list = pickle.load(file_times)
+            if not os.path.isfile("data/time_data_2.txt"):
+                with open('data/time_data_2.txt', 'wb') as file_times:
+                    pickle.dump([[[] for j in range(0, len(node_indicies_list))] for i in range(0, NUM_METHODS)], file_times)
 
-        # Append the EUs appropriately to list in outer scope
-        for index in range(0, NUM_METHODS):
-            pickled_eu_list[index].append(eu_time[0][index])
-            for node in range(0, len(node_indicies_list)):
-                pickled_time_list[index][node].append(eu_time[1][index][node])
+            # Open files in binary mode with wb instead of w
+            file_eus = open('data/eu_data_2.txt', 'rb')
+            file_times = open('data/time_data_2.txt', 'rb')
+            
+            # Load the saved embedded lists to append new data
+            pickled_eu_list = pickle.load(file_eus)
+            pickled_time_list = pickle.load(file_times)
 
-        with open('data/eu_data.txt', 'wb') as file_eus:
-            pickle.dump(pickled_eu_list, file_eus)
+            # Append the EUs appropriately to list in outer scope
+            for method_index in range(0, NUM_METHODS):
+                pickled_eu_list[method_index].append(eu_time[0][method_index])
+                for node in range(0, len(node_indicies_list)):
+                    pickled_time_list[method_index][node].append(eu_time[1][node][method_index])
 
-        with open('data/time_data.txt', 'wb') as file_times:
-            pickle.dump(pickled_time_list, file_times)
+            with open('data/eu_data_2.txt', 'wb') as file_eus:
+                pickle.dump(pickled_eu_list, file_eus)
+
+            with open('data/time_data_2.txt', 'wb') as file_times:
+                pickle.dump(pickled_time_list, file_times)

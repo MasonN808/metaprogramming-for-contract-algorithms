@@ -460,7 +460,7 @@ class ContractProgram:
 
             # Remove the Nones in the list before taking permutations
             refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
-
+            best_allocations_changed = False
             # Go through all permutations of the time allocations
             for permutation in permutations(refactored_allocations, 2):
 
@@ -525,12 +525,16 @@ class ContractProgram:
                     eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner)
 
                     if eu_adjusted > eu_original:
-                        possible_local_max.append([adjusted_allocations, true_allocations, false_allocations, for_allocations])
+                        self.allocations = copy.deepcopy(adjusted_allocations)
+                        self.best_allocations_inner = [copy.deepcopy(true_allocations), copy.deepcopy(false_allocations), copy.deepcopy(for_allocations)]
+                        # possible_local_max.append([adjusted_allocations, true_allocations, false_allocations, for_allocations])
+                        best_allocations_changed = True
 
-                    # Reset the branches of the inner conditional (go back to the original allocations for the next permutation)
-                    true_allocations = self.best_allocations_inner[0]
-                    false_allocations = self.best_allocations_inner[1]
-                    for_allocations = self.best_allocations_inner[2]
+                    else:
+                        # Reset the branches of the inner conditional (go back to the original allocations for the next permutation)
+                        true_allocations = copy.deepcopy(self.best_allocations_inner[0])
+                        false_allocations = copy.deepcopy(self.best_allocations_inner[1])
+                        for_allocations = copy.deepcopy(self.best_allocations_inner[2])
 
                     # scale the EUs
                     eu_adjusted *= self.scale
@@ -556,30 +560,30 @@ class ContractProgram:
                         print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations_outer))
 
             # arg max here
-            if possible_local_max:
-                best_allocation = max([self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) for allocations in possible_local_max])
-                # print("OTHER Allocations: {}".format([self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) * self.scale for allocations in possible_local_max]))
-                # print("BEST Allocation: {}".format(best_allocation * self.scale))
-                for allocations in possible_local_max:
-                    if self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) == best_allocation:
-                        # utils.print_allocations(allocations[0])
-                        # utils.print_allocations(allocations[1])
-                        # utils.print_allocations(allocations[2])
-                        # utils.print_allocations(allocations[3])
-                        # Make a deep copy to avoid pointers to the same list
-                        self.allocations = copy.deepcopy(allocations[0])
-                        self.best_allocations_inner = [copy.deepcopy(allocations[1]), copy.deepcopy(allocations[2]), copy.deepcopy(allocations[3])]
-                        # utils.print_allocations(allocations[0])
-                        # utils.print_allocations(allocations[1])
-                        # utils.print_allocations(allocations[2])
-                        # utils.print_allocations(allocations[3])
-                        # print(self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]))
-                        # print(best_allocation)
-                        # print("MADE SWITCH HERE")
-                        # print("EU Validation: {}".format(self.global_expected_utility(self.allocations, self.best_allocations_inner)))
-                        break
+            # if possible_local_max:
+            #     best_allocation = max([self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) for allocations in possible_local_max])
+            #     # print("OTHER Allocations: {}".format([self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) * self.scale for allocations in possible_local_max]))
+            #     # print("BEST Allocation: {}".format(best_allocation * self.scale))
+            #     for allocations in possible_local_max:
+            #         if self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) == best_allocation:
+            #             # utils.print_allocations(allocations[0])
+            #             # utils.print_allocations(allocations[1])
+            #             # utils.print_allocations(allocations[2])
+            #             # utils.print_allocations(allocations[3])
+            #             # Make a deep copy to avoid pointers to the same list
+            #             self.allocations = copy.deepcopy(allocations[0])
+            #             self.best_allocations_inner = [copy.deepcopy(allocations[1]), copy.deepcopy(allocations[2]), copy.deepcopy(allocations[3])]
+            #             # utils.print_allocations(allocations[0])
+            #             # utils.print_allocations(allocations[1])
+            #             # utils.print_allocations(allocations[2])
+            #             # utils.print_allocations(allocations[3])
+            #             # print(self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]))
+            #             # print(best_allocation)
+            #             # print("MADE SWITCH HERE")
+            #             # print("EU Validation: {}".format(self.global_expected_utility(self.allocations, self.best_allocations_inner)))
+            #             break
 
-            else:
+            if not best_allocations_changed:
                 time_switched = time_switched / decay
 
         return [self.allocations, self.best_allocations_inner[0], self.best_allocations_inner[1], self.best_allocations_inner[2]]
@@ -612,19 +616,24 @@ class ContractProgram:
         ppv = copy.deepcopy(self.performance_profile_velocities)
         flattend_ppv = utils.flatten_list(ppv)
 
-        # Get rid of all the strings
+        # Get rid of all the strings (e.g., conditionals and fors)
         ppv_no_strings = [velocity for velocity in flattend_ppv if not isinstance(velocity, str)]
-
-        # Use the inverse tangent function to transform coefficients from (0, infinity) -> (0,1)
-        ppv_transformed = [1 - beta * (math.atan(c) / (math.pi / 2)) for c in ppv_no_strings]
+        # print("PPV NO STRINGS: {}".format(ppv_no_strings))
+        print(len(ppv_no_strings))
+        # Use the tangent function to transform coefficients from (0, infinity) -> (0,1)
+        ppv_transformed = [1 - (math.atan(beta * c) / (math.pi / 2)) for c in ppv_no_strings]
 
         true_indices = [1, 3, 4, 5]
         false_indices = [2, 6]
+        # Make sure to reduce the indices since we removed strings from ppv
         for_indices = [9, 10, 11, 12, 13]
 
         # Make sure that the left and right branches get the same time allocation
         true_sum = 0
         false_sum = 0
+
+        # if sum(ppv_transformed) == 0:
+        #     ppv_transformed = [1 for c in ppv_no_strings]
 
         for index in true_indices:
             true_sum += ppv_transformed[index]
@@ -647,6 +656,7 @@ class ContractProgram:
 
         # Get the coefficients proportinal to the budget and ...
         # Subtract one of the sums of the branches since that double count is put into the budget
+        
         budget_proportion = taxed_budget / (sum(ppv_transformed) - transformed_branch_sum)
 
         # Append the conditional node to the lists
@@ -701,7 +711,12 @@ class ContractProgram:
             self.child_programs[child_index].allocations = allocations[child_index]
 
         self.allocations = proportional_allocations_outer
-
+        print("---------------------")
+        print(ppv_transformed)
+        utils.print_allocations(proportional_allocations_outer)
+        utils.print_allocations(proportional_allocations_true)
+        utils.print_allocations(proportional_allocations_false)
+        utils.print_allocations(proportional_allocations_for)
         return [proportional_allocations_outer, proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
 
     def proportional_allocation_division(self, beta=.2) -> List[float]:

@@ -82,7 +82,9 @@ class Generator:
 
                     for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
                         # Add some noise to the qualities for each instance
-                        noise = np.random.normal(loc=0, scale=.025)
+                        noise = np.random.normal(loc=0, scale=.01)
+
+                        # generated_quality = (1 - math.e ** (-(velocity + noise) * t))
 
                         generated_quality = (1 - math.e ** (-velocity * t))
 
