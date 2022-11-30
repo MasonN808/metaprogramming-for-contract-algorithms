@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 3
+    ITERATIONS = 40
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (for subtree)
@@ -332,24 +332,27 @@ if __name__ == "__main__":
 
         # Outputs embeded list of expected utilities and allocations
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
-        # print("TIMES:")
-        # print(eu_time[1])
+        print("TIMES:")
+        print(eu_time[1])
+        print(len(eu_time[1]))
+        print(len(eu_time[1][0]))
 
         save_to_external = True
 
         if save_to_external:
             # Check if data files exist
-            if not os.path.isfile("data/eu_data_2.txt"):
-                with open('data/eu_data_2.txt', 'wb') as file_eus:
+            if not os.path.isfile("data/eu_data_4.txt"):
+                with open('data/eu_data_4.txt', 'wb') as file_eus:
                     pickle.dump([[] for i in range(0, NUM_METHODS)], file_eus)
 
-            if not os.path.isfile("data/time_data_2.txt"):
-                with open('data/time_data_2.txt', 'wb') as file_times:
-                    pickle.dump([[[] for j in range(0, len(node_indicies_list))] for i in range(0, NUM_METHODS)], file_times)
+            if not os.path.isfile("data/time_data_4.txt"):
+                with open('data/time_data_4.txt', 'wb') as file_times:
+                    # pickle.dump([[[] for j in range(0, len(node_indicies_list))] for i in range(0, NUM_METHODS)], file_times)
+                    pickle.dump([[[] for j in range(0, NUM_METHODS)] for i in range(0, len(node_indicies_list))], file_times)
 
             # Open files in binary mode with wb instead of w
-            file_eus = open('data/eu_data_2.txt', 'rb')
-            file_times = open('data/time_data_2.txt', 'rb')
+            file_eus = open('data/eu_data_4.txt', 'rb')
+            file_times = open('data/time_data_4.txt', 'rb')
             
             # Load the saved embedded lists to append new data
             pickled_eu_list = pickle.load(file_eus)
@@ -359,10 +362,10 @@ if __name__ == "__main__":
             for method_index in range(0, NUM_METHODS):
                 pickled_eu_list[method_index].append(eu_time[0][method_index])
                 for node in range(0, len(node_indicies_list)):
-                    pickled_time_list[method_index][node].append(eu_time[1][node][method_index])
+                    pickled_time_list[node][method_index].append(eu_time[1][node][method_index])
 
-            with open('data/eu_data_2.txt', 'wb') as file_eus:
+            with open('data/eu_data_4.txt', 'wb') as file_eus:
                 pickle.dump(pickled_eu_list, file_eus)
 
-            with open('data/time_data_2.txt', 'wb') as file_times:
+            with open('data/time_data_4.txt', 'wb') as file_times:
                 pickle.dump(pickled_time_list, file_times)

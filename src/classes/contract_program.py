@@ -619,7 +619,7 @@ class ContractProgram:
         # Get rid of all the strings (e.g., conditionals and fors)
         ppv_no_strings = [velocity for velocity in flattend_ppv if not isinstance(velocity, str)]
         # print("PPV NO STRINGS: {}".format(ppv_no_strings))
-        print(len(ppv_no_strings))
+        # print(len(ppv_no_strings))
         # Use the tangent function to transform coefficients from (0, infinity) -> (0,1)
         ppv_transformed = [1 - (math.atan(beta * c) / (math.pi / 2)) for c in ppv_no_strings]
 
@@ -656,7 +656,6 @@ class ContractProgram:
 
         # Get the coefficients proportinal to the budget and ...
         # Subtract one of the sums of the branches since that double count is put into the budget
-        
         budget_proportion = taxed_budget / (sum(ppv_transformed) - transformed_branch_sum)
 
         # Append the conditional node to the lists
@@ -689,7 +688,7 @@ class ContractProgram:
         proportional_allocations_for = []
         for i in range(0, 15):
             if (i in for_indices):
-                if (for_indices.index(i) == len(for_indices) - 1):
+                if (for_indices.index(i) == len(for_indices)-1):
                     proportional_allocations_for.append(TimeAllocation(i, 0))
                 else:
                     # subtract 1 from the index since we encountered a conditional prior
@@ -712,7 +711,8 @@ class ContractProgram:
 
         self.allocations = proportional_allocations_outer
         print("---------------------")
-        print(ppv_transformed)
+        print("RAW: {}".format(ppv_no_strings))
+        print("TRANSFORMED: {}".format(ppv_transformed))
         utils.print_allocations(proportional_allocations_outer)
         utils.print_allocations(proportional_allocations_true)
         utils.print_allocations(proportional_allocations_false)
