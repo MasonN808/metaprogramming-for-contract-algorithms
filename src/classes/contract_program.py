@@ -456,8 +456,6 @@ class ContractProgram:
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
 
         while time_switched > threshold:
-            possible_local_max = []
-
             # Remove the Nones in the list before taking permutations
             refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
             best_allocations_changed = False
@@ -632,9 +630,6 @@ class ContractProgram:
         true_sum = 0
         false_sum = 0
 
-        # if sum(ppv_transformed) == 0:
-        #     ppv_transformed = [1 for c in ppv_no_strings]
-
         for index in true_indices:
             true_sum += ppv_transformed[index]
         for index in false_indices:
@@ -688,7 +683,7 @@ class ContractProgram:
         proportional_allocations_for = []
         for i in range(0, 15):
             if (i in for_indices):
-                if (for_indices.index(i) == len(for_indices)-1):
+                if (for_indices.index(i) == len(for_indices) - 1):
                     proportional_allocations_for.append(TimeAllocation(i, 0))
                 else:
                     # subtract 1 from the index since we encountered a conditional prior

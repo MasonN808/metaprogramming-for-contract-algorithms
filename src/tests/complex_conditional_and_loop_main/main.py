@@ -1,10 +1,7 @@
-import json
 import os
 import pickle
 import sys
-from matplotlib import pyplot as plt
 import numpy as np
-import csv
 
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
@@ -222,8 +219,12 @@ if __name__ == "__main__":
     program_dag = DirectedAcyclicGraph(nodes, root)
 
     # Use a Dirichlet distribution to generate random ppvs
-    performance_profile_velocities = utils.dirichlet_ppv(iterations=ITERATIONS, dag=program_dag, alpha=.9, constant=10)
+    # performance_profile_velocities = utils.dirichlet_ppv(iterations=ITERATIONS, dag=program_dag, alpha=.9, constant=10)
 
+    # Use an Analysis ppv to test the avaerage time allocations on varying Cs for a given node
+    c_list = np.arange(.1, 5.1, .2)
+    c_node_id = 6
+    performance_profile_velocities = utils.analysis_ppv(node_id=c_node_id, dag=program_dag, c_list=c_list, constant=1)
     # Initialize the velocities for the quality mappings in a list
     # Need to initialize it after adjusting program_dag
     # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
@@ -233,10 +234,11 @@ if __name__ == "__main__":
 
     # performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
 
-    eu_list = [[] for i in range(0, NUM_METHODS)]
-    time_list = [[] for i in range(0, NUM_METHODS)]
+    # eu_list = [[] for i in range(0, NUM_METHODS)]
+    # time_list = [[] for i in range(0, NUM_METHODS)]
+    times_on_c = [[] for c in range(0, len(c_list))]
 
-    for ppv in performance_profile_velocities:
+    for ppv_index, ppv in enumerate(performance_profile_velocities):
         # Used to create the synthetic data as instances and a populous file
         generate = True
         if not exists("populous.json") or generate:
@@ -256,13 +258,7 @@ if __name__ == "__main__":
             for i in generator.generator_dag.nodes:
                 print("generator_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
 
-            # Initialize the velocities for the quality mappings in a list
-            # Need to initialize it after adjusting program_dag
-            # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
-            # Note that the numbers can't be too small; otherwise the qualities converge to 0, giving a 0 utility
             generator.activate_manual_override(ppv)
-            # print("PPV LENGTH {}".format(len(ppv)))
-            # print("PPV {}".format(ppv))
 
             # Generate the nodes' quality mappings
             nodes = generator.generate_nodes()  # Return a list of file names of the nodes
@@ -327,17 +323,16 @@ if __name__ == "__main__":
         # Get all the node_ids that aren't fors or conditionals
         node_indicies_list = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
 
-        #TODO: Get rid of None params later
-        test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, plot_type=None, plot_methods=None, plot_nodes=None)
+        # TODO: Get rid of None params later
+        test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, num_plot_methods=NUM_METHODS, plot_type=None, plot_nodes=None)
 
         # Outputs embeded list of expected utilities and allocations
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
-        print("TIMES:")
         print(eu_time[1])
-        print(len(eu_time[1]))
-        print(len(eu_time[1][0]))
+        # Save the time allcoations
+        times_on_c[ppv_index] += (eu_time[1])
 
-        save_to_external = True
+        save_to_external = False
 
         if save_to_external:
             # Check if data files exist
@@ -353,7 +348,7 @@ if __name__ == "__main__":
             # Open files in binary mode with wb instead of w
             file_eus = open('data/eu_data_4.txt', 'rb')
             file_times = open('data/time_data_4.txt', 'rb')
-            
+
             # Load the saved embedded lists to append new data
             pickled_eu_list = pickle.load(file_eus)
             pickled_time_list = pickle.load(file_times)
@@ -369,3 +364,26 @@ if __name__ == "__main__":
 
             with open('data/time_data_4.txt', 'wb') as file_times:
                 pickle.dump(pickled_time_list, file_times)
+
+    save_analysis_to_file = True
+
+    if save_analysis_to_file:
+        # Check if data files exist
+        if not os.path.isfile("data/time_on_c_data.txt"):
+            with open('data/time_on_c_data.txt', 'wb') as file_times:
+                pickle.dump([[] for i in range(0, len(performance_profile_velocities))], file_times)
+
+        # Open file in binary mode with wb instead of w
+        file_times = open('data/time_on_c_data.txt', 'rb')
+
+        # Load the saved embedded list to append new data
+        pickled_time_list = pickle.load(file_times)
+
+        # Append the EUs appropriately to list in outer scope
+        for ppv_index in range(0, len(performance_profile_velocities)):
+            pickled_time_list[ppv_index] += (times_on_c[ppv_index])
+
+        print(pickled_time_list)
+
+        with open('data/time_on_c_data.txt', 'wb') as file_times:
+            pickle.dump(pickled_time_list, file_times)
