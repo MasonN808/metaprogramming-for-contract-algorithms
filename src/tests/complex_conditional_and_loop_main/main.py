@@ -2,8 +2,11 @@ import os
 import pickle
 import sys
 import numpy as np
+from os.path import exists  # noqa
 
+# TODO: Try and fix this absolute path, not great for collaboration
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
+# sys.path.append(os.path.join(os.path.dirname(sys.path[0]),'src'))
 
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
 from classes.node import Node  # noqa
@@ -11,7 +14,6 @@ from classes.contract_program import ContractProgram  # noqa
 from classes.generator import Generator  # noqa
 from classes import utils  # noqa
 from tests.test import Test  # noqa
-from os.path import exists  # noqa
 
 if __name__ == "__main__":
     # Total budget for the DAG
