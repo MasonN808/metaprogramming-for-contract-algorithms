@@ -39,9 +39,7 @@ if __name__ == "__main__":
     pickled_time_list = pickle.load(file_times)
     pickled_c_times = pickle.load(file_c_times)
 
-    iterations = len(pickled_eu_list[0])  # Not the greatest way to do calculate it
-    print(iterations)
-    # File to create plot
+    iterations = len(pickled_eu_list[0])
 
     if (plot_type == "box_whisker"):
         FILENAME = 'box_whisker_charts/{}-{}-iterations{}.png'.format(plot_type, plot_methods, iterations)
@@ -255,8 +253,10 @@ if __name__ == "__main__":
 
             # Reduce pickled_c_times to having the specified methods and nodes
             node_reduced_pickled_c_times = []
-            # Initilize what methods to choose from
+
+            # Truncate with respect to a specified node to choose from
             # pickled_c_times arranged as pickled_c_times[ppv_index][nodes][methods]
+            print(pickled_c_times)
             for ppv_index in range(0, len(pickled_c_times)):
                 temp_allocations = []
                 for method_index in range(0, len(pickled_c_times[0][0])):
@@ -265,10 +265,12 @@ if __name__ == "__main__":
                 node_reduced_pickled_c_times.append(temp_allocations)
 
             # Get all methods
-            truncated_method_indicies = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+            truncated_method_indicies = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
             method_reduced_pickled_c_times = []
+
             # Get the allocations for the specified methods and create sublist of allocations for each method
             for method_index in truncated_method_indicies:
+                # print(len(node_reduced_pickled_c_times[0]))
                 temp_allocations = []
                 for ppv_index in range(0, len(pickled_c_times)):
                     temp_allocations.append(node_reduced_pickled_c_times[ppv_index][method_index])
@@ -287,7 +289,7 @@ if __name__ == "__main__":
             proportional11 = np.array(method_reduced_pickled_c_times[10])
 
             uniform = np.array(method_reduced_pickled_c_times[11])
-            # ehc = np.array(pickled_eu_list[12])
+            ehc = np.array(method_reduced_pickled_c_times[12])
 
             figure = plt.figure(figsize=(12, 6))
 
@@ -312,7 +314,7 @@ if __name__ == "__main__":
             plt.scatter(x=c_list, y=[proportional10], c=next(colors), marker="o", label='PA (ß=.1)')
             plt.scatter(x=c_list, y=[proportional11], c=next(colors), marker="o", label='PA (ß=0)')
             plt.scatter(x=c_list, y=[uniform], c=next(colors), marker="o", label='uniform')
-            # plt.scatter(x=c_list, y=[ehc])
+            plt.scatter(x=c_list, y=[ehc], c=next(colors), marker="o", label='EHC')
             # plt.xticks([1, 2, 3, 4, 5], x_axis)
 
             plt.rcParams["font.family"] = "Times New Roman"

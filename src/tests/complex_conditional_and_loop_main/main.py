@@ -4,7 +4,7 @@ import sys
 import numpy as np
 from os.path import exists  # noqa
 
-# TODO: Try and fix this absolute path, not great for collaboration
+# TODO: Try and fix this absolute path
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 # sys.path.append(os.path.join(os.path.dirname(sys.path[0]),'src'))
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 40
+    ITERATIONS = 1
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (for subtree)
@@ -344,7 +344,6 @@ if __name__ == "__main__":
 
             if not os.path.isfile("data/time_data_4.txt"):
                 with open('data/time_data_4.txt', 'wb') as file_times:
-                    # pickle.dump([[[] for j in range(0, len(node_indicies_list))] for i in range(0, NUM_METHODS)], file_times)
                     pickle.dump([[[] for j in range(0, NUM_METHODS)] for i in range(0, len(node_indicies_list))], file_times)
 
             # Open files in binary mode with wb instead of w
