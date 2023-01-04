@@ -801,11 +801,11 @@ class ContractProgram:
                 proportional_allocations_for.append(TimeAllocation(i, None))
 
         proportional_allocations_outer = [TimeAllocation(0, ppv_transformed[0] * budget_proportion), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None),
-                                            TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, None),
-                                            TimeAllocation(7, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_true)])),
-                                            TimeAllocation(8, ppv_transformed[7] * budget_proportion), TimeAllocation(9, None), TimeAllocation(10, None), TimeAllocation(11, None),
-                                            TimeAllocation(12, None), TimeAllocation(13, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])),
-                                            TimeAllocation(14, ppv_transformed[12] * budget_proportion)]
+                                          TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, None),
+                                          TimeAllocation(7, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_true)])),
+                                          TimeAllocation(8, ppv_transformed[7] * budget_proportion), TimeAllocation(9, None), TimeAllocation(10, None), TimeAllocation(11, None),
+                                          TimeAllocation(12, None), TimeAllocation(13, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])),
+                                          TimeAllocation(14, ppv_transformed[12] * budget_proportion)]
 
         allocations = [proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
 
@@ -822,7 +822,6 @@ class ContractProgram:
         utils.print_allocations(proportional_allocations_false)
         utils.print_allocations(proportional_allocations_for)
         return [proportional_allocations_outer, proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
-
 
     def naive_hill_climbing_outer_conditional(self, true_allocations, false_allocations, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """

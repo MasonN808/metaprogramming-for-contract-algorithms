@@ -278,17 +278,17 @@ class Test:
                 if index == 0:
                     # TODO: Hardcoded
                     # remove the conditional and for node allocations
-                    cleaned_allocations.pop(1) # This is the conditiional
-                    cleaned_allocations.pop(2) # THis is the for
+                    cleaned_allocations.pop(1)  # This is the conditiional
+                    cleaned_allocations.pop(2)  # THis is the for
                 elif index == 1:
                     # remove the last part of the true branch
-                    cleaned_allocations.pop(len(cleaned_allocations)-1) # This is the tax
+                    cleaned_allocations.pop(len(cleaned_allocations) - 1)  # This is the tax
                 elif index == 2:
                     # remove the last part of the true branch
-                    cleaned_allocations.pop(len(cleaned_allocations)-1) # This is the tax
+                    cleaned_allocations.pop(len(cleaned_allocations) - 1)  # This is the tax
                 elif index == 3:
                     # remove the last part of the true branch
-                    cleaned_allocations.pop(len(cleaned_allocations)-1) # This is the 0 allocation
+                    cleaned_allocations.pop(len(cleaned_allocations) - 1)  # This is the 0 allocation
 
                 cleaned_allocations_list.append(cleaned_allocations)
 

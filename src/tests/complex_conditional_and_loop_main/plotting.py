@@ -3,7 +3,8 @@ from matplotlib import pyplot as plt
 
 import numpy as np
 
-MAX_NUM_METHODS=13
+MAX_NUM_METHODS = 13
+
 
 def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_times, file_c_times, bar_plot_nodes=None):
     # Plot types:
@@ -14,11 +15,10 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
     # Plot methods:
     #   - "all" => use all solution methods
     #   - "subset" => use PA(1), PA(.5), PA(0), Uniform, and EHC
-
     """
     Plots information pertinent to time allocation and expected utiltiy for various allocation methods
 
-    :param plot_type: string, <box_whisker> => a box and whisker plot of EU for our contract program on differing solution methods 
+    :param plot_type: string, <box_whisker> => a box and whisker plot of EU for our contract program on differing solution methods
                     or <bar> => a bar graph of the average time allocation over N simulations for particular node(s) on differing solution methods
                     or <scatter> => a scatter plot of average time allocation for a particular node on various solution methods
     :param node_indicies: the node indices to be plotted
@@ -129,7 +129,7 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
             for node_index in range(0, len(node_indicies)):
                 for method_index in range(0, MAX_NUM_METHODS):
                     average_times[node_index][method_index] = total[node_index][method_index] / iterations
-                    
+
             # Plot results
             for node_id in bar_plot_nodes:
                 FILENAME = 'bar_charts/{}-{}-iterations{}-node{}.png'.format(plot_type, methods, iterations, node_id)
@@ -405,4 +405,4 @@ if __name__ == "__main__":
     methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC']
 
     plot(plot_type="scatter", node_indicies=node_indicies, methods=methods, c_list=c_list,
-        file_eus=file_eus,file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=node_indicies)
+         file_eus=file_eus, file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=node_indicies)
