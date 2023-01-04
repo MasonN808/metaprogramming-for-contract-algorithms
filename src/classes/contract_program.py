@@ -714,6 +714,116 @@ class ContractProgram:
         utils.print_allocations(proportional_allocations_for)
         return [proportional_allocations_outer, proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
 
+    def proportional_allocation_linear(self) -> List[float]:
+        # Must be < 1 and > 0
+        budget = copy.deepcopy(self.budget)
+        # TODO: This does not work -> fix
+        # taxed_budget = budget - self.initialize_allocations.count_conditionals()*self.performance_profile.calculate_tau()
+        taxed_budget = budget - .1
+
+        ppv = copy.deepcopy(self.performance_profile_velocities)
+        flattend_ppv = utils.flatten_list(ppv)
+
+        # Get rid of all the strings (e.g., conditionals and fors)
+        ppv_no_strings = [velocity for velocity in flattend_ppv if not isinstance(velocity, str)]
+
+        # Use a linear function to transform coefficients from (0, infinity) -> (0,1)
+        ppv_transformed = [max(ppv_no_strings) - c for c in ppv_no_strings]
+
+        true_indices = [1, 3, 4, 5]
+        false_indices = [2, 6]
+        # Make sure to reduce the indices since we removed strings from ppv
+        for_indices = [9, 10, 11, 12, 13]
+
+        # Make sure that the left and right branches get the same time allocation
+        true_sum = 0
+        false_sum = 0
+
+        for index in true_indices:
+            true_sum += ppv_transformed[index]
+        for index in false_indices:
+            false_sum += ppv_transformed[index]
+
+        transformed_branch_sum = 0
+        if (false_sum > true_sum):
+            difference = false_sum - true_sum
+            for index in true_indices:
+                # Add the difference
+                ppv_transformed[index] += difference / len(true_indices)
+                transformed_branch_sum += ppv_transformed[index]
+        else:
+            difference = true_sum - false_sum
+            for index in false_indices:
+                # Add the difference
+                ppv_transformed[index] += difference / len(false_indices)
+                transformed_branch_sum += ppv_transformed[index]
+
+        # Get the coefficients proportinal to the budget and ...
+        # subtract one of the sums of the branches since that double count is put into the budget
+        budget_proportion = taxed_budget / (sum(ppv_transformed) - transformed_branch_sum)
+
+        # Append the conditional node to the lists
+        true_indices.append(7)
+        false_indices.append(7)
+
+        # TODO: This is hardcoded
+        # Note: the indices in ppv_ordering are different from the node_ids since srings are removed prior to ordering
+        proportional_allocations_true = []
+        for i in range(0, 15):
+            if (i in true_indices):
+                # Check if its the last element in the list
+                if (true_indices.index(i) == len(true_indices) - 1):
+                    proportional_allocations_true.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
+                else:
+                    proportional_allocations_true.append(TimeAllocation(i, ppv_transformed[i] * budget_proportion))
+            else:
+                proportional_allocations_true.append(TimeAllocation(i, None))
+
+        proportional_allocations_false = []
+        for i in range(0, 15):
+            if (i in false_indices):
+                if (false_indices.index(i) == len(false_indices) - 1):
+                    proportional_allocations_false.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
+                else:
+                    proportional_allocations_false.append(TimeAllocation(i, ppv_transformed[i] * budget_proportion))
+            else:
+                proportional_allocations_false.append(TimeAllocation(i, None))
+
+        proportional_allocations_for = []
+        for i in range(0, 15):
+            if (i in for_indices):
+                if (for_indices.index(i) == len(for_indices) - 1):
+                    proportional_allocations_for.append(TimeAllocation(i, 0))
+                else:
+                    # subtract 1 from the index since we encountered a conditional prior
+                    proportional_allocations_for.append(TimeAllocation(i, ppv_transformed[i - 1] * budget_proportion))
+            else:
+                proportional_allocations_for.append(TimeAllocation(i, None))
+
+        proportional_allocations_outer = [TimeAllocation(0, ppv_transformed[0] * budget_proportion), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None),
+                                            TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, None),
+                                            TimeAllocation(7, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_true)])),
+                                            TimeAllocation(8, ppv_transformed[7] * budget_proportion), TimeAllocation(9, None), TimeAllocation(10, None), TimeAllocation(11, None),
+                                            TimeAllocation(12, None), TimeAllocation(13, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])),
+                                            TimeAllocation(14, ppv_transformed[12] * budget_proportion)]
+
+        allocations = [proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
+
+        # Assign the allocations
+        for child_index in range(0, len(self.child_programs)):
+            self.child_programs[child_index].allocations = allocations[child_index]
+
+        self.allocations = proportional_allocations_outer
+        print("---------------------")
+        print("RAW: {}".format(ppv_no_strings))
+        print("TRANSFORMED: {}".format(ppv_transformed))
+        utils.print_allocations(proportional_allocations_outer)
+        utils.print_allocations(proportional_allocations_true)
+        utils.print_allocations(proportional_allocations_false)
+        utils.print_allocations(proportional_allocations_for)
+        return [proportional_allocations_outer, proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
+
+
     def naive_hill_climbing_outer_conditional(self, true_allocations, false_allocations, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
         Does hill climbing specific to an outer contract program with conditional subprograms
@@ -842,10 +952,6 @@ class ContractProgram:
 
             # Go through all permutations of the time allocations
             for permutation in permutations(refactored_allocations, 2):
-                # print(permutation[0].node_id)
-                # print(permutation[1].node_id)
-                # print([node.id for node in self.program_dag.nodes])
-                # utils.print_allocations(self.allocations)
                 node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
                 node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
 

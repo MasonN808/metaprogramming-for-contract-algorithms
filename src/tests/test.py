@@ -129,13 +129,7 @@ class Test:
 
             # Sort the flattened list in ascending order
             sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=True)
-            # for allocation in sorted_allocations_list:
-            #     print(allocation.node_id)
 
-            # print('TESTING SORTED ALLOCATIONS')
-            # utils.print_allocations(sorted_allocations_list)
-            # for index, node_id in enumerate(self.node_indicies_list):
-            #     TIME[index].append(sorted_allocations_list[node_id].time)
             for index in range(0, len(self.node_indicies_list)):
                 TIME[index].append(sorted_allocations_list[index].time)
 

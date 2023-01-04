@@ -3,37 +3,30 @@ from matplotlib import pyplot as plt
 
 import numpy as np
 
+MAX_NUM_METHODS=13
 
-if __name__ == "__main__":
+def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_times, file_c_times, bar_plot_nodes=None):
     # Plot types:
     #   - "box_whisker" => a box and whisker plot of EU for our contract program on differing solution methods
     #   - "bar" => a bar graph of the average time allocation over N simulations for a particular node n_i on differing solution methods
-    #   - "satter" => a scatter plot of average EU
+    #   - "scatter" => a scatter plot of average EU
 
     # Plot methods:
     #   - "all" => use all solution methods
     #   - "subset" => use PA(1), PA(.5), PA(0), Uniform, and EHC
 
-    # plot_type = "bar"
-    # plot_type = "box_whisker"
-    plot_type = "scatter"
-    # Nodes to plot (only for bar plot types):
-    # plot_nodes = [4, 8, 11]
-    plot_nodes = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
-    plot_methods = "all"
-    # NUM_METHODS = 13
-    NUM_METHODS = 12
+    """
+    Plots information pertinent to time allocation and expected utiltiy for various allocation methods
 
-    c_list = np.arange(.1, 5.1, .2)
-    c_node_id = 6
-
-    # Get all the node_ids that aren't fors or conditionals
-    node_indicies_list = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
-
-    # Pull all the data from the .txt files
-    file_eus = open('data/eu_data_4.txt', 'rb')
-    file_times = open('data/time_data_4.txt', 'rb')
-    file_c_times = open('data/time_on_c_data.txt', 'rb')
+    :param plot_type: string, <box_whisker> => a box and whisker plot of EU for our contract program on differing solution methods 
+                    or <bar> => a bar graph of the average time allocation over N simulations for particular node(s) on differing solution methods
+                    or <scatter> => a scatter plot of average time allocation for a particular node on various solution methods
+    :param node_indicies: the node indices to be plotted
+    :param methods: string, <all> => use all solution methods, <subset> => use PA(1), PA(.5), PA(0), Uniform, and EHC
+    :param threshold: float, the threshold of the temperature decay during annealing
+    :param decay: float, the decay rate of the temperature during annealing
+    :return: A stream of optimized time allocations associated with each contract algorithm
+    """
     # Load the saved embedded lists to append new data
     pickled_eu_list = pickle.load(file_eus)
     pickled_time_list = pickle.load(file_times)
@@ -42,8 +35,9 @@ if __name__ == "__main__":
     iterations = len(pickled_eu_list[0])
 
     if (plot_type == "box_whisker"):
-        FILENAME = 'box_whisker_charts/{}-{}-iterations{}.png'.format(plot_type, plot_methods, iterations)
-        if (plot_methods == "all"):
+        FILENAME = 'box_whisker_charts/{}-{}-iterations{}.png'.format(plot_type, methods, iterations)
+        if (methods == "all"):
+            # TODO: put a for loop with a switch case inside
             # Plot results
             proportional1 = np.log(np.array(pickled_eu_list[0]))
             proportional2 = np.log(np.array(pickled_eu_list[1]))
@@ -122,29 +116,23 @@ if __name__ == "__main__":
             plt.show()
 
     elif (plot_type == "bar"):
-        if (plot_methods == "all"):
-
-            total = [[0 for j in range(0, NUM_METHODS)] for i in range(0, len(node_indicies_list))]
-            for node_index in range(0, len(node_indicies_list)):
-                for method_index in range(0, NUM_METHODS):
+        if (methods == "all"):
+            total = [[0 for j in range(0, MAX_NUM_METHODS)] for i in range(0, len(node_indicies))]
+            for node_index in range(0, len(node_indicies)):
+                for method_index in range(0, MAX_NUM_METHODS):
                     for iteration in range(0, iterations):
                         # for sublist in pickled_time_list[iteration]:
                         total[node_index][method_index] += pickled_time_list[node_index][method_index][iteration]
             # print("TOTAL: {}".format(total))
-            average_times = [[None for j in range(0, NUM_METHODS)] for i in range(0, len(node_indicies_list))]
+            average_times = [[None for j in range(0, MAX_NUM_METHODS)] for i in range(0, len(node_indicies))]
             # Get the average time across all instances
-            for node_index in range(0, len(node_indicies_list)):
-                for method_index in range(0, NUM_METHODS):
+            for node_index in range(0, len(node_indicies)):
+                for method_index in range(0, MAX_NUM_METHODS):
                     average_times[node_index][method_index] = total[node_index][method_index] / iterations
-            print("average")
-            print(average_times[8])
-            # print(average_times)
-            # print("total")
-            # print(total[0])
-
+                    
             # Plot results
-            for node_id in plot_nodes:
-                FILENAME = 'bar_charts/{}-{}-iterations{}-node{}.png'.format(plot_type, plot_methods, iterations, node_id)
+            for node_id in bar_plot_nodes:
+                FILENAME = 'bar_charts/{}-{}-iterations{}-node{}.png'.format(plot_type, methods, iterations, node_id)
 
                 proportional1 = np.array(average_times[node_id][0])
                 proportional2 = np.array(average_times[node_id][1])
@@ -184,17 +172,17 @@ if __name__ == "__main__":
 
         else:
             # TODO: fix these index inconsistencies; it's different from box and whisker plot indexes since EU and TIME are different
-            total = [[0 for j in range(0, NUM_METHODS)] for i in range(0, len(node_indicies_list))]
-            for node_index in range(0, len(node_indicies_list)):
-                for method_index in range(0, NUM_METHODS):
+            total = [[0 for j in range(0, MAX_NUM_METHODS)] for i in range(0, len(node_indicies))]
+            for node_index in range(0, len(node_indicies)):
+                for method_index in range(0, MAX_NUM_METHODS):
                     for iteration in range(0, iterations):
                         # for sublist in pickled_time_list[iteration]:
                         total[node_index][method_index] += pickled_time_list[node_index][method_index][iteration]
 
-            average_times = [[None for j in range(0, NUM_METHODS)] for i in range(0, len(node_indicies_list))]
+            average_times = [[None for j in range(0, MAX_NUM_METHODS)] for i in range(0, len(node_indicies))]
             # Get the average time across all instances
-            for node_index in range(0, len(node_indicies_list)):
-                for method_index in range(0, NUM_METHODS):
+            for node_index in range(0, len(node_indicies)):
+                for method_index in range(0, MAX_NUM_METHODS):
                     average_times[node_index][method_index] = total[node_index][method_index] / iterations
 
             # Truncates the nodes.  The index represents the method index; however, each element in average_times[i] are the nodes
@@ -202,9 +190,9 @@ if __name__ == "__main__":
             truncated_times_list = [average_times[0], average_times[5], average_times[10], average_times[11], average_times[12]]
 
             # Plot results
-            for node_id in plot_nodes:
+            for node_id in bar_plot_nodes:
                 # TODO: We need to traverse the DAG to identify when to reduce indices based on functional expression nodes that are not processes
-                FILENAME = 'bar_charts/{}-{}-iterations{}-node{}.png'.format(plot_type, plot_methods, iterations, node_id)
+                FILENAME = 'bar_charts/{}-{}-iterations{}-node{}.png'.format(plot_type, methods, iterations, node_id)
                 if (node_id > 7):
                     node_id -= 1
                 proportional1 = np.array(truncated_times_list[0][node_id])
@@ -242,8 +230,8 @@ if __name__ == "__main__":
 
     elif (plot_type == "scatter"):
         iterations = len(pickled_c_times)
-        FILENAME = 'scatter_charts/{}-{}-iterations{}.png'.format(plot_type, plot_methods, iterations)
-        if (plot_methods == "all"):
+        FILENAME = 'scatter_charts/{}-{}-iterations{}.png'.format(plot_type, methods, iterations)
+        if (methods == "all"):
             # Reduce the node id if for and conditionals exist before it
             transformed_node_id = c_node_id
             if transformed_node_id > 7:
@@ -270,7 +258,6 @@ if __name__ == "__main__":
 
             # Get the allocations for the specified methods and create sublist of allocations for each method
             for method_index in truncated_method_indicies:
-                # print(len(node_reduced_pickled_c_times[0]))
                 temp_allocations = []
                 for ppv_index in range(0, len(pickled_c_times)):
                     temp_allocations.append(node_reduced_pickled_c_times[ppv_index][method_index])
@@ -315,7 +302,6 @@ if __name__ == "__main__":
             plt.scatter(x=c_list, y=[proportional11], c=next(colors), marker="o", label='PA (ß=0)')
             plt.scatter(x=c_list, y=[uniform], c=next(colors), marker="o", label='uniform')
             plt.scatter(x=c_list, y=[ehc], c=next(colors), marker="o", label='EHC')
-            # plt.xticks([1, 2, 3, 4, 5], x_axis)
 
             plt.rcParams["font.family"] = "Times New Roman"
             plt.rcParams["font.size"] = 11
@@ -394,3 +380,29 @@ if __name__ == "__main__":
             plt.tight_layout()
             figure.savefig(FILENAME)
             plt.show()
+
+
+if __name__ == "__main__":
+    # Plot types:
+    #   - "box_whisker" => a box and whisker plot of EU for our contract program on differing solution methods
+    #   - "bar" => a bar graph of the average time allocation over N simulations for a particular node n_i on differing solution methods
+    #   - "scatter" => a scatter plot of average EU
+
+    # Plot methods:
+    #   - "all" => use all solution methods
+    #   - "subset" => use PA(1), PA(.5), PA(0), Uniform, and EHC
+
+    # Get all the node_ids that aren't fors or conditionals
+    node_indicies = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
+    c_list = np.arange(.1, 5.1, .2)
+    c_node_id = 6
+
+    # Pull all the data from the .txt files
+    file_eus = open('data/eu_data_4.txt', 'rb')
+    file_times = open('data/time_data_4.txt', 'rb')
+    file_c_times = open('data/time_on_c_data.txt', 'rb')
+
+    methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC']
+
+    plot(plot_type="scatter", node_indicies=node_indicies, methods=methods, c_list=c_list,
+        file_eus=file_eus,file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=node_indicies)
