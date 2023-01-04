@@ -15,11 +15,15 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
     :param plot_type: string, <box_whisker> => a box and whisker plot of EU for our contract program on differing solution methods
                     or <bar> => a bar graph of the average time allocation over N simulations for particular node(s) on differing solution methods
                     or <scatter> => a scatter plot of average time allocation for a particular node on various solution methods
-    :param node_indicies: the node indices to be plotted
-    :param methods: string, <all> => use all solution methods, <subset> => use PA(1), PA(.5), PA(0), Uniform, and RHC
-    :param threshold: float, the threshold of the temperature decay during annealing
-    :param decay: float, the decay rate of the temperature during annealing
-    :return: A stream of optimized time allocations associated with each contract algorithm
+    :param node_indicies: int[], the node indices of the contract program
+    :param subset_methods: string[], the subset of methods that were used during simulation for plotting
+    :param file_eus: File, file with EUs for various methods
+    :param file_times: File, file with times for various methods on all nodes
+    :param file_c_times: File, file with times for various methods on different c values in the performance profiles for a specified node
+    :param bar_plot_nodes: int[], a list of node indicies that are specified to be plotted using a bar chart
+    :param c_list: float[], a list of c values that were iterated on during simulation
+    :param c_node_id: int, the node id specified for experimentation with various c values
+    :return: a plot(s) saved to an external file
     """
     # Load the saved embedded lists to append new data
     pickled_eu_list = pickle.load(file_eus)
@@ -265,15 +269,6 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
 
 
 if __name__ == "__main__":
-    # Plot types:
-    #   - "box_whisker" => a box and whisker plot of EU for our contract program on differing solution methods
-    #   - "bar" => a bar graph of the average time allocation over N simulations for a particular node n_i on differing solution methods
-    #   - "scatter" => a scatter plot of average EU
-
-    # Plot methods:
-    #   - "all" => use all solution methods
-    #   - "subset" => use PA(1), PA(.5), PA(0), Uniform, and RHC
-
     # Get all the node_ids that aren't fors or conditionals
     node_indicies = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
     c_list = np.arange(.1, 5.1, .2)
