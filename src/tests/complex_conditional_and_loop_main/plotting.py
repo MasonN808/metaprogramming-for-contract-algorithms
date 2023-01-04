@@ -3,10 +3,12 @@ from matplotlib import pyplot as plt
 
 import numpy as np
 
-MAX_NUM_METHODS = 13
+POSSIBLE_METHODS = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
+
+MAX_NUM_METHODS = len(POSSIBLE_METHODS)
 
 
-def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_times, file_c_times, bar_plot_nodes=None):
+def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_times, bar_plot_nodes=None, c_list=None, c_node_id=None):
     # Plot types:
     #   - "box_whisker" => a box and whisker plot of EU for our contract program on differing solution methods
     #   - "bar" => a bar graph of the average time allocation over N simulations for a particular node n_i on differing solution methods
@@ -14,7 +16,7 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
 
     # Plot methods:
     #   - "all" => use all solution methods
-    #   - "subset" => use PA(1), PA(.5), PA(0), Uniform, and EHC
+    #   - "subset" => use PA(1), PA(.5), PA(0), Uniform, and RHC
     """
     Plots information pertinent to time allocation and expected utiltiy for various allocation methods
 
@@ -22,7 +24,7 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
                     or <bar> => a bar graph of the average time allocation over N simulations for particular node(s) on differing solution methods
                     or <scatter> => a scatter plot of average time allocation for a particular node on various solution methods
     :param node_indicies: the node indices to be plotted
-    :param methods: string, <all> => use all solution methods, <subset> => use PA(1), PA(.5), PA(0), Uniform, and EHC
+    :param methods: string, <all> => use all solution methods, <subset> => use PA(1), PA(.5), PA(0), Uniform, and RHC
     :param threshold: float, the threshold of the temperature decay during annealing
     :param decay: float, the decay rate of the temperature during annealing
     :return: A stream of optimized time allocations associated with each contract algorithm
@@ -35,85 +37,145 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
     iterations = len(pickled_eu_list[0])
 
     if (plot_type == "box_whisker"):
-        FILENAME = 'box_whisker_charts/{}-{}-iterations{}.png'.format(plot_type, methods, iterations)
-        if (methods == "all"):
-            # TODO: put a for loop with a switch case inside
-            # Plot results
-            proportional1 = np.log(np.array(pickled_eu_list[0]))
-            proportional2 = np.log(np.array(pickled_eu_list[1]))
-            proportional3 = np.log(np.array(pickled_eu_list[2]))
-            proportional4 = np.log(np.array(pickled_eu_list[3]))
-            proportional5 = np.log(np.array(pickled_eu_list[4]))
-            proportional6 = np.log(np.array(pickled_eu_list[5]))
-            proportional7 = np.log(np.array(pickled_eu_list[6]))
-            proportional8 = np.log(np.array(pickled_eu_list[7]))
-            proportional9 = np.log(np.array(pickled_eu_list[8]))
-            proportional10 = np.log(np.array(pickled_eu_list[9]))
-            proportional11 = np.log(np.array(pickled_eu_list[10]))
+        # Check if subset of methods is equal to all possible methods by simply comparing lengths
+        method_type = "all_methods"
+        if (len(subset_methods) != len(POSSIBLE_METHODS)):
+                method_type = "subset_methods"
+        FILENAME = 'box_whisker_charts/{}-iterations{}.png'.format(plot_type, method_type, iterations)
+        # TODO: put a for loop with a switch case inside
+        logged_eus = []
+        for method in subset_methods:
+            match method:
+                case 'PA (ß=10)':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[0])))
+                case 'PA (ß=5)':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[1])))
+                case 'PA (ß=4)':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[2])))
+                case 'PA (ß=3)':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[3])))
+                case 'PA (ß=2)':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[4])))
+                case 'PA (ß=1)':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[5])))
+                case 'PA (ß=.8)':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[6])))
+                case 'PA (ß=.6)':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[7])))
+                case 'PA (ß=.5)':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[8])))
+                case 'PA (ß=.1)':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[9])))
+                case 'PA (ß=0)':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[10])))
+                case 'Uniform':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[11])))
+                case 'RHC':
+                    logged_eus.append(np.log(np.array(pickled_eu_list[12])))
+                case default:
+                    print("Invalid method")
+                    exit()
 
-            uniform = np.log(np.array(pickled_eu_list[11]))
-            ehc = np.log(np.array(pickled_eu_list[12]))
+        figure = plt.figure(figsize=(12, 6))
 
-            figure = plt.figure(figsize=(12, 6))
+        plt.title("Expected Utility Variation on Solution Methods")
+        plt.ylabel("Log(Expected Utility)")
+        plt.xlabel("Solution Methods")
 
-            plt.title("Expected Utility Variation on Solution Methods")
-            plt.ylabel("Log(Expected Utility)")
-            plt.xlabel("Solution Methods")
+        plt.boxplot(logged_eus)
+        x_axis = subset_methods
 
-            plt.boxplot([proportional1, proportional2, proportional3, proportional4, proportional5, proportional6, proportional7, proportional8, proportional9, proportional10, proportional11, uniform, ehc])
+        plt.xticks([i+1 for i in range(0, len(subset_methods))], x_axis)
 
-            # x_axis = ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC']
-            x_axis = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC']
+        plt.rcParams["font.family"] = "Times New Roman"
+        plt.rcParams["font.size"] = 11
+        plt.rcParams["grid.linestyle"] = "-"
+        plt.grid(True)
 
-            plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], x_axis)
+        axis = plt.gca()
+        axis.spines["top"].set_visible(False)
 
-            plt.rcParams["font.family"] = "Times New Roman"
-            plt.rcParams["font.size"] = 11
-            plt.rcParams["grid.linestyle"] = "-"
-            plt.grid(True)
+        plt.tight_layout()
+        figure.savefig(FILENAME)
+        plt.show()
 
-            axis = plt.gca()
-            axis.spines["top"].set_visible(False)
+        # if (methods == "all"):
+        #     # Plot results
+        #     proportional1 = np.log(np.array(pickled_eu_list[0]))
+        #     proportional2 = np.log(np.array(pickled_eu_list[1]))
+        #     proportional3 = np.log(np.array(pickled_eu_list[2]))
+        #     proportional4 = np.log(np.array(pickled_eu_list[3]))
+        #     proportional5 = np.log(np.array(pickled_eu_list[4]))
+        #     proportional6 = np.log(np.array(pickled_eu_list[5]))
+        #     proportional7 = np.log(np.array(pickled_eu_list[6]))
+        #     proportional8 = np.log(np.array(pickled_eu_list[7]))
+        #     proportional9 = np.log(np.array(pickled_eu_list[8]))
+        #     proportional10 = np.log(np.array(pickled_eu_list[9]))
+        #     proportional11 = np.log(np.array(pickled_eu_list[10]))
 
-            plt.tight_layout()
-            figure.savefig(FILENAME)
-            plt.show()
+        #     uniform = np.log(np.array(pickled_eu_list[11]))
+        #     RHC = np.log(np.array(pickled_eu_list[12]))
 
-        else:
-            # Get only PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'EHC'
-            truncated_eu_list = [pickled_eu_list[0], pickled_eu_list[5], pickled_eu_list[10], pickled_eu_list[11], pickled_eu_list[12]]
+        #     figure = plt.figure(figsize=(12, 6))
 
-            # Plot results
-            proportional1 = np.log(np.array(truncated_eu_list[0]))
-            proportional2 = np.log(np.array(truncated_eu_list[1]))
-            proportional3 = np.log(np.array(truncated_eu_list[2]))
+        #     plt.title("Expected Utility Variation on Solution Methods")
+        #     plt.ylabel("Log(Expected Utility)")
+        #     plt.xlabel("Solution Methods")
 
-            uniform = np.log(np.array(truncated_eu_list[3]))
-            ehc = np.log(np.array(truncated_eu_list[4]))
+        #     plt.boxplot([proportional1, proportional2, proportional3, proportional4, proportional5, proportional6, proportional7, proportional8, proportional9, proportional10, proportional11, uniform, RHC])
 
-            figure = plt.figure(figsize=(12, 6))
+        #     # x_axis = ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
+        #     x_axis = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
 
-            plt.title("Expected Utility Variation on Solution Methods")
-            plt.ylabel("Log(Expected Utility)")
-            plt.xlabel("Solution Methods")
+        #     plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], x_axis)
 
-            # x_axis = ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'EHC']
-            x_axis = ['PA (ß=10)', 'PA (ß=1)', 'PA (ß=0)', 'Uniform', 'EHC']
+        #     plt.rcParams["font.family"] = "Times New Roman"
+        #     plt.rcParams["font.size"] = 11
+        #     plt.rcParams["grid.linestyle"] = "-"
+        #     plt.grid(True)
 
-            plt.boxplot([proportional1, proportional2, proportional3, uniform, ehc])
-            plt.xticks([1, 2, 3, 4, 5], x_axis)
+        #     axis = plt.gca()
+        #     axis.spines["top"].set_visible(False)
 
-            plt.rcParams["font.family"] = "Times New Roman"
-            plt.rcParams["font.size"] = 11
-            plt.rcParams["grid.linestyle"] = "-"
-            plt.grid(True)
+        #     plt.tight_layout()
+        #     figure.savefig(FILENAME)
+        #     plt.show()
 
-            axis = plt.gca()
-            axis.spines["top"].set_visible(False)
+        # else:
+        #     # Get only PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'RHC'
+        #     truncated_eu_list = [pickled_eu_list[0], pickled_eu_list[5], pickled_eu_list[10], pickled_eu_list[11], pickled_eu_list[12]]
 
-            plt.tight_layout()
-            figure.savefig(FILENAME)
-            plt.show()
+        #     # Plot results
+        #     proportional1 = np.log(np.array(truncated_eu_list[0]))
+        #     proportional2 = np.log(np.array(truncated_eu_list[1]))
+        #     proportional3 = np.log(np.array(truncated_eu_list[2]))
+
+        #     uniform = np.log(np.array(truncated_eu_list[3]))
+        #     RHC = np.log(np.array(truncated_eu_list[4]))
+
+        #     figure = plt.figure(figsize=(12, 6))
+
+        #     plt.title("Expected Utility Variation on Solution Methods")
+        #     plt.ylabel("Log(Expected Utility)")
+        #     plt.xlabel("Solution Methods")
+
+        #     # x_axis = ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'RHC']
+        #     x_axis = ['PA (ß=10)', 'PA (ß=1)', 'PA (ß=0)', 'Uniform', 'RHC']
+
+        #     plt.boxplot([proportional1, proportional2, proportional3, uniform, RHC])
+        #     plt.xticks([1, 2, 3, 4, 5], x_axis)
+
+        #     plt.rcParams["font.family"] = "Times New Roman"
+        #     plt.rcParams["font.size"] = 11
+        #     plt.rcParams["grid.linestyle"] = "-"
+        #     plt.grid(True)
+
+        #     axis = plt.gca()
+        #     axis.spines["top"].set_visible(False)
+
+        #     plt.tight_layout()
+        #     figure.savefig(FILENAME)
+        #     plt.show()
 
     elif (plot_type == "bar"):
         if (methods == "all"):
@@ -147,17 +209,17 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
                 proportional11 = np.array(average_times[node_id][10])
 
                 uniform = np.array(average_times[node_id][11])
-                ehc = np.array(average_times[node_id][12])
+                RHC = np.array(average_times[node_id][12])
 
                 figure = plt.figure(figsize=(12, 6))
 
                 plt.title("Average Time Allocation on Node {}".format(node_id))
                 plt.ylabel("Average Time Allocation")
                 plt.xlabel("Solution Methods")
-                # x_axis = ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC']
-                x_axis = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC']
+                # x_axis = ['PA (ß=1)', 'PA (ß=.9)', 'PA (ß=.8)', 'PA (ß=.7)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.4)', 'PA (ß=.3)', 'PA (ß=.2)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
+                x_axis = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
 
-                plt.bar(x=x_axis, height=[proportional1, proportional2, proportional3, proportional4, proportional5, proportional6, proportional7, proportional8, proportional9, proportional10, proportional11, uniform, ehc])
+                plt.bar(x=x_axis, height=[proportional1, proportional2, proportional3, proportional4, proportional5, proportional6, proportional7, proportional8, proportional9, proportional10, proportional11, uniform, RHC])
 
                 plt.rcParams["font.family"] = "Times New Roman"
                 plt.rcParams["font.size"] = 11
@@ -186,7 +248,7 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
                     average_times[node_index][method_index] = total[node_index][method_index] / iterations
 
             # Truncates the nodes.  The index represents the method index; however, each element in average_times[i] are the nodes
-            # Get only PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'EHC'
+            # Get only PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'RHC'
             truncated_times_list = [average_times[0], average_times[5], average_times[10], average_times[11], average_times[12]]
 
             # Plot results
@@ -200,7 +262,7 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
                 proportional3 = np.array(truncated_times_list[2][node_id])
 
                 uniform = np.array(truncated_times_list[3][node_id])
-                ehc = np.array(truncated_times_list[4][node_id])
+                RHC = np.array(truncated_times_list[4][node_id])
 
                 figure = plt.figure(figsize=(12, 6))
 
@@ -211,10 +273,10 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
                 plt.ylabel("Average Time Allocation")
                 plt.xlabel("Solution Methods")
 
-                # x_axis = ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'EHC']
-                x_axis = ['PA (ß=10)', 'PA (ß=1)', 'PA (ß=0)', 'Uniform', 'EHC']
+                # x_axis = ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'RHC']
+                x_axis = ['PA (ß=10)', 'PA (ß=1)', 'PA (ß=0)', 'Uniform', 'RHC']
 
-                plt.bar(x=x_axis, height=[proportional1, proportional2, proportional3, uniform, ehc])
+                plt.bar(x=x_axis, height=[proportional1, proportional2, proportional3, uniform, RHC])
 
                 plt.rcParams["font.family"] = "Times New Roman"
                 plt.rcParams["font.size"] = 11
@@ -276,7 +338,7 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
             proportional11 = np.array(method_reduced_pickled_c_times[10])
 
             uniform = np.array(method_reduced_pickled_c_times[11])
-            ehc = np.array(method_reduced_pickled_c_times[12])
+            RHC = np.array(method_reduced_pickled_c_times[12])
 
             figure = plt.figure(figsize=(12, 6))
 
@@ -284,7 +346,7 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
             plt.ylabel("Time Allocation")
             plt.xlabel("C value")
 
-            # 'PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC'
+            # 'PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC'
 
             # Cycle through rainbow colors
             colors = iter(plt.cm.rainbow(np.linspace(0, 1, len(method_reduced_pickled_c_times))))
@@ -301,7 +363,7 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
             plt.scatter(x=c_list, y=[proportional10], c=next(colors), marker="o", label='PA (ß=.1)')
             plt.scatter(x=c_list, y=[proportional11], c=next(colors), marker="o", label='PA (ß=0)')
             plt.scatter(x=c_list, y=[uniform], c=next(colors), marker="o", label='uniform')
-            plt.scatter(x=c_list, y=[ehc], c=next(colors), marker="o", label='EHC')
+            plt.scatter(x=c_list, y=[RHC], c=next(colors), marker="o", label='RHC')
 
             plt.rcParams["font.family"] = "Times New Roman"
             plt.rcParams["font.size"] = 11
@@ -335,7 +397,7 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
                     temp_allocations.append(pickled_c_times[ppv_index][transformed_node_id][method_index])
                 node_reduced_pickled_c_times.append(temp_allocations)
 
-            # Get only PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'EHC'
+            # Get only PA (ß=1)', 'PA (ß=.5)', 'PA (ß=0)', 'Uniform', 'RHC'
             truncated_method_indicies = [5, 8, 9, 11, 12]
             # truncated_method_indicies = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,11]
             method_reduced_pickled_c_times = []
@@ -352,7 +414,7 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
             proportional3 = np.array(method_reduced_pickled_c_times[2])
 
             uniform = np.array(method_reduced_pickled_c_times[3])
-            # ehc = np.array(method_reduced_pickled_c_times[4])
+            # RHC = np.array(method_reduced_pickled_c_times[4])
 
             figure = plt.figure(figsize=(12, 6))
 
@@ -360,12 +422,12 @@ def plot(plot_type, node_indicies, methods, c_list, c_node_id, file_eus, file_ti
             plt.ylabel("Time Allocation")
             plt.xlabel("C value")
 
-            # 'PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC'
+            # 'PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC'
             plt.scatter(x=c_list, y=[proportional1], c='r', marker="o", label='PA (ß=1)')
             plt.scatter(x=c_list, y=[proportional2], c='g', marker="o", label='PA (ß=.5)')
             plt.scatter(x=c_list, y=[proportional3], c='b', marker="o", label='PA (ß=0)')
             plt.scatter(x=c_list, y=[uniform], c='y', marker="o", label='first')
-            # plt.scatter(x=c_list, y=[ehc])
+            # plt.scatter(x=c_list, y=[RHC])
             # plt.xticks([1, 2, 3, 4, 5], x_axis)
 
             plt.rcParams["font.family"] = "Times New Roman"
@@ -390,7 +452,7 @@ if __name__ == "__main__":
 
     # Plot methods:
     #   - "all" => use all solution methods
-    #   - "subset" => use PA(1), PA(.5), PA(0), Uniform, and EHC
+    #   - "subset" => use PA(1), PA(.5), PA(0), Uniform, and RHC
 
     # Get all the node_ids that aren't fors or conditionals
     node_indicies = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
@@ -401,8 +463,8 @@ if __name__ == "__main__":
     file_eus = open('data/eu_data_4.txt', 'rb')
     file_times = open('data/time_data_4.txt', 'rb')
     file_c_times = open('data/time_on_c_data.txt', 'rb')
-
-    methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'EHC']
-
-    plot(plot_type="scatter", node_indicies=node_indicies, methods=methods, c_list=c_list,
+    subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
+    plot(plot_type="box_whisker", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list,
          file_eus=file_eus, file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=node_indicies)
+    # plot(plot_type="scatter", node_indicies=node_indicies, subset_methods=methods, c_list=c_list,
+    #      file_eus=file_eus, file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=node_indicies)
