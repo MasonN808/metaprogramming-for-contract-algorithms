@@ -609,6 +609,7 @@ class ContractProgram:
         budget = copy.deepcopy(self.budget)
         # TODO: This does not work -> fix
         # taxed_budget = budget - self.initialize_allocations.count_conditionals()*self.performance_profile.calculate_tau()
+        #TODO: This is hardcoded
         taxed_budget = budget - .1
 
         ppv = copy.deepcopy(self.performance_profile_velocities)
@@ -616,8 +617,7 @@ class ContractProgram:
 
         # Get rid of all the strings (e.g., conditionals and fors)
         ppv_no_strings = [velocity for velocity in flattend_ppv if not isinstance(velocity, str)]
-        # print("PPV NO STRINGS: {}".format(ppv_no_strings))
-        # print(len(ppv_no_strings))
+
         # Use the tangent function to transform coefficients from (0, infinity) -> (0,1)
         ppv_transformed = [1 - (math.atan(beta * c) / (math.pi / 2)) for c in ppv_no_strings]
 
@@ -652,6 +652,7 @@ class ContractProgram:
         # Get the coefficients proportinal to the budget and ...
         # subtract one of the sums of the branches since that double count is put into the budget
         budget_proportion = taxed_budget / (sum(ppv_transformed) - transformed_branch_sum)
+        print("BUDGET PROPORTION: {}".format(budget_proportion))
 
         # Append the conditional node to the lists
         true_indices.append(7)

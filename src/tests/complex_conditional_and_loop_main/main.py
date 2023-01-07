@@ -1,3 +1,4 @@
+import math
 import os
 import pickle
 import sys
@@ -16,6 +17,9 @@ from classes import utils  # noqa
 from tests.test import Test  # noqa
 
 if __name__ == "__main__":
+    # for c in np.arange(.1, 5, .1):
+    #     print(1 - (math.atan(.1 * c) / (math.pi / 2)))
+    # exit()
     # Total budget for the DAG
     BUDGET = 10
     # Number of instances/simulations
@@ -224,9 +228,10 @@ if __name__ == "__main__":
     # performance_profile_velocities = utils.dirichlet_ppv(iterations=ITERATIONS, dag=program_dag, alpha=.9, constant=10)
 
     # Use an Analysis ppv to test the avaerage time allocations on varying Cs for a given node
-    c_list = np.arange(.1, 5.1, .2)
-    c_node_id = 6
-    performance_profile_velocities = utils.analysis_ppv(node_id=c_node_id, dag=program_dag, c_list=c_list, constant=1)
+    # c_list = np.arange(.1, 5.1, .2)
+    c_list = np.arange(.1, 1.1, .2)
+    c_node_id = 7
+    performance_profile_velocities = utils.ppv_generator(node_id=c_node_id, dag=program_dag, c_list=c_list, constant=1)
     # Initialize the velocities for the quality mappings in a list
     # Need to initialize it after adjusting program_dag
     # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
@@ -337,18 +342,20 @@ if __name__ == "__main__":
         save_to_external = False
 
         if save_to_external:
+            file_str_eus = "data/eu_data.txt"
+            file_str_times = "data/time_data.txt"
             # Check if data files exist
-            if not os.path.isfile("data/eu_data_4.txt"):
-                with open('data/eu_data_4.txt', 'wb') as file_eus:
+            if not os.path.isfile(file_str_eus):
+                with open(file_str_eus, 'wb') as file_eus:
                     pickle.dump([[] for i in range(0, NUM_METHODS)], file_eus)
 
-            if not os.path.isfile("data/time_data_4.txt"):
-                with open('data/time_data_4.txt', 'wb') as file_times:
+            if not os.path.isfile(file_str_times):
+                with open(file_str_times, 'wb') as file_times:
                     pickle.dump([[[] for j in range(0, NUM_METHODS)] for i in range(0, len(node_indicies_list))], file_times)
 
             # Open files in binary mode with wb instead of w
-            file_eus = open('data/eu_data_4.txt', 'rb')
-            file_times = open('data/time_data_4.txt', 'rb')
+            file_eus = open(file_str_eus, 'rb')
+            file_times = open(file_str_times, 'rb')
 
             # Load the saved embedded lists to append new data
             pickled_eu_list = pickle.load(file_eus)
@@ -360,22 +367,23 @@ if __name__ == "__main__":
                 for node in range(0, len(node_indicies_list)):
                     pickled_time_list[node][method_index].append(eu_time[1][node][method_index])
 
-            with open('data/eu_data_4.txt', 'wb') as file_eus:
+            with open(file_str_eus, 'wb') as file_eus:
                 pickle.dump(pickled_eu_list, file_eus)
 
-            with open('data/time_data_4.txt', 'wb') as file_times:
+            with open(file_str_times, 'wb') as file_times:
                 pickle.dump(pickled_time_list, file_times)
 
     save_analysis_to_file = True
 
     if save_analysis_to_file:
+        file = "data/time_on_c_data_node8.txt"
         # Check if data files exist
-        if not os.path.isfile("data/time_on_c_data.txt"):
-            with open('data/time_on_c_data.txt', 'wb') as file_times:
+        if not os.path.isfile(file):
+            with open(file, 'wb') as file_times:
                 pickle.dump([[] for i in range(0, len(performance_profile_velocities))], file_times)
 
         # Open file in binary mode with wb instead of w
-        file_times = open('data/time_on_c_data.txt', 'rb')
+        file_times = open(file, 'rb')
 
         # Load the saved embedded list to append new data
         pickled_time_list = pickle.load(file_times)
@@ -386,5 +394,5 @@ if __name__ == "__main__":
 
         print(pickled_time_list)
 
-        with open('data/time_on_c_data.txt', 'wb') as file_times:
+        with open(file, 'wb') as file_times:
             pickle.dump(pickled_time_list, file_times)

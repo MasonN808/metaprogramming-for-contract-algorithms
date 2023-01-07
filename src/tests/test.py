@@ -127,7 +127,7 @@ class Test:
             # Flatten all the allocations
             flattened_allocations_list = utils.flatten_list(cleaned_allocations_list)
 
-            # Sort the flattened list in ascending order
+            # Sort the flattened list in ascending order wrt to the node id
             sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=True)
 
             for index in range(0, len(self.node_indicies_list)):

@@ -190,7 +190,7 @@ def dirichlet_ppv(iterations, dag, alpha=1, constant=10):
     return accumulated_ppv
 
 
-def analysis_ppv(node_id, dag, c_list, constant=1):
+def ppv_generator(node_id, dag, c_list, constant=1):
     # node_id is the index accounting for all nodes in the contract program including fors and conditionals
     # Make all parameters C to be constant except for node_id where we do INTERVAL intervals to generate ppvs
     accumulated_ppv = []
