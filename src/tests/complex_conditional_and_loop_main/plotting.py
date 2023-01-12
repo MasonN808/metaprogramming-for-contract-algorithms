@@ -180,15 +180,21 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         transformed_node_id = c_node_id
         if transformed_node_id > 7:
             transformed_node_id -= 1
-        if transformed_node_id > 12:
+        if transformed_node_id > 11:
             transformed_node_id -= 1
 
         # Reduce pickled_c_times to having the specified methods and nodes
-        node_reduced_pickled_c_times = []
+        print("LENGTH: {}".format(len(pickled_c_times[0]))) # TODO: FIX THIS
+        for i in range(0, 13):
+            print(pickled_c_times[1][i][2])
 
         # Truncate with respect to a specified node to choose from
         # pickled_c_times arranged as pickled_c_times[ppv_index][nodes][methods]
+        node_reduced_pickled_c_times = []
         for ppv_index in range(0, len(pickled_c_times)):
+            # Reverse the pickled_c_times over each node index such that the start is at the end and vice versa
+            # Issue in the appending of values in the main file FIXME
+            pickled_c_times[ppv_index].reverse()
             temp_allocations = []
             for method_index in range(0, len(pickled_c_times[0][0])):
                 # Get the allocations for the specified transformed node_id
@@ -271,14 +277,14 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
 if __name__ == "__main__":
     # Get all the node_ids that aren't fors or conditionals
     node_indicies = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
-    # c_list = np.arange(.1, 5.1, .2)
-    c_list = np.arange(.1, 1.1, .2)
-    c_node_id = 7
+    c_list = np.arange(.1, 5.1, .2)
+    # c_list = np.arange(.1, 1.1, .2)
+    c_node_id = 6
 
     # Pull all the data from the .txt files
     file_eus = open('data/eu_data.txt', 'rb')
     file_times = open('data/time_data.txt', 'rb')
-    file_c_times = open('data/time_on_c_data_node8.txt', 'rb')
+    file_c_times = open('data/time_on_c_data_node6.txt', 'rb')
     subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
 
     plot(plot_type="scatter", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,

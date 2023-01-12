@@ -228,9 +228,9 @@ if __name__ == "__main__":
     # performance_profile_velocities = utils.dirichlet_ppv(iterations=ITERATIONS, dag=program_dag, alpha=.9, constant=10)
 
     # Use an Analysis ppv to test the avaerage time allocations on varying Cs for a given node
-    # c_list = np.arange(.1, 5.1, .2)
-    c_list = np.arange(.1, 1.1, .2)
-    c_node_id = 7
+    c_list = np.arange(.1, 5.1, .2)
+    # c_list = np.arange(.1, 1.1, .2)
+    c_node_id = 8
     performance_profile_velocities = utils.ppv_generator(node_id=c_node_id, dag=program_dag, c_list=c_list, constant=1)
     # Initialize the velocities for the quality mappings in a list
     # Need to initialize it after adjusting program_dag
