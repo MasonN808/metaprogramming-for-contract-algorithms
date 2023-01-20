@@ -491,7 +491,7 @@ class ContractProgram:
                         # Reallocate the budgets for the inner metareasoning problems
                         node_0.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_0.id].time))
 
-                        # Do naive hill climbing on the chain 
+                        # Do naive hill climbing on the chain
                         for_allocations = copy.deepcopy(node_0.for_subprogram.naive_hill_climbing_inner())
                     if node_1.expression_type == "conditional":
                         # Reallocate the budgets for the inner metareasoning problems

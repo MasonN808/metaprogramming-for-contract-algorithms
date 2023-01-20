@@ -247,6 +247,7 @@ class PerformanceProfile:
         for time_allocation in refactored_allocations:
             node = self.find_node(time_allocation.node_id, contract_program.program_dag)
 
+            # Skip the identifier node
             if node.expression_type != "conditional":
                 # Get the parents' qualities given their time allocations
                 parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)
@@ -272,10 +273,12 @@ class PerformanceProfile:
         time_allocations = for_node.for_subprogram.allocations
 
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
+        # print("Refactored allocations: {}".format(utils.print_allocations(refactored_allocations)))
 
         for time_allocation in refactored_allocations:
             node = self.find_node(time_allocation.node_id, for_node.for_subprogram.program_dag)
 
+            # Skip the identifier node
             if node.expression_type != "for":
                 # Get the parents' qualities given their time allocations
                 parent_qualities = self.find_parent_qualities(node, time_allocations, depth=0)

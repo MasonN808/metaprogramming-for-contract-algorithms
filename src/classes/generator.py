@@ -74,6 +74,7 @@ class Generator:
             for quality in potential_parent_qualities:
                 dictionary[quality] = {quality: {}}
                 qualities.append(quality)
+
                 # Base Case
                 if depth == parents_length - 1:
                     dictionary[quality] = {}
@@ -98,9 +99,7 @@ class Generator:
                         # Use this function to approximate the performance profile
                         dictionary[quality][t] = generated_quality
                 else:
-                    agg_qualities = copy.deepcopy(qualities)
-
-                    self.recur_build(depth + 1, node, agg_qualities, dictionary[quality], random_number, noise)
+                    self.recur_build(depth + 1, node, qualities, dictionary[quality], random_number, noise)
                     # Remove the last quality for next set of potential qualities
                     qualities = qualities[:-1]
 

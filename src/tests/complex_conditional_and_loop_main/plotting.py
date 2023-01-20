@@ -184,7 +184,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
             transformed_node_id -= 1
 
         # Reduce pickled_c_times to having the specified methods and nodes
-        print("LENGTH: {}".format(len(pickled_c_times[0]))) # TODO: FIX THIS
+        print("LENGTH: {}".format(len(pickled_c_times[0])))  # TODO: FIX THIS
         for i in range(0, 13):
             print(pickled_c_times[1][i][2])
 

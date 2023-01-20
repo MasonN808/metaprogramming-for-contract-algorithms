@@ -7,7 +7,7 @@ sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-alg
 from classes.node import Node  # noqa
 
 
-def print_allocations(allocations) -> None:
+def print_allocations(allocations):
     print([i.time for i in allocations])
 
 
