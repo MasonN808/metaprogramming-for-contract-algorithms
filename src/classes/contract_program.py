@@ -454,14 +454,14 @@ class ContractProgram:
         # The initial true_allocations, false_allocations, and for_allocations have uniform alloations
         # Initialize the amount of time to be switched
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
-
+        eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner) * self.scale
         while time_switched > threshold:
             # Remove the Nones in the list before taking permutations
             refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
             best_allocations_changed = False
             # Go through all permutations of the time allocations
             for permutation in permutations(refactored_allocations, 2):
-
+                eu_improved = False
                 node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
                 node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
 
@@ -471,11 +471,9 @@ class ContractProgram:
                 # Avoids exchanging time with itself
                 if permutation[0].node_id == permutation[1].node_id:
                     continue
-
                 # Avoids negative time allocation
                 elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
                     continue
-
                 else:
                     adjusted_allocations[permutation[0].node_id].time -= time_switched
                     adjusted_allocations[permutation[1].node_id].time += time_switched
@@ -489,19 +487,12 @@ class ContractProgram:
                         # Do naive hill climbing on the branches
                         true_allocations = copy.deepcopy(node_0.true_subprogram.naive_hill_climbing_inner())
                         false_allocations = copy.deepcopy(node_0.false_subprogram.naive_hill_climbing_inner())
-
                     elif node_0.expression_type == "for":
                         # Reallocate the budgets for the inner metareasoning problems
                         node_0.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_0.id].time))
 
-                        # Do naive hill climbing on the branches
-                        # print("About to do inner naive hill climbing on for")
+                        # Do naive hill climbing on the chain 
                         for_allocations = copy.deepcopy(node_0.for_subprogram.naive_hill_climbing_inner())
-                        # print("after inner hill:")
-                        # utils.print_allocations(for_allocations)
-                        # print("outer hill self.allocations")
-                        # utils.print_allocations(self.allocations)
-
                     if node_1.expression_type == "conditional":
                         # Reallocate the budgets for the inner metareasoning problems
                         node_1.true_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_1.id].time))
@@ -510,33 +501,32 @@ class ContractProgram:
                         # Do naive hill climbing on the branches
                         true_allocations = copy.deepcopy(node_1.true_subprogram.naive_hill_climbing_inner())
                         false_allocations = copy.deepcopy(node_1.false_subprogram.naive_hill_climbing_inner())
-
                     elif node_1.expression_type == "for":
                         # Reallocate the budgets for the inner metareasoning problems
                         node_1.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_1.id].time))
 
-                        # Do naive hill climbing on the branches
+                        # Do naive hill climbing on the chain
                         for_allocations = copy.deepcopy(node_1.for_subprogram.naive_hill_climbing_inner())
 
-                    # best allocations from the previous iterations are needed since the allocations of the subprograms may be adjusted from above
-                    eu_adjusted = self.global_expected_utility(adjusted_allocations, [true_allocations, false_allocations, for_allocations])
-                    eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner)
+                    # Best allocations from the previous iterations are needed since the allocations of the subprograms may be adjusted from above
+                    # And scale the EU for interprettable results
+                    eu_adjusted = self.global_expected_utility(adjusted_allocations, [true_allocations, false_allocations, for_allocations]) * self.scale
 
                     if eu_adjusted > eu_original:
+                        # print("ADJUSTED: {}, ORIGINAL: {}".format(eu_adjusted, eu_original))
                         self.allocations = copy.deepcopy(adjusted_allocations)
                         self.best_allocations_inner = [copy.deepcopy(true_allocations), copy.deepcopy(false_allocations), copy.deepcopy(for_allocations)]
-                        # possible_local_max.append([adjusted_allocations, true_allocations, false_allocations, for_allocations])
                         best_allocations_changed = True
-
+                        eu_improved = True
                     else:
                         # Reset the branches of the inner conditional (go back to the original allocations for the next permutation)
                         true_allocations = copy.deepcopy(self.best_allocations_inner[0])
                         false_allocations = copy.deepcopy(self.best_allocations_inner[1])
                         for_allocations = copy.deepcopy(self.best_allocations_inner[2])
 
-                    # scale the EUs
-                    eu_adjusted *= self.scale
-                    eu_original *= self.scale
+                    print("ADJUSTED: {}, ORIGINAL: {}".format(eu_adjusted, eu_original))
+
+                    # eu_original *= self.scale
 
                     adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
 
@@ -550,40 +540,17 @@ class ContractProgram:
                         eu_adjusted = round(eu_adjusted, self.decimals)
                         eu_original = round(eu_original, self.decimals)
 
-                        # self.global_expected_utility(self.allocations) * self.scale
                         temp_time_switched = round(temp_time_switched, self.decimals)
-
                     if verbose:
                         message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
                         print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations_outer))
 
-            # arg max here
-            # if possible_local_max:
-            #     best_allocation = max([self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) for allocations in possible_local_max])
-            #     # print("OTHER Allocations: {}".format([self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) * self.scale for allocations in possible_local_max]))
-            #     # print("BEST Allocation: {}".format(best_allocation * self.scale))
-            #     for allocations in possible_local_max:
-            #         if self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]) == best_allocation:
-            #             # utils.print_allocations(allocations[0])
-            #             # utils.print_allocations(allocations[1])
-            #             # utils.print_allocations(allocations[2])
-            #             # utils.print_allocations(allocations[3])
-            #             # Make a deep copy to avoid pointers to the same list
-            #             self.allocations = copy.deepcopy(allocations[0])
-            #             self.best_allocations_inner = [copy.deepcopy(allocations[1]), copy.deepcopy(allocations[2]), copy.deepcopy(allocations[3])]
-            #             # utils.print_allocations(allocations[0])
-            #             # utils.print_allocations(allocations[1])
-            #             # utils.print_allocations(allocations[2])
-            #             # utils.print_allocations(allocations[3])
-            #             # print(self.global_expected_utility(allocations[0], [allocations[1], allocations[2], allocations[3]]))
-            #             # print(best_allocation)
-            #             # print("MADE SWITCH HERE")
-            #             # print("EU Validation: {}".format(self.global_expected_utility(self.allocations, self.best_allocations_inner)))
-            #             break
+                if eu_improved:
+                    eu_original = eu_adjusted
+                    print("HEYfklasjd;lfjkasjdfkj;laskdk;fj;alsj")
 
             if not best_allocations_changed:
                 time_switched = time_switched / decay
-
         return [self.allocations, self.best_allocations_inner[0], self.best_allocations_inner[1], self.best_allocations_inner[2]]
 
         # An attempt to make a recursive function for a more genralizable method
@@ -609,7 +576,7 @@ class ContractProgram:
         budget = copy.deepcopy(self.budget)
         # TODO: This does not work -> fix
         # taxed_budget = budget - self.initialize_allocations.count_conditionals()*self.performance_profile.calculate_tau()
-        #TODO: This is hardcoded
+        # TODO: This is hardcoded
         taxed_budget = budget - .1
 
         ppv = copy.deepcopy(self.performance_profile_velocities)
