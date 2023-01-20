@@ -198,8 +198,8 @@ class Generator:
             if Node.is_conditional_node(self.program_dag.nodes[i]) or Node.is_for_node(self.program_dag.nodes[i]):
                 i += 1
 
-            with open('node_{}.json'.format(i), 'w') as f:
-                nodes.append('node_{}.json'.format(i))
+            with open('quality_mappings/node_{}.json'.format(i), 'w') as f:
+                nodes.append('quality_mappings/node_{}.json'.format(i))
                 json.dump(dictionary_temp, f, indent=2)
                 print("New JSON file created for node_{}".format(i))
             i += 1

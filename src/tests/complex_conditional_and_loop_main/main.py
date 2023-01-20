@@ -238,7 +238,7 @@ if __name__ == "__main__":
     # performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10],
     #                                   [10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
 
-    # performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
+    performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
 
     # eu_list = [[] for i in range(0, NUM_METHODS)]
     # time_list = [[] for i in range(0, NUM_METHODS)]
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     for ppv_index, ppv in enumerate(performance_profile_velocities):
         # Used to create the synthetic data as instances and a populous file
         generate = True
-        if not exists("populous.json") or generate:
+        if not exists("quality_mappings/populous.json") or generate:
             # Initialize a generator
             generator = Generator(INSTANCES, program_dag=program_dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE,
                                   uniform_low=0.05,
@@ -269,7 +269,7 @@ if __name__ == "__main__":
             # Generate the nodes' quality mappings
             nodes = generator.generate_nodes()  # Return a list of file names of the nodes
             # populate the nodes' quality mappings into one populous file
-            generator.populate(nodes, "populous.json")
+            generator.populate(nodes, "quality_mappings/populous.json")
 
         # Create the program with some budget
         program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
@@ -372,7 +372,7 @@ if __name__ == "__main__":
             with open(file_str_times, 'wb') as file_times:
                 pickle.dump(pickled_time_list, file_times)
 
-    save_analysis_to_file = True
+    save_analysis_to_file = False
 
     if save_analysis_to_file:
         file = "data/time_on_c_data_node8_TEST.txt"

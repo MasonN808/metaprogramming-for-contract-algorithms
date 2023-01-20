@@ -31,7 +31,7 @@ class ContractProgram:
     :param: time_interval : float, required
         The interval used to help calculate the performance profiles (probabilities)
     """
-    POPULOUS_FILE_NAME = "populous.json"
+    POPULOUS_FILE_NAME = "quality_mappings/populous.json"
 
     def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals,
                  quality_interval, time_interval, time_step_size, in_child_contract_program, generator_dag,
@@ -524,7 +524,7 @@ class ContractProgram:
                         false_allocations = copy.deepcopy(self.best_allocations_inner[1])
                         for_allocations = copy.deepcopy(self.best_allocations_inner[2])
 
-                    print("ADJUSTED: {}, ORIGINAL: {}".format(eu_adjusted, eu_original))
+                    # print("ADJUSTED: {}, ORIGINAL: {}".format(eu_adjusted, eu_original))
 
                     # eu_original *= self.scale
 
@@ -547,7 +547,6 @@ class ContractProgram:
 
                 if eu_improved:
                     eu_original = eu_adjusted
-                    print("HEYfklasjd;lfjkasjdfkj;laskdk;fj;alsj")
 
             if not best_allocations_changed:
                 time_switched = time_switched / decay
