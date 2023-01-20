@@ -279,12 +279,12 @@ if __name__ == "__main__":
     node_indicies = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
     c_list = np.arange(.1, 5.1, .2)
     # c_list = np.arange(.1, 1.1, .2)
-    c_node_id = 6
+    c_node_id = 8
 
     # Pull all the data from the .txt files
     file_eus = open('data/eu_data.txt', 'rb')
     file_times = open('data/time_data.txt', 'rb')
-    file_c_times = open('data/time_on_c_data_node6.txt', 'rb')
+    file_c_times = open('data/time_on_c_data_node8.txt', 'rb')
     subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
 
     plot(plot_type="scatter", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,

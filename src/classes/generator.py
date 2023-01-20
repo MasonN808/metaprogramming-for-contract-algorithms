@@ -33,7 +33,7 @@ class Generator:
         self.manual_override_index = -1
         self.manual_override = None
 
-    def simulate_performance_profile(self, random_number, node):
+    def simulate_performance_profile(self, random_number, node, noise):
         """
         Simulates a performance profile of a contract algorithm using synthetic data
 
@@ -41,10 +41,10 @@ class Generator:
         :param random_number: a random number from a uniform distribution with some noise
         :return: dictionary
         """
-        dictionary = self.recur_build(0, node, [], {}, random_number)
+        dictionary = self.recur_build(depth=0, node=node, qualities=[], dictionary={}, random_number=random_number, noise=noise)
         return dictionary
 
-    def recur_build(self, depth, node, qualities, dictionary, random_number):
+    def recur_build(self, depth, node, qualities, dictionary, random_number, noise):
         """
         Used to recursively generate the synthetic quality mappings
 
@@ -62,7 +62,8 @@ class Generator:
 
             for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
                 # Use this function to approximate the performance profile
-                dictionary[t] = 1 - math.e ** (-velocity * t)
+                # dictionary[t] = 1 - math.e ** (-velocity * t)
+                dictionary[t] = 1 - math.e ** (-(velocity + noise) * t)
 
         else:
             parents_length = len(node.parents)
@@ -72,21 +73,21 @@ class Generator:
 
             for quality in potential_parent_qualities:
                 dictionary[quality] = {quality: {}}
-
+                qualities.append(quality)
                 # Base Case
                 if depth == parents_length - 1:
                     dictionary[quality] = {}
-
                     # To change the quality mapping with respect to the parent qualities
                     velocity = self.parent_dependent_transform(node, qualities, random_number)
 
+                    # Remove the last quality for next set of potential qualities
+                    qualities = qualities[:-1]
+
                     for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
                         # Add some noise to the qualities for each instance
-                        # noise = np.random.normal(loc=0, scale=.01)
 
-                        # generated_quality = (1 - math.e ** (-(velocity + noise) * t))
-
-                        generated_quality = (1 - math.e ** (-velocity * t))
+                        generated_quality = (1 - math.e ** (-(velocity + noise) * t))
+                        # generated_quality = (1 - math.e ** (-velocity * t))
 
                         # Check bounds and truncate
                         if generated_quality < 0:
@@ -97,8 +98,11 @@ class Generator:
                         # Use this function to approximate the performance profile
                         dictionary[quality][t] = generated_quality
                 else:
-                    qualities.append(quality)
-                    self.recur_build(depth + 1, node, qualities, dictionary[quality], random_number)
+                    agg_qualities = copy.deepcopy(qualities)
+
+                    self.recur_build(depth + 1, node, agg_qualities, dictionary[quality], random_number, noise)
+                    # Remove the last quality for next set of potential qualities
+                    qualities = qualities[:-1]
 
         return dictionary
 
@@ -156,6 +160,7 @@ class Generator:
         """
         dictionary = {'instances': {}}
 
+        noise = 0
         for i in range(self.instances):
             # Take a random value from a uniform distribution; used for nodes without parents
             # c = np.random.uniform(low=self.uniform_low, high=self.uniform_high)
@@ -164,8 +169,11 @@ class Generator:
             # c = c + abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
             c = abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
 
+            # Aggregate the noise to produce different quality mappings
+            noise += abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
+
             # Make an embedded dictionary for each instance of the node in the DAG
-            dictionary_inner = self.simulate_performance_profile(c, node)
+            dictionary_inner = self.simulate_performance_profile(c, node, noise)
 
             dictionary['instances']['instance_{}'.format(i)] = dictionary_inner
 
@@ -195,9 +203,7 @@ class Generator:
                 nodes.append('node_{}.json'.format(i))
                 json.dump(dictionary_temp, f, indent=2)
                 print("New JSON file created for node_{}".format(i))
-
             i += 1
-
         return nodes
 
     def valid_manual_override(self):

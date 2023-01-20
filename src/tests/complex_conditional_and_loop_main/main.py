@@ -376,7 +376,7 @@ if __name__ == "__main__":
     save_analysis_to_file = True
 
     if save_analysis_to_file:
-        file = "data/time_on_c_data_node8.txt"
+        file = "data/time_on_c_data_node8_TEST.txt"
         # Check if data files exist
         if not os.path.isfile(file):
             with open(file, 'wb') as file_times:
