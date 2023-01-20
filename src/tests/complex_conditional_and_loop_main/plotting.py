@@ -118,7 +118,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
             FILENAME = 'bar_charts/{}-{}-iterations{}-node{}.png'.format(plot_type, method_type, iterations, node_id)
             times = []
             for method in subset_methods:
-                match method:
+                match method: # noqa
                     case 'PA (ß=10)':
                         times.append(np.array(average_times[node_id][0]))
                     case 'PA (ß=5)':
