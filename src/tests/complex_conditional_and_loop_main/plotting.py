@@ -40,7 +40,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         FILENAME = 'box_whisker_charts/{}-{}-iterations{}.png'.format(plot_type, method_type, iterations)
         logged_eus = []
         for method in subset_methods:
-            match method:
+            match method: # noqa
                 case 'PA (ß=10)':
                     logged_eus.append(np.log(np.array(pickled_eu_list[0])))
                 case 'PA (ß=5)':
