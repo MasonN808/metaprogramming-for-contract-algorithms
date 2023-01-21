@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 1
+    ITERATIONS = 10
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (for subtree)
@@ -224,13 +224,14 @@ if __name__ == "__main__":
     program_dag = DirectedAcyclicGraph(nodes, root)
 
     # Use a Dirichlet distribution to generate random ppvs
-    # performance_profile_velocities = utils.dirichlet_ppv(iterations=ITERATIONS, dag=program_dag, alpha=.9, constant=10)
+    performance_profile_velocities = utils.dirichlet_ppv(iterations=ITERATIONS, dag=program_dag, alpha=.9, constant=10)
 
     # Use an Analysis ppv to test the avaerage time allocations on varying Cs for a given node
     c_list = np.arange(.1, 5.1, .2)
     # c_list = np.arange(.1, 1.1, .2)
     c_node_id = 8
-    performance_profile_velocities = utils.ppv_generator(node_id=c_node_id, dag=program_dag, c_list=c_list, constant=1)
+    # performance_profile_velocities = utils.ppv_generator(node_id=c_node_id, dag=program_dag, c_list=c_list, constant=1)
+
     # Initialize the velocities for the quality mappings in a list
     # Need to initialize it after adjusting program_dag
     # A higher number x indicates a higher velocity in f(x)=1-e^{-x*t}
@@ -238,7 +239,7 @@ if __name__ == "__main__":
     # performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10],
     #                                   [10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
 
-    performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
+    # performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
 
     # eu_list = [[] for i in range(0, NUM_METHODS)]
     # time_list = [[] for i in range(0, NUM_METHODS)]
@@ -338,11 +339,11 @@ if __name__ == "__main__":
         # Save the time allcoations
         times_on_c[ppv_index] += (eu_time[1])
 
-        save_to_external = False
+        save_to_external = True
 
         if save_to_external:
-            file_str_eus = "data/eu_data.txt"
-            file_str_times = "data/time_data.txt"
+            file_str_eus = "data/eu_data_2.txt"
+            file_str_times = "data/time_data_2.txt"
             # Check if data files exist
             if not os.path.isfile(file_str_eus):
                 with open(file_str_eus, 'wb') as file_eus:
