@@ -628,7 +628,7 @@ class ContractProgram:
                     if verbose:
                         message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
                         print(message.format(temp_time_switched, printed_eu_adjusted, printed_eu_original,
-                                                print_allocations_outer))
+                                             print_allocations_outer))
 
             # if local max wasn't found
             if not best_allocations_changed:

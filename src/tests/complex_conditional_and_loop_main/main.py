@@ -34,7 +34,7 @@ if __name__ == "__main__":
     QUALITY_INTERVAL = .05
     NUMBER_OF_LOOPS = 4
     # For type of performance profile (exact or appproximate)
-    EXPECTED_UTILITY_TYPE = "approximate"
+    EXPECTED_UTILITY_TYPE = "exact"
     # Initialize a list of all possible qualities
     POSSIBLE_QUALITIES = np.arange(0, 1 + QUALITY_INTERVAL, QUALITY_INTERVAL)
     # The number of methods for experimentation
@@ -239,7 +239,7 @@ if __name__ == "__main__":
     # performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10],
     #                                   [10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
 
-    # performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
+    performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
 
     # eu_list = [[] for i in range(0, NUM_METHODS)]
     # time_list = [[] for i in range(0, NUM_METHODS)]
@@ -342,7 +342,7 @@ if __name__ == "__main__":
         # Save the time allcoations for C-variation experimenet
         # times_on_c[ppv_index] += (eu_time[1])
 
-        save_to_external = True
+        save_to_external = False
 
         if save_to_external:
             file_str_eus = "data/eu_data_3.txt"
