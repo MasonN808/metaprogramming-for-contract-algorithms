@@ -461,49 +461,56 @@ class ContractProgram:
             best_allocations_changed = False
             # Go through all permutations of the time allocations
             for permutation in permutations(refactored_allocations, 2):
-                eu_improved = False
-                node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
-                node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
-
                 # Makes a deep copy to avoid pointers to the same list
                 adjusted_allocations = copy.deepcopy(self.allocations)
+                previous_eu_original = eu_original
+                node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
+                node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
+                node_0_time = adjusted_allocations[permutation[0].node_id].time
+                node_1_time = adjusted_allocations[permutation[1].node_id].time
 
                 # Avoids exchanging time with itself
                 if permutation[0].node_id == permutation[1].node_id:
                     continue
                 # Avoids negative time allocation
-                elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
+                elif node_0_time - time_switched < 0:
+                    continue
+                # Avoids reducing the time allocation below the conditional time lower bound (tau)
+                elif ((node_0.expression_type == "conditional") and (node_0_time - time_switched < self.performance_profile.calculate_tau())) or ((node_1.expression_type == "conditional") and (node_1_time + time_switched < self.performance_profile.calculate_tau())):
                     continue
                 else:
                     adjusted_allocations[permutation[0].node_id].time -= time_switched
                     adjusted_allocations[permutation[1].node_id].time += time_switched
 
+                    altered_node_0_time = adjusted_allocations[permutation[0].node_id].time
+                    altered_node_1_time = adjusted_allocations[permutation[1].node_id].time
+
                     # Does hill climbing on the outer metareasoning problem that is a conditional
                     if node_0.expression_type == "conditional":
                         # Reallocate the budgets for the inner metareasoning problems
-                        node_0.true_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_0.id].time))
-                        node_0.false_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_0.id].time))
+                        node_0.true_subprogram.change_budget(copy.deepcopy(altered_node_0_time))
+                        node_0.false_subprogram.change_budget(copy.deepcopy(altered_node_0_time))
 
                         # Do naive hill climbing on the branches
                         true_allocations = copy.deepcopy(node_0.true_subprogram.naive_hill_climbing_inner())
                         false_allocations = copy.deepcopy(node_0.false_subprogram.naive_hill_climbing_inner())
                     elif node_0.expression_type == "for":
                         # Reallocate the budgets for the inner metareasoning problems
-                        node_0.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_0.id].time))
+                        node_0.for_subprogram.change_budget(copy.deepcopy(altered_node_0_time))
 
                         # Do naive hill climbing on the chain
                         for_allocations = copy.deepcopy(node_0.for_subprogram.naive_hill_climbing_inner())
                     if node_1.expression_type == "conditional":
                         # Reallocate the budgets for the inner metareasoning problems
-                        node_1.true_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_1.id].time))
-                        node_1.false_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_1.id].time))
+                        node_1.true_subprogram.change_budget(copy.deepcopy(altered_node_1_time))
+                        node_1.false_subprogram.change_budget(copy.deepcopy(altered_node_1_time))
 
                         # Do naive hill climbing on the branches
                         true_allocations = copy.deepcopy(node_1.true_subprogram.naive_hill_climbing_inner())
                         false_allocations = copy.deepcopy(node_1.false_subprogram.naive_hill_climbing_inner())
                     elif node_1.expression_type == "for":
                         # Reallocate the budgets for the inner metareasoning problems
-                        node_1.for_subprogram.change_budget(copy.deepcopy(adjusted_allocations[node_1.id].time))
+                        node_1.for_subprogram.change_budget(copy.deepcopy(altered_node_1_time))
 
                         # Do naive hill climbing on the chain
                         for_allocations = copy.deepcopy(node_1.for_subprogram.naive_hill_climbing_inner())
@@ -517,7 +524,7 @@ class ContractProgram:
                         self.allocations = copy.deepcopy(adjusted_allocations)
                         self.best_allocations_inner = [copy.deepcopy(true_allocations), copy.deepcopy(false_allocations), copy.deepcopy(for_allocations)]
                         best_allocations_changed = True
-                        eu_improved = True
+                        eu_original = eu_adjusted
                     else:
                         # Reset the branches of the inner conditional (go back to the original allocations for the next permutation)
                         true_allocations = copy.deepcopy(self.best_allocations_inner[0])
@@ -536,21 +543,98 @@ class ContractProgram:
                     # Check for rounding
                     if self.decimals is not None:
                         print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
-
-                        eu_adjusted = round(eu_adjusted, self.decimals)
-                        eu_original = round(eu_original, self.decimals)
-
+                        printed_eu_adjusted = round(eu_adjusted, self.decimals)
+                        printed_eu_original = round(previous_eu_original, self.decimals)
                         temp_time_switched = round(temp_time_switched, self.decimals)
                     if verbose:
                         message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
-                        print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations_outer))
-
-                if eu_improved:
-                    eu_original = eu_adjusted
+                        print(message.format(temp_time_switched, printed_eu_adjusted, printed_eu_original, print_allocations_outer))
 
             if not best_allocations_changed:
                 time_switched = time_switched / decay
+
         return [self.allocations, self.best_allocations_inner[0], self.best_allocations_inner[1], self.best_allocations_inner[2]]
+
+    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
+        """
+        Does hill climbing specific to an arbitrary inner contract program
+
+        :param verbose: Verbose mode
+        :param threshold: float, the threshold of the temperature decay during annealing
+        :param decay: float, the decay rate of the temperature during annealing
+        :return: A stream of optimized time allocations associated with each contract algorithm
+        """
+        # Reinitialize the inner metareasoning problem with a uniform budget
+        self.allocations = self.initialize_allocations.uniform_budget()
+        eu_original = self.global_expected_utility(self.allocations) * self.scale
+
+        # Initialize the amount of time to be switched
+        time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
+
+        while time_switched > threshold:
+            # Remove the Nones in the list before taking permutations
+            refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
+            best_allocations_changed = False
+
+            # Go through all permutations of the time allocations
+            for permutation in permutations(refactored_allocations, 2):
+                previous_eu_original = eu_original
+                node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
+                node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
+
+                # Makes a deep copy to avoid pointers to the same list
+                adjusted_allocations = copy.deepcopy(self.allocations)
+
+                # Avoids exchanging time with itself
+                if permutation[0].node_id == permutation[1].node_id:
+                    continue
+
+                # Avoids all permutations that include the conditional node in the inner metareasoning problem
+                elif node_0.expression_type == "conditional" or node_1.expression_type == "conditional":
+                    continue
+
+                # Avoids all permutations that include the for node in the inner metareasoning problem
+                elif node_0.expression_type == "for" or node_1.expression_type == "for":
+                    continue
+
+                # Avoids negative time allocation
+                elif adjusted_allocations[permutation[0].node_id].time - time_switched <= 0:
+                    continue
+
+                else:
+                    adjusted_allocations[permutation[0].node_id].time -= time_switched
+                    adjusted_allocations[permutation[1].node_id].time += time_switched
+
+                    eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
+
+                    if eu_adjusted > eu_original:
+                        self.allocations = copy.deepcopy(adjusted_allocations)
+                        best_allocations_changed = True
+                        eu_original = eu_adjusted
+
+                    adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
+
+                    print_allocations_outer = [i.time for i in adjusted_allocations]
+
+                    temp_time_switched = time_switched
+
+                    # Check for rounding
+                    if self.decimals is not None:
+                        print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
+                        printed_eu_adjusted = round(eu_adjusted, self.decimals)
+                        printed_eu_original = round(previous_eu_original, self.decimals)
+                        temp_time_switched = round(temp_time_switched, self.decimals)
+
+                    if verbose:
+                        message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
+                        print(message.format(temp_time_switched, printed_eu_adjusted, printed_eu_original,
+                                                print_allocations_outer))
+
+            # if local max wasn't found
+            if not best_allocations_changed:
+                time_switched = time_switched / decay
+
+        return self.allocations
 
         # An attempt to make a recursive function for a more genralizable method
         # node_index = 0
@@ -997,117 +1081,6 @@ class ContractProgram:
                 time_switched = time_switched / decay
 
         return [self.allocations, self.best_allocations_inner[0]]
-
-    def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
-        """
-        Does hill climbing specific to an arbitrary inner contract program
-
-        :param verbose: Verbose mode
-        :param threshold: float, the threshold of the temperature decay during annealing
-        :param decay: float, the decay rate of the temperature during annealing
-        :return: A stream of optimized time allocations associated with each contract algorithm
-        """
-        if self.subprogram_expression_type == "conditional":
-            # Check that the net budget doesn't go negative if taxed with tau for inner
-            tau = self.performance_profile.calculate_tau()
-            taxed_budget = self.budget - tau
-
-        elif self.subprogram_expression_type == "for":
-            taxed_budget = self.budget
-
-        # Check if the budget is 0 for the inner metareasoning
-        if taxed_budget > 0:
-            # Reinitialize the inner metareasoning problem with a uniform budget
-            self.allocations = self.initialize_allocations.uniform_budget()
-
-            # Initialize the amount of time to be switched
-            time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
-
-            while time_switched > threshold:
-                possible_local_max = []
-
-                # Remove the Nones in the list before taking permutations
-                refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
-
-                # Go through all permutations of the time allocations
-                for permutation in permutations(refactored_allocations, 2):
-                    node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
-                    node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
-
-                    # Makes a deep copy to avoid pointers to the same list
-                    adjusted_allocations = copy.deepcopy(self.allocations)
-
-                    # Avoids exchanging time with itself
-                    if permutation[0].node_id == permutation[1].node_id:
-                        continue
-
-                    # Avoids all permutations that include the conditional node in the inner metareasoning problem
-                    elif node_0.expression_type == "conditional" or node_1.expression_type == "conditional":
-                        continue
-
-                    # Avoids all permutations that include the for node in the inner metareasoning problem
-                    elif node_0.expression_type == "for" or node_1.expression_type == "for":
-                        continue
-
-                    # Avoids negative time allocation
-                    elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
-                        continue
-
-                    else:
-                        adjusted_allocations[permutation[0].node_id].time -= time_switched
-                        adjusted_allocations[permutation[1].node_id].time += time_switched
-
-                        eu_adjusted = self.global_expected_utility(adjusted_allocations)
-                        eu_original = self.global_expected_utility(self.allocations)
-
-                        if eu_adjusted > eu_original:
-                            possible_local_max.append(adjusted_allocations)
-
-                        eu_adjusted *= self.scale
-                        eu_original *= self.scale
-
-                        adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
-
-                        print_allocations_outer = [i.time for i in adjusted_allocations]
-
-                        temp_time_switched = time_switched
-
-                        # Check for rounding
-                        if self.decimals is not None:
-                            print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
-
-                            eu_adjusted = round(eu_adjusted, self.decimals)
-                            eu_original = round(eu_original, self.decimals)
-
-                            temp_time_switched = round(temp_time_switched, self.decimals)
-
-                        if verbose:
-
-                            message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
-                            print(message.format(temp_time_switched, eu_adjusted, eu_original,
-                                                 print_allocations_outer))
-
-                # arg max here
-                if possible_local_max:
-                    best_allocation = max([self.global_expected_utility(j) for j in possible_local_max])
-                    for j in possible_local_max:
-                        if self.global_expected_utility(j) == best_allocation:
-                            # Make a deep copy to avoid pointers to the same list
-                            self.allocations = copy.deepcopy(j)
-
-                # if local max wasn't found
-                else:
-                    time_switched = time_switched / decay
-            # print("inner hill self.allocations: ")
-            # utils.print_allocations(self.allocations)
-            return self.allocations
-
-        else:
-            for time_allocation in self.allocations:
-                if time_allocation.time is not None and not Node.is_conditional_node(utils.find_node(time_allocation.node_id, self.program_dag)) and not Node.is_for_node(utils.find_node(time_allocation.node_id, self.program_dag)):
-                    time_allocation.time = 0
-
-            return self.allocations
 
     def change_budget(self, new_budget) -> None:
         """

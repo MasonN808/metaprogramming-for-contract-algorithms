@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 10
+    ITERATIONS = 100
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (for subtree)
@@ -335,15 +335,18 @@ if __name__ == "__main__":
 
         # Outputs embeded list of expected utilities and allocations
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
-        print(eu_time[1])
-        # Save the time allcoations
-        times_on_c[ppv_index] += (eu_time[1])
+        # print(eu_time[1])
+
+        print("PPV: {}".format(ppv))
+
+        # Save the time allcoations for C-variation experimenet
+        # times_on_c[ppv_index] += (eu_time[1])
 
         save_to_external = True
 
         if save_to_external:
-            file_str_eus = "data/eu_data_2.txt"
-            file_str_times = "data/time_data_2.txt"
+            file_str_eus = "data/eu_data_3.txt"
+            file_str_times = "data/time_data_3.txt"
             # Check if data files exist
             if not os.path.isfile(file_str_eus):
                 with open(file_str_eus, 'wb') as file_eus:
