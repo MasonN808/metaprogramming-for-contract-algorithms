@@ -322,10 +322,6 @@ class Generator:
         dag = copy.deepcopy(dag)
         for node in dag.nodes:
             if node.expression_type == "for":
-                # for parent in node.parents:
-                #     parent.children.extend(node.children)
-                #     if node in parent.children:
-                #         parent.children.remove(node)
                 for child in node.children:
                     child.parents.extend(node.parents)
                     child.parents.remove(node)
