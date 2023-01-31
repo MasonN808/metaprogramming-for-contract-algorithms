@@ -314,8 +314,8 @@ class ContractProgram:
                         total_sum += conditional_probability * utility
                     else:
                         total_sum += conditional_probability * self.find_exact_expected_utility(leaves=new_leaves, time_allocations=time_allocations, depth=depth,
-                                                                                          expected_utility=expected_utility, current_qualities=current_qualities,
-                                                                                          possible_qualities=possible_qualities, parent_qualities=[], total_sum=0)
+                                                                                                expected_utility=expected_utility, current_qualities=current_qualities,
+                                                                                                possible_qualities=possible_qualities, parent_qualities=[], total_sum=0)
 
             # print("FINAL SUM: {}".format(total_sum))
             # print(depth)

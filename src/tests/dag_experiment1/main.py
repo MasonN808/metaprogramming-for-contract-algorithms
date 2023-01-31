@@ -46,7 +46,7 @@ if __name__ == "__main__":
     node_2 = Node(2, [], [], expression_type="contract", in_child_contract_program=False)
 
     # For Node
-    node_1= Node(1, [node_2], [], expression_type="contract", in_child_contract_program=False)
+    node_1 = Node(1, [node_2], [], expression_type="contract", in_child_contract_program=False)
 
     # Root node
     root = Node(0, [node_1], [], expression_type="contract", in_child_contract_program=False)
