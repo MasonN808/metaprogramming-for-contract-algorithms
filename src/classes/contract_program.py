@@ -95,7 +95,8 @@ class ContractProgram:
         :return: float
         """
         if self.expected_utility_type == "exact":
-            return (self.global_expected_utility_exact(time_allocations, best_allocations_inner))
+            return (self.global_expected_utility_exact(time_allocations))
+            # return (self.global_expected_utility_exact(time_allocations, best_allocations_inner))
         elif self.expected_utility_type == "approximate":
             return (self.global_expected_utility_approximate(time_allocations, best_allocations_inner))
         else:
@@ -224,8 +225,8 @@ class ContractProgram:
 
         # utils.print_allocations(time_allocations)
         return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=0,
-                                                current_qualities=[None for i in range(self.generator_dag.order)], parent_qualities=[],
-                                                depth=0, leaves=leaves, sum=0)
+                                                current_qualities=[0.0 for i in range(self.generator_dag.order)], parent_qualities=[],
+                                                depth=0, leaves=leaves, total_sum=0)
 
     # eu = 0
     # for q_1 in 1 to max_Q:
@@ -235,7 +236,7 @@ class ContractProgram:
     #         eu += pr(q_1, ..., q_n) * utility(q_1, ..., q_n)
 
     # TODO: Fix this (9/22)
-    def find_exact_expected_utility(self, leaves, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, sum) -> float:
+    def find_exact_expected_utility(self, leaves, time_allocations, depth, expected_utility, current_qualities, parent_qualities, possible_qualities, total_sum) -> float:
         """
         Returns the exact EU
 
@@ -248,28 +249,22 @@ class ContractProgram:
         # Recur down the DAG
         depth += 1
         # print("DEPTH: {}".format(depth))
-
         if leaves:
-
             for node in leaves:
-
                 if node.parents and depth != 1:
-
                     parents = node.parents
                     for_and_conditional_nodes = []
 
-                    for parent in parents:
+                    print(current_qualities)
 
+                    for parent in parents:
                         # Check parents aren't fors or conditionals
                         # If so, get its parents instead
                         if parent.expression_type == "for" or parent.expression_type == "conditional":
-
                             # TODO: Make this for an arbitrary branch structure not just a P_n graph
                             parents.extend(parent.parents)
                             for_and_conditional_nodes.append(parent)
-
                             continue
-
                         # Use the qualities from the previous possible qualities in the parent nodes
                         # as parent qualities to query from performance profiles
                         parent_qualities.append(current_qualities[parent.id])
@@ -280,12 +275,16 @@ class ContractProgram:
 
                 # Loop through all possible qualities on the current node
                 for possible_quality in possible_qualities:
-
                     current_qualities[node.id] = possible_quality
-
                     node_time = time_allocations[node.id].time
 
                     # print("TEST: {}, {}".format(node_time, node.id))
+                    print("PARENT QUALITIES: {}".format(parent_qualities))
+                    print("ID -- {}".format(node.id))
+
+                    # Check if the node is the conditional root, then average the quality of the parents for the root
+                    if node.is_conditional_root:
+                        parent_qualities = [sum(parent_qualities) / len(parent_qualities)]
 
                     sample_quality_list = self.performance_profile.query_quality_list_on_interval(
                         time=node_time, id=node.id, parent_qualities=parent_qualities)
@@ -305,25 +304,26 @@ class ContractProgram:
 
                     # Traverse up the DAG
                     new_leaves = node.children
+                    print([i.id for i in new_leaves])
 
                     # TODO: Subtract by 1 and the number of fors and conditionals in DAG
                     if depth == self.generator_dag.order - 1:
                         # Remove nones from the list since current qualities will have model qualities for every node in the generator dag
                         utility = self.global_utility(utils.remove_nones_list(current_qualities))
                         # print("UTILITY: {}".format(utility))
-                        sum += conditional_probability * utility
+                        total_sum += conditional_probability * utility
                     else:
-                        sum += conditional_probability * self.find_exact_expected_utility(leaves=new_leaves, time_allocations=time_allocations, depth=depth,
+                        total_sum += conditional_probability * self.find_exact_expected_utility(leaves=new_leaves, time_allocations=time_allocations, depth=depth,
                                                                                           expected_utility=expected_utility, current_qualities=current_qualities,
-                                                                                          possible_qualities=possible_qualities, parent_qualities=[], sum=0)
+                                                                                          possible_qualities=possible_qualities, parent_qualities=[], total_sum=0)
 
-            # print("FINAL SUM: {}".format(sum))
+            # print("FINAL SUM: {}".format(total_sum))
             # print(depth)
-            return sum
+            return total_sum
 
         # If we hit the bottom of the recursion (i.e., the root)
         else:
-            return sum
+            return total_sum
 
     def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
