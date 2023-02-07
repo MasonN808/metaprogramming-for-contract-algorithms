@@ -158,32 +158,34 @@ def dirichlet_ppv(iterations, dag, alpha=1, constant=10):
         # Turn the numpy array into a list
         velocities_list = velocities_array.tolist()
 
-        # Create the sublist for conditional
-        accumlated_velocities = []
-        for index in range(0, len(conditional_indices) + 1):
-            if index == len(conditional_indices):
-                accumlated_velocities.append("conditional")
-            else:
-                accumlated_velocities.append(velocities_list[conditional_indices[index]])
-        # Place the sublist in the list
-        velocities_list[conditional_indices[0]] = accumlated_velocities
-        # Remove the duplicates in outer list
-        for i in range(0, len(conditional_indices) - 1):
-            velocities_list.pop(conditional_indices[0] + 1)
+        if number_conditionals > 0:
+            # Create the sublist for conditional
+            accumlated_velocities = []
+            for index in range(0, len(conditional_indices) + 1):
+                if index == len(conditional_indices):
+                    accumlated_velocities.append("conditional")
+                else:
+                    accumlated_velocities.append(velocities_list[conditional_indices[index]])
+            # Place the sublist in the list
+            velocities_list[conditional_indices[0]] = accumlated_velocities
+            # Remove the duplicates in outer list
+            for i in range(0, len(conditional_indices) - 1):
+                velocities_list.pop(conditional_indices[0] + 1)
 
-        # Place the sublist in the list
-        accumlated_velocities = []
-        for index in range(0, len(for_indices) + 1):
-            if index == len(for_indices):
-                accumlated_velocities.append("for")
-            else:
-                accumlated_velocities.append(velocities_list[for_indices[index] - len(conditional_indices) + 1])
+        if number_fors > 0:
+            # Create the sublist for the For
+            accumlated_velocities = []
+            for index in range(0, len(for_indices) + 1):
+                if index == len(for_indices):
+                    accumlated_velocities.append("for")
+                else:
+                    accumlated_velocities.append(velocities_list[for_indices[index] - len(conditional_indices) + 1])
+            # Place the sublist in the list
+            velocities_list[for_indices[0] - len(conditional_indices)] = accumlated_velocities
 
-        # Place the sublist in the list
-        velocities_list[for_indices[0] - len(conditional_indices)] = accumlated_velocities
-        # Remove the duplicates in outer list
-        for i in range(0, len(for_indices) - 1):
-            velocities_list.pop(for_indices[0] - len(conditional_indices) + 1)
+            # Remove the duplicates in outer list
+            for i in range(0, len(for_indices) - 1):
+                velocities_list.pop(for_indices[0] - len(conditional_indices) + 1)
 
         accumulated_ppv.append(velocities_list)
 

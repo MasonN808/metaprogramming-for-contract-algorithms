@@ -255,7 +255,7 @@ class ContractProgram:
                     parents = node.parents
                     for_and_conditional_nodes = []
 
-                    print(current_qualities)
+                    # print(current_qualities)
 
                     for parent in parents:
                         # Check parents aren't fors or conditionals
@@ -279,8 +279,8 @@ class ContractProgram:
                     node_time = time_allocations[node.id].time
 
                     # print("TEST: {}, {}".format(node_time, node.id))
-                    print("PARENT QUALITIES: {}".format(parent_qualities))
-                    print("ID -- {}".format(node.id))
+                    # print("PARENT QUALITIES: {}".format(parent_qualities))
+                    # print("ID -- {}".format(node.id))
 
                     # Check if the node is the conditional root, then average the quality of the parents for the root
                     if node.is_conditional_root:
@@ -304,7 +304,7 @@ class ContractProgram:
 
                     # Traverse up the DAG
                     new_leaves = node.children
-                    print([i.id for i in new_leaves])
+                    # print([i.id for i in new_leaves])
 
                     # TODO: Subtract by 1 and the number of fors and conditionals in DAG
                     if depth == self.generator_dag.order - 1:
