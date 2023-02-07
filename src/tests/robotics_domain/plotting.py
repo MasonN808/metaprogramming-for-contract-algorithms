@@ -260,10 +260,19 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         plt.ylabel("Time Allocation")
         plt.xlabel("C value")
 
-        # Cycle through rainbow colors
-        colors = iter(plt.cm.rainbow(np.linspace(0, 1, len(times))))
-        for index, method_str in enumerate(subset_methods):
+        # Make the method colors cycle through the rainbow colors
+        # colors = iter(plt.cm.rainbow(np.linspace(0, 1, len(times))))
+        # for index, method_str in enumerate(subset_methods):
+        #     plt.scatter(x=c_list, y=[times[index]], c=next(colors), marker="o", label=method_str)
+
+        # Make the PA methods a single heatmap color
+        colors = iter(plt.cm.autumn(np.linspace(0, 1, len(times))))
+        for index, method_str in enumerate(subset_methods[:-2]):
             plt.scatter(x=c_list, y=[times[index]], c=next(colors), marker="o", label=method_str)
+        # Make Uniform gray
+        plt.scatter(x=c_list, y=[times[11]], c="gray", marker="o", label="Uniform")
+        # Make RHC green
+        plt.scatter(x=c_list, y=[times[12]], c="green", marker="o", label="RHC")
 
         plt.rcParams["font.family"] = "Times New Roman"
         plt.rcParams["font.size"] = 11
@@ -293,5 +302,5 @@ if __name__ == "__main__":
     subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
     subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
 
-    plot(plot_type="box_whisker", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
+    plot(plot_type="scatter", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
          file_eus=file_eus, file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=[1])
