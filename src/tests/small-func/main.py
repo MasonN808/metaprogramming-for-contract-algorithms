@@ -1,6 +1,4 @@
 import copy
-import os
-import pickle
 import sys
 import numpy as np
 from os.path import exists  # noqa
@@ -115,4 +113,4 @@ if __name__ == "__main__":
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
 
         # Save the EU and Time data to an external files
-        test.save_eu_time_data(eu_time_list= eu_time, eu_file_path="src/tests/small-func/data/eu_data.txt", time_file_path="src/tests/small-func/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
+        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/small-func/data/eu_data.txt", time_file_path="src/tests/small-func/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
