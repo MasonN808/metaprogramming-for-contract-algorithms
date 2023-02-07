@@ -82,6 +82,7 @@ class PerformanceProfile:
             # Round to get rid of rounding error in division of time
             for t in np.arange(start_step + self.time_step_size, end_step + self.time_step_size, self.time_step_size).round(num_decimals_step_size):
                 # ["{}".format(t)]: The time allocation
+                # print(dictionary)
                 qualities += dictionary["{}".format(t)]
 
             return qualities

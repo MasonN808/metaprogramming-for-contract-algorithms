@@ -39,6 +39,11 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
             method_type = "subset_methods"
         FILENAME = 'box_whisker_charts/{}-{}-iterations{}.png'.format(plot_type, method_type, iterations)
         logged_eus = []
+
+        # Remove 0s in arrays
+        for i in range(0, len(pickled_eu_list)):
+            pickled_eu_list[i] = [i for i in pickled_eu_list[i] if i != 0]
+
         for method in subset_methods:
             match method:  # noqa
                 case 'PA (ß=10)':
@@ -282,8 +287,8 @@ if __name__ == "__main__":
     c_node_id = 6
 
     # Pull all the data from the .txt files
-    file_eus = open('data/eu_data_3.txt', 'rb')
-    file_times = open('data/time_data_3.txt', 'rb')
+    file_eus = open('data/eu_data_4.txt', 'rb')
+    file_times = open('data/time_data_4.txt', 'rb')
     file_c_times = open('data/time_on_c_data_node6_TEST2.txt', 'rb')
     subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
     subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']

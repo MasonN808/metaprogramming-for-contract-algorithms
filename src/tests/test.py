@@ -1,4 +1,6 @@
 import copy
+import os
+import pickle
 import sys
 import numpy as np
 from time import sleep
@@ -675,6 +677,37 @@ class Test:
         for i, parent in enumerate(root.parents):
             is_last = i == len(root.parents) - 1
             self.print_tree(parent, marker_str, [*level_markers, not is_last])
+
+    @staticmethod
+    def save_eu_time_data(eu_time_list, eu_file_path, time_file_path, node_indicies, num_methods):
+        # Check if data files exist
+        if not os.path.isfile(eu_file_path):
+            with open(eu_file_path, 'wb') as file_eus:
+                pickle.dump([[] for i in range(0, num_methods)], file_eus)
+
+        if not os.path.isfile(time_file_path):
+            with open(time_file_path, 'wb') as file_times:
+                pickle.dump([[[] for j in range(0, num_methods)] for i in range(0, len(node_indicies))], file_times)
+
+        # Open files in binary mode with wb instead of w
+        file_eus = open(eu_file_path, 'rb')
+        file_times = open(time_file_path, 'rb')
+
+        # Load the saved embedded lists to append new data
+        pickled_eu_list = pickle.load(file_eus)
+        pickled_time_list = pickle.load(file_times)
+
+        # Append the EUs appropriately to list in outer scope
+        for method_index in range(0, num_methods):
+            pickled_eu_list[method_index].append(eu_time_list[0][method_index])
+            for node in range(0, len(node_indicies)):
+                pickled_time_list[node][method_index].append(eu_time_list[1][node][method_index])
+
+        with open(eu_file_path, 'wb') as file_eus:
+            pickle.dump(pickled_eu_list, file_eus)
+
+        with open(time_file_path, 'wb') as file_times:
+            pickle.dump(pickled_time_list, file_times)
 
     @staticmethod
     def genetic_algorithm(program, dag):

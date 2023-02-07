@@ -31,13 +31,13 @@ if __name__ == "__main__":
     QUALITY_INTERVAL = .05
     NUMBER_OF_LOOPS = 4
     # For type of performance profile (exact or appproximate)
-    EXPECTED_UTILITY_TYPE = "exact"
+    EXPECTED_UTILITY_TYPE = "approximate"
     # Initialize a list of all possible qualities
     POSSIBLE_QUALITIES = np.arange(0, 1 + QUALITY_INTERVAL, QUALITY_INTERVAL)
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 100
+    ITERATIONS = 50
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (for subtree)
@@ -224,7 +224,7 @@ if __name__ == "__main__":
     c_list = np.arange(.01, 5.11, .1)
     # c_list = np.arange(.1, 1.1, .2)
     c_node_id = 6
-    performance_profile_velocities = utils.ppv_generator(node_id=c_node_id, dag=program_dag, c_list=c_list, constant=1)
+    # performance_profile_velocities = utils.ppv_generator(node_id=c_node_id, dag=program_dag, c_list=c_list, constant=1)
 
     # Initialize the velocities for the quality mappings in a list
     # Need to initialize it after adjusting program_dag
@@ -233,7 +233,7 @@ if __name__ == "__main__":
     # performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10],
     #                                   [10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
 
-    performance_profile_velocities = [[10, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
+    # performance_profile_velocities = [[1, 20, 0.1, 0.1, 0.1, 0.1, 1000, "conditional", 1000, .1, .1, 100, .1, "for", 10]]
 
     # eu_list = [[] for i in range(0, NUM_METHODS)]
     # time_list = [[] for i in range(0, NUM_METHODS)]
@@ -329,47 +329,14 @@ if __name__ == "__main__":
 
         # Outputs embeded list of expected utilities and allocations
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
-        # print(eu_time[1])
 
         print("PPV: {}".format(ppv))
 
         # Save the time allcoations for C-variation experimenet
         times_on_c[ppv_index] += (eu_time[1])
 
-        save_to_external = False
-
-        if save_to_external:
-            file_str_eus = "data/eu_data_3.txt"
-            file_str_times = "data/time_data_3.txt"
-            # Check if data files exist
-            if not os.path.isfile(file_str_eus):
-                with open(file_str_eus, 'wb') as file_eus:
-                    pickle.dump([[] for i in range(0, NUM_METHODS)], file_eus)
-
-            if not os.path.isfile(file_str_times):
-                with open(file_str_times, 'wb') as file_times:
-                    pickle.dump([[[] for j in range(0, NUM_METHODS)] for i in range(0, len(node_indicies_list))], file_times)
-
-            # Open files in binary mode with wb instead of w
-            file_eus = open(file_str_eus, 'rb')
-            file_times = open(file_str_times, 'rb')
-
-            # Load the saved embedded lists to append new data
-            pickled_eu_list = pickle.load(file_eus)
-            pickled_time_list = pickle.load(file_times)
-
-            # Append the EUs appropriately to list in outer scope
-            for method_index in range(0, NUM_METHODS):
-                pickled_eu_list[method_index].append(eu_time[0][method_index])
-                for node in range(0, len(node_indicies_list)):
-                    pickled_time_list[node][method_index].append(eu_time[1][node][method_index])
-
-            with open(file_str_eus, 'wb') as file_eus:
-                pickle.dump(pickled_eu_list, file_eus)
-
-            with open(file_str_times, 'wb') as file_times:
-                pickle.dump(pickled_time_list, file_times)
-
+        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="data/eu_data_4.txt", time_file_path="data/time_data_4.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
+        
     save_analysis_to_file = False
 
     if save_analysis_to_file:
