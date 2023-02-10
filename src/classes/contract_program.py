@@ -6,7 +6,7 @@ from itertools import permutations
 
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
-from classes.time_allocation import TimeAllocation # noqa
+from classes.time_allocation import TimeAllocation  # noqa
 from classes import utils  # noqa
 from classes.node import Node  # noqa
 from classes.performance_profile import PerformanceProfile  # noqa
@@ -658,7 +658,7 @@ class ContractProgram:
         number_conditionals_and_fors = utils.number_of_fors_conditionals(self.generator_dag)
         number_conditionals = number_conditionals_and_fors[0]
         number_fors = number_conditionals_and_fors[1]
-        conditional_indices = utils.find_conditional_indices(self.generator_dag)
+        # conditional_indices = utils.find_conditional_indices(self.generator_dag)
 
         # Find the indicies for the for and conditional expressions if they exist
         for_indices = utils.find_for_indices(self.generator_dag)
@@ -681,10 +681,10 @@ class ContractProgram:
         # Make sure to reduce the indices since we removed strings from ppv
         # Make sure that the left and right branches get the same time allocation
         transformed_branch_sum = 0
-        if number_conditionals > 0: # TODO: what if there are more than one conditional
+        if number_conditionals > 0:  # TODO: what if there are more than one conditional
             true_sum = 0
             false_sum = 0
-            # if 
+            # if
             for index in true_indices:
                 true_sum += ppv_transformed[index]
             for index in false_indices:
@@ -738,13 +738,13 @@ class ContractProgram:
                         proportional_allocations_false.append(TimeAllocation(i, ppv_transformed[i] * budget_proportion))
                 else:
                     proportional_allocations_false.append(TimeAllocation(i, None))
-            
+
             suballocations.append(proportional_allocations_true)
             suballocations.append(proportional_allocations_false)
 
         if number_fors > 0:
             proportional_allocations_for = []
-            for i in range(0, self.generator_dag.order): #TODO: FIX this next commit
+            for i in range(0, self.generator_dag.order):  # TODO: FIX this next commit
                 if (i in for_indices):
                     if i == for_indices[-1]:
                         proportional_allocations_for.append(TimeAllocation(i, 0))
@@ -753,8 +753,8 @@ class ContractProgram:
                         proportional_allocations_for.append(TimeAllocation(i, ppv_transformed[i - 1] * budget_proportion))
                 else:
                     proportional_allocations_for.append(TimeAllocation(i, None))
-        
-            suballocations.append(proportional_allocations_for)  
+
+            suballocations.append(proportional_allocations_for)
 
         # proportional_allocations_outer = [TimeAllocation(0, ppv_transformed[0] * budget_proportion), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None),
         #                                   TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, None),
@@ -781,7 +781,7 @@ class ContractProgram:
                     proportional_allocations_outer.append(TimeAllocation(i, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])))
                     continue
             if (i not in true_indices) or (i not in false_indices) or (i not in for_indices):
-                proportional_allocations_outer.append(TimeAllocation(i, ppv_transformed[i-traveresed_meta_nodes] * budget_proportion))
+                proportional_allocations_outer.append(TimeAllocation(i, ppv_transformed[i - traveresed_meta_nodes] * budget_proportion))
             else:
                 proportional_allocations_outer.append(TimeAllocation(i, None))
 
