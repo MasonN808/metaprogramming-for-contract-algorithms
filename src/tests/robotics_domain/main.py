@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 50
+    ITERATIONS = 100
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (for subtree)
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     node_6 = Node(6, [node_7], [], expression_type="contract", in_child_contract_program=False)
     node_5 = Node(5, [node_7], [], expression_type="contract", in_child_contract_program=False)
 
-    node_6.in_true = True
+    node_6.in_false = True
     node_5.in_true = True
 
     # Conditional subtrees
@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
     node_4.in_true = True
     node_3.in_true = True
-    node_2.in_true = True
+    node_2.in_false = True
     node_1.in_true = True
 
     # Root node
@@ -326,6 +326,7 @@ if __name__ == "__main__":
 
         # TODO: Get rid of None params later
         test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, num_plot_methods=NUM_METHODS, plot_type=None, plot_nodes=None)
+        test.contract_program = program_outer
 
         # Outputs embeded list of expected utilities and allocations
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
@@ -333,7 +334,7 @@ if __name__ == "__main__":
         print("PPV: {}".format(ppv))
 
         # Save the time allcoations for C-variation experimenet
-        times_on_c[ppv_index] += (eu_time[1])
+        # times_on_c[ppv_index] += (eu_time[1])
 
         test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="data/eu_data_4.txt", time_file_path="data/time_data_4.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
 

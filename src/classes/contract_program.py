@@ -1,4 +1,3 @@
-from classes.time_allocation import TimeAllocation
 import sys
 from typing import List
 import copy
@@ -7,6 +6,7 @@ from itertools import permutations
 
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
+from classes.time_allocation import TimeAllocation # noqa
 from classes import utils  # noqa
 from classes.node import Node  # noqa
 from classes.performance_profile import PerformanceProfile  # noqa
@@ -655,12 +655,19 @@ class ContractProgram:
         #     node_index += 1
 
     def proportional_allocation_tangent(self, beta=1) -> List[float]:
-        # Must be < 1 and > 0
+        number_conditionals_and_fors = utils.number_of_fors_conditionals(self.generator_dag)
+        number_conditionals = number_conditionals_and_fors[0]
+        number_fors = number_conditionals_and_fors[1]
+        conditional_indices = utils.find_conditional_indices(self.generator_dag)
+
+        # Find the indicies for the for and conditional expressions if they exist
+        for_indices = utils.find_for_indices(self.generator_dag)
+        true_indices = utils.find_true_indices(self.generator_dag)
+        false_indices = utils.find_false_indices(self.generator_dag)
+
         budget = copy.deepcopy(self.budget)
-        # TODO: This does not work -> fix
-        # taxed_budget = budget - self.initialize_allocations.count_conditionals()*self.performance_profile.calculate_tau()
-        # TODO: This is hardcoded
-        taxed_budget = budget - .1
+        # Tax the budget given any conditionals present in the program
+        taxed_budget = budget - number_conditionals * self.performance_profile.calculate_tau()
 
         ppv = copy.deepcopy(self.performance_profile_velocities)
         flattend_ppv = utils.flatten_list(ppv)
@@ -671,89 +678,116 @@ class ContractProgram:
         # Use the tangent function to transform coefficients from (0, infinity) -> (0,1)
         ppv_transformed = [1 - (math.atan(beta * c) / (math.pi / 2)) for c in ppv_no_strings]
 
-        true_indices = [1, 3, 4, 5]
-        false_indices = [2, 6]
         # Make sure to reduce the indices since we removed strings from ppv
-        for_indices = [9, 10, 11, 12, 13]
-
         # Make sure that the left and right branches get the same time allocation
-        true_sum = 0
-        false_sum = 0
-
-        for index in true_indices:
-            true_sum += ppv_transformed[index]
-        for index in false_indices:
-            false_sum += ppv_transformed[index]
-
         transformed_branch_sum = 0
-        if (false_sum > true_sum):
-            difference = false_sum - true_sum
+        if number_conditionals > 0: # TODO: what if there are more than one conditional
+            true_sum = 0
+            false_sum = 0
+            # if 
             for index in true_indices:
-                # Add the difference
-                ppv_transformed[index] += difference / len(true_indices)
-                transformed_branch_sum += ppv_transformed[index]
-        else:
-            difference = true_sum - false_sum
+                true_sum += ppv_transformed[index]
             for index in false_indices:
-                # Add the difference
-                ppv_transformed[index] += difference / len(false_indices)
-                transformed_branch_sum += ppv_transformed[index]
+                false_sum += ppv_transformed[index]
+
+            if (false_sum > true_sum):
+                difference = false_sum - true_sum
+                for index in true_indices:
+                    # Add the difference
+                    ppv_transformed[index] += difference / len(true_indices)
+                    transformed_branch_sum += ppv_transformed[index]
+            else:
+                difference = true_sum - false_sum
+                for index in false_indices:
+                    # Add the difference
+                    ppv_transformed[index] += difference / len(false_indices)
+                    transformed_branch_sum += ppv_transformed[index]
 
         # Get the coefficients proportinal to the budget and ...
         # subtract one of the sums of the branches since that double count is put into the budget
         budget_proportion = taxed_budget / (sum(ppv_transformed) - transformed_branch_sum)
-        print("BUDGET PROPORTION: {}".format(budget_proportion))
+        # print("BUDGET PROPORTION: {}".format(budget_proportion))
 
-        # Append the conditional node to the lists
-        true_indices.append(7)
-        false_indices.append(7)
+        # Add the meta nodes to the index lists
+        true_indices = utils.find_true_indices(self.generator_dag, True)
+        false_indices = utils.find_false_indices(self.generator_dag, True)
+        for_indices = utils.find_for_indices(self.generator_dag, True)
 
-        # TODO: This is hardcoded
+        suballocations = []
+        traveresed_meta_nodes = 0
+        # Populate suballocations with allocations to any subexpressions
         # Note: the indices in ppv_ordering are different from the node_ids since srings are removed prior to ordering
-        proportional_allocations_true = []
-        for i in range(0, 15):
-            if (i in true_indices):
-                # Check if its the last element in the list
-                if (true_indices.index(i) == len(true_indices) - 1):
-                    proportional_allocations_true.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
+        if number_conditionals > 0:
+            proportional_allocations_true = []
+            for i in range(0, self.generator_dag.order):
+                if (i in true_indices):
+                    # Check if its the last element in the list
+                    if i == true_indices[-1]:
+                        proportional_allocations_true.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
+                    else:
+                        proportional_allocations_true.append(TimeAllocation(i, ppv_transformed[i - traveresed_meta_nodes] * budget_proportion))
                 else:
-                    proportional_allocations_true.append(TimeAllocation(i, ppv_transformed[i] * budget_proportion))
-            else:
-                proportional_allocations_true.append(TimeAllocation(i, None))
+                    proportional_allocations_true.append(TimeAllocation(i, None))
 
-        proportional_allocations_false = []
-        for i in range(0, 15):
-            if (i in false_indices):
-                if (false_indices.index(i) == len(false_indices) - 1):
-                    proportional_allocations_false.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
+            proportional_allocations_false = []
+            for i in range(0, self.generator_dag.order):
+                if (i in false_indices):
+                    if i == false_indices[-1]:
+                        proportional_allocations_false.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
+                    else:
+                        proportional_allocations_false.append(TimeAllocation(i, ppv_transformed[i] * budget_proportion))
                 else:
-                    proportional_allocations_false.append(TimeAllocation(i, ppv_transformed[i] * budget_proportion))
-            else:
-                proportional_allocations_false.append(TimeAllocation(i, None))
+                    proportional_allocations_false.append(TimeAllocation(i, None))
+            
+            suballocations.append(proportional_allocations_true)
+            suballocations.append(proportional_allocations_false)
 
-        proportional_allocations_for = []
-        for i in range(0, 15):
-            if (i in for_indices):
-                if (for_indices.index(i) == len(for_indices) - 1):
-                    proportional_allocations_for.append(TimeAllocation(i, 0))
+        if number_fors > 0:
+            proportional_allocations_for = []
+            for i in range(0, self.generator_dag.order): #TODO: FIX this next commit
+                if (i in for_indices):
+                    if i == for_indices[-1]:
+                        proportional_allocations_for.append(TimeAllocation(i, 0))
+                    else:
+                        # subtract 1 from the index since we encountered a conditional prior
+                        proportional_allocations_for.append(TimeAllocation(i, ppv_transformed[i - 1] * budget_proportion))
                 else:
-                    # subtract 1 from the index since we encountered a conditional prior
-                    proportional_allocations_for.append(TimeAllocation(i, ppv_transformed[i - 1] * budget_proportion))
+                    proportional_allocations_for.append(TimeAllocation(i, None))
+        
+            suballocations.append(proportional_allocations_for)  
+
+        # proportional_allocations_outer = [TimeAllocation(0, ppv_transformed[0] * budget_proportion), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None),
+        #                                   TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, None),
+        #                                   TimeAllocation(7, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_true)])),
+        #                                   TimeAllocation(8, ppv_transformed[7] * budget_proportion), TimeAllocation(9, None), TimeAllocation(10, None), TimeAllocation(11, None),
+        #                                   TimeAllocation(12, None), TimeAllocation(13, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])),
+        #                                   TimeAllocation(14, ppv_transformed[12] * budget_proportion)]
+
+        proportional_allocations_outer = []
+        # Populate outer allocations
+        traveresed_meta_nodes = 0
+        for i in range(0, self.generator_dag.order):
+            # Check if node id is a meta level node
+            if number_conditionals > 0:
+                # See if the node id is equivalent to the node id of the meta conditional node
+                if i == utils.find_true_indices(self.generator_dag, include_meta=True)[-1]:
+                    traveresed_meta_nodes += 1
+                    proportional_allocations_outer.append(TimeAllocation(i, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_true)])))
+                    continue
+            if number_fors > 0:
+                # See if the node id is equivalent to the node id of the meta conditional node
+                if i == utils.find_for_indices(self.generator_dag, include_meta=True)[-1]:
+                    traveresed_meta_nodes += 1
+                    proportional_allocations_outer.append(TimeAllocation(i, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])))
+                    continue
+            if (i not in true_indices) or (i not in false_indices) or (i not in for_indices):
+                proportional_allocations_outer.append(TimeAllocation(i, ppv_transformed[i-traveresed_meta_nodes] * budget_proportion))
             else:
-                proportional_allocations_for.append(TimeAllocation(i, None))
+                proportional_allocations_outer.append(TimeAllocation(i, None))
 
-        proportional_allocations_outer = [TimeAllocation(0, ppv_transformed[0] * budget_proportion), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None),
-                                          TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, None),
-                                          TimeAllocation(7, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_true)])),
-                                          TimeAllocation(8, ppv_transformed[7] * budget_proportion), TimeAllocation(9, None), TimeAllocation(10, None), TimeAllocation(11, None),
-                                          TimeAllocation(12, None), TimeAllocation(13, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])),
-                                          TimeAllocation(14, ppv_transformed[12] * budget_proportion)]
-
-        allocations = [proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
-
-        # Assign the allocations
+        # Assign the suballocations
         for child_index in range(0, len(self.child_programs)):
-            self.child_programs[child_index].allocations = allocations[child_index]
+            self.child_programs[child_index].allocations = suballocations[child_index]
 
         self.allocations = proportional_allocations_outer
         print("---------------------")
@@ -763,7 +797,8 @@ class ContractProgram:
         utils.print_allocations(proportional_allocations_true)
         utils.print_allocations(proportional_allocations_false)
         utils.print_allocations(proportional_allocations_for)
-        return [proportional_allocations_outer, proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
+
+        return [proportional_allocations_outer, suballocations]
 
     def proportional_allocation_linear(self) -> List[float]:
         # Must be < 1 and > 0

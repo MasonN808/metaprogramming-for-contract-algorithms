@@ -67,11 +67,12 @@ class Test:
         :return: None
         """
 
-        if self.contract_program.child_programs:
-            return self.find_utility_and_allocations_main(initial_allocation, outer_program, verbose)
+        # if self.contract_program.child_programs:
+        #     return self.find_utility_and_allocations_main(initial_allocation, outer_program, verbose)
 
-        else:
-            self.find_utility_and_allocations_default(initial_allocation, outer_program, verbose)
+        # else:
+        #     self.find_utility_and_allocations_default(initial_allocation, outer_program, verbose)
+        return self.find_utility_and_allocations_main(initial_allocation, outer_program, verbose)
 
     # For program with both conditionals and fors
     def find_utility_and_allocations_main(self, initial_allocation, outer_program, verbose=False):
@@ -79,16 +80,11 @@ class Test:
         eu = []
         # To monitor times for specific nodes
         time = [[] for i in range(0, len(self.node_indicies_list))]  # Remove 2 (TODO: THIS IS HARD CODED) for the for node and conditional node that are not anytime algos
-
-        # if c_node_id != None:
-        #     # To monitor the allocations on each method depending on varying C parameter in ppv for a specified node
-        #     times_on_c = [[] for method_index in range(0, self.num_plot_methods)]
-
         start = timer()
 
-        ##########################################
+        ##############################################################################################################################
         # PROPORTIONAL ALLOCATION
-        ##########################################
+        ##############################################################################################################################
 
         # Betas for tangent
         betas = [10, 5, 4, 3, 2, 1, .8, .6, .5, .1, 0]
@@ -97,18 +93,19 @@ class Test:
         for beta in betas:
             proportional_allocations = self.contract_program.proportional_allocation_tangent(beta)
 
-            eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], [proportional_allocations[1], proportional_allocations[2], proportional_allocations[3]]) * self.contract_program.scale
-
+            eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], proportional_allocations[1]) * self.contract_program.scale
             eu.append(eu_proportional)
 
             cleaned_allocations_list = []
-
+            print("ENTER")
             # TODO: This is redundant
             # Remove all none time allocations and append to list
             for index, allocations in enumerate(proportional_allocations):
                 # Do some transformatioins and deletion depending on allocation to get allocations for plotting
                 # remove nones
                 cleaned_allocations = utils.remove_nones_time_allocations(allocations)
+                print("CLEANED: ")
+                utils.print_allocations(cleaned_allocations)
                 if index == 0:
                     # TODO: Hardcoded
                     # remove the conditional and for node allocations
@@ -149,9 +146,9 @@ class Test:
             print("{:<62}Time Allocations (inner-false): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[2]])))
             print("{:<62}Time Allocations (inner-for): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[3]])))
 
-        ##########################################
+        ##############################################################################################################################
         # UNIFORM ALLOCATION
-        ##########################################
+        ##############################################################################################################################
 
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
@@ -242,9 +239,9 @@ class Test:
             print("                   Initial ==> Expected Utility: {:<5} ==> "
                   "Time Allocations (outer): {}".format(eu_initial, initial_time_allocations_outer))
 
-        ##########################################
+        ##############################################################################################################################
         # RHC ALLOCATION
-        ##########################################
+        ##############################################################################################################################
 
         # Should output a list of lists of optimal time allocations
         # This is the bulk of the code

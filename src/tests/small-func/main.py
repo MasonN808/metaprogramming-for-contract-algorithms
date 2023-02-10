@@ -108,7 +108,8 @@ if __name__ == "__main__":
 
         # TODO: Get rid of None params later
         test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, num_plot_methods=NUM_METHODS, plot_type=None, plot_nodes=None)
-
+        test.contract_program = program_outer
+        
         # Outputs embeded list of expected utilities and allocations
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
 

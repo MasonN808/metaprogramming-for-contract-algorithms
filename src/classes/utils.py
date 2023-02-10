@@ -261,19 +261,64 @@ def number_of_fors_conditionals(dag):
     return [conditional_count, for_count]
 
 
-def find_conditional_indices(dag):
+def find_conditional_indices(dag, include_meta=False):
+    '''
+    param: include_meta includes the node that determines the expression type (conditional or for)
+    '''
     indices = []
     for node in dag.nodes:
         if (node.in_true or node.in_false):
             indices.append(node.id)
+    # TODO: This is hardcoded
+    if include_meta:
+        for node in dag.nodes:
+            if node.expression_type == "conditional":
+                indices.append(node.id)
     return indices
 
+def find_true_indices(dag, include_meta=False):
+    '''
+    param: include_meta includes the node that determines the expression type (conditional or for)
+    '''
+    indices = []
+    for node in dag.nodes:
+        if node.in_true:
+            indices.append(node.id)
+    # TODO: This is hardcoded
+    if include_meta:
+        for node in dag.nodes:
+            if node.expression_type == "conditional":
+                indices.append(node.id)
+    return indices
 
-def find_for_indices(dag):
+def find_false_indices(dag, include_meta=False):
+    '''
+    param: include_meta includes the node that determines the expression type (conditional or for)
+    '''
+    indices = []
+    for node in dag.nodes:
+        if node.in_false:
+            indices.append(node.id)
+    # TODO: This is hardcoded
+    if include_meta:
+        for node in dag.nodes:
+            if node.expression_type == "conditional":
+                indices.append(node.id)
+    return indices
+
+def find_for_indices(dag, include_meta=False):
+    '''
+    param: include_meta includes the node that determines the expression type (conditional or for)
+    '''
     indices = []
     for node in dag.nodes:
         if (node.in_for):
             indices.append(node.id)
+    # TODO: This is hardcoded
+    if include_meta:
+        for node in dag.nodes:
+            if node.expression_type == "for":
+                indices.append(node.id)
     return indices
 
 
