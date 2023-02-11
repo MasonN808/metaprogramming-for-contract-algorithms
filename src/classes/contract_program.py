@@ -741,7 +741,7 @@ class ContractProgram:
                         proportional_allocations_false.append(TimeAllocation(i, ppv_transformed[i - traveresed_meta_nodes] * budget_proportion))
                 else:
                     proportional_allocations_false.append(TimeAllocation(i, None))
-                
+
                 if found_meta_node:
                     traveresed_meta_nodes += 1
 

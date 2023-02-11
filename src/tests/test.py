@@ -144,18 +144,18 @@ class Test:
             print("PPV ==> ", *self.ppv)
             print("         Proportional (inverse Tangent) ==> Expected Utility: {:<5} ==> "
                   "Time Allocations (outer): {}".format(round(eu_proportional, self.contract_program.decimals), [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[0]])]))
-            if number_conditionals > 0: # TODO: HARDCODED
+            if number_conditionals > 0:  # TODO: HARDCODED
                 print("{:<62}Time Allocations (inner-true): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[1]])]))
                 print("{:<62}Time Allocations (inner-false): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[2]])]))
-            if number_fors > 0: # TODO: HARDCODED
+            if number_fors > 0:  # TODO: HARDCODED
                 print("{:<62}Time Allocations (inner-for): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[3]])]))
         else:
             print("         Proportional (inverse Tangent) ==> Expected Utility: {:<5} ==> "
                   "Time Allocations (outer): {}".format(eu_proportional, utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[0]])))
-            if number_conditionals > 0: # TODO: HARDCODED
+            if number_conditionals > 0:  # TODO: HARDCODED
                 print("{:<62}Time Allocations (inner-true): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[1]])))
                 print("{:<62}Time Allocations (inner-false): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[2]])))
-            if number_fors > 0: # TODO: HARDCODED
+            if number_fors > 0:  # TODO: HARDCODED
                 print("{:<62}Time Allocations (inner-for): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[3]])))
 
         ##############################################################################################################################
