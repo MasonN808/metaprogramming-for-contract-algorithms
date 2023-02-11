@@ -111,22 +111,24 @@ class Test:
                 # Do some transformatioins and deletion depending on allocation to get allocations for plotting
                 if index == 0:
                     # Find the meta for and conditional node indices if they exist
-                    meta_conditional_index = utils.find_true_indices(self.contract_program.generator_dag, include_meta=True)[-1]
-                    meta_for_index = utils.find_for_indices(self.contract_program.generator_dag, include_meta=True)[-1]
-                    # remove the conditional and for node allocations
-                    allocations.pop(meta_conditional_index)  # This is the conditiional
-                    allocations.pop(meta_for_index)  # THis is the for
+                    # Remove the conditional and for node allocations
+                    if number_conditionals > 0:
+                        meta_conditional_index = utils.find_true_indices(self.contract_program.generator_dag, include_meta=True)[-1]
+                        allocations.pop(meta_conditional_index)
+                    if number_fors > 0:
+                        meta_for_index = utils.find_for_indices(self.contract_program.generator_dag, include_meta=True)[-1]
+                        allocations.pop(meta_for_index)
 
-                # remove nones
+                # Remove nones
                 cleaned_allocations = utils.remove_nones_time_allocations(allocations)
 
                 if number_conditionals > 0:
                     if index >= 1 and index <= 2:
-                        # remove the last part of the true branch
+                        # Remove the last part of the true branch
                         cleaned_allocations.pop(len(cleaned_allocations) - 1)  # This is the tax
                 if number_fors > 0:
                     if index == 3:
-                        # remove the last part of the true branch
+                        # Remove the last part of the true branch
                         cleaned_allocations.pop(len(cleaned_allocations) - 1)  # This is the 0 allocation
 
                 cleaned_allocations_list.append(cleaned_allocations)
@@ -161,7 +163,7 @@ class Test:
         ##############################################################################################################################
         # UNIFORM ALLOCATION
         ##############################################################################################################################
-
+        # TODO: GENERALIZE THIS (2/10)
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
 

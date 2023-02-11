@@ -762,13 +762,6 @@ class ContractProgram:
         suballocations.append(proportional_allocations_false)
         suballocations.append(proportional_allocations_for)
 
-        # proportional_allocations_outer = [TimeAllocation(0, ppv_transformed[0] * budget_proportion), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None),
-        #                                   TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, None),
-        #                                   TimeAllocation(7, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_true)])),
-        #                                   TimeAllocation(8, ppv_transformed[7] * budget_proportion), TimeAllocation(9, None), TimeAllocation(10, None), TimeAllocation(11, None),
-        #                                   TimeAllocation(12, None), TimeAllocation(13, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])),
-        #                                   TimeAllocation(14, ppv_transformed[12] * budget_proportion)]
-
         proportional_allocations_outer = []
         # Populate outer allocations
         traveresed_meta_nodes = 0
@@ -792,8 +785,9 @@ class ContractProgram:
                 proportional_allocations_outer.append(TimeAllocation(i, None))
 
         # Assign the suballocations
-        for child_index in range(0, len(self.child_programs)):
-            self.child_programs[child_index].allocations = suballocations[child_index]
+        if self.child_programs:
+            for child_index in range(0, len(self.child_programs)):
+                self.child_programs[child_index].allocations = suballocations[child_index]
 
         self.allocations = proportional_allocations_outer
         print("---------------------")
