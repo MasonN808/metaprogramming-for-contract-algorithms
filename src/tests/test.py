@@ -76,6 +76,9 @@ class Test:
 
     # For program with both conditionals and fors
     def find_utility_and_allocations_main(self, initial_allocation, outer_program, verbose=False):
+        number_conditionals_and_fors = utils.number_of_fors_conditionals(self.contract_program.generator_dag)
+        number_conditionals = number_conditionals_and_fors[0]
+        number_fors = number_conditionals_and_fors[1]
         # Data for plotting
         eu = []
         # To monitor times for specific nodes
@@ -96,30 +99,35 @@ class Test:
             eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], proportional_allocations[1]) * self.contract_program.scale
             eu.append(eu_proportional)
 
+            # Flatten the proportional allocations
+            # TODO: HARDCODED
+            proportional_allocations_flattened = [proportional_allocations[0], proportional_allocations[1][0], proportional_allocations[1][1], proportional_allocations[1][2]]
+
             cleaned_allocations_list = []
-            print("ENTER")
+
             # TODO: This is redundant
             # Remove all none time allocations and append to list
-            for index, allocations in enumerate(proportional_allocations):
+            for index, allocations in enumerate(proportional_allocations_flattened):
                 # Do some transformatioins and deletion depending on allocation to get allocations for plotting
+                if index == 0:
+                    # Find the meta for and conditional node indices if they exist
+                    meta_conditional_index = utils.find_true_indices(self.contract_program.generator_dag, include_meta=True)[-1]
+                    meta_for_index = utils.find_for_indices(self.contract_program.generator_dag, include_meta=True)[-1]
+                    # remove the conditional and for node allocations
+                    allocations.pop(meta_conditional_index)  # This is the conditiional
+                    allocations.pop(meta_for_index)  # THis is the for
+
                 # remove nones
                 cleaned_allocations = utils.remove_nones_time_allocations(allocations)
-                print("CLEANED: ")
-                utils.print_allocations(cleaned_allocations)
-                if index == 0:
-                    # TODO: Hardcoded
-                    # remove the conditional and for node allocations
-                    cleaned_allocations.pop(1)  # This is the conditiional
-                    cleaned_allocations.pop(2)  # THis is the for
-                elif index == 1:
-                    # remove the last part of the true branch
-                    cleaned_allocations.pop(len(cleaned_allocations) - 1)  # This is the tax
-                elif index == 2:
-                    # remove the last part of the true branch
-                    cleaned_allocations.pop(len(cleaned_allocations) - 1)  # This is the tax
-                elif index == 3:
-                    # remove the last part of the true branch
-                    cleaned_allocations.pop(len(cleaned_allocations) - 1)  # This is the 0 allocation
+
+                if number_conditionals > 0:
+                    if index >= 1 and index <= 2:
+                        # remove the last part of the true branch
+                        cleaned_allocations.pop(len(cleaned_allocations) - 1)  # This is the tax
+                if number_fors > 0:
+                    if index == 3:
+                        # remove the last part of the true branch
+                        cleaned_allocations.pop(len(cleaned_allocations) - 1)  # This is the 0 allocation
 
                 cleaned_allocations_list.append(cleaned_allocations)
 
@@ -135,16 +143,20 @@ class Test:
         if self.contract_program.decimals is not None:
             print("PPV ==> ", *self.ppv)
             print("         Proportional (inverse Tangent) ==> Expected Utility: {:<5} ==> "
-                  "Time Allocations (outer): {}".format(round(eu_proportional, self.contract_program.decimals), [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[0]])]))
-            print("{:<62}Time Allocations (inner-true): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[1]])]))
-            print("{:<62}Time Allocations (inner-false): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[2]])]))
-            print("{:<62}Time Allocations (inner-for): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[3]])]))
+                  "Time Allocations (outer): {}".format(round(eu_proportional, self.contract_program.decimals), [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[0]])]))
+            if number_conditionals > 0: # TODO: HARDCODED
+                print("{:<62}Time Allocations (inner-true): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[1]])]))
+                print("{:<62}Time Allocations (inner-false): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[2]])]))
+            if number_fors > 0: # TODO: HARDCODED
+                print("{:<62}Time Allocations (inner-for): {}".format("", [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[3]])]))
         else:
             print("         Proportional (inverse Tangent) ==> Expected Utility: {:<5} ==> "
                   "Time Allocations (outer): {}".format(eu_proportional, utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[0]])))
-            print("{:<62}Time Allocations (inner-true): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[1]])))
-            print("{:<62}Time Allocations (inner-false): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[2]])))
-            print("{:<62}Time Allocations (inner-for): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations[3]])))
+            if number_conditionals > 0: # TODO: HARDCODED
+                print("{:<62}Time Allocations (inner-true): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[1]])))
+                print("{:<62}Time Allocations (inner-false): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[2]])))
+            if number_fors > 0: # TODO: HARDCODED
+                print("{:<62}Time Allocations (inner-for): {}".format("", utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[3]])))
 
         ##############################################################################################################################
         # UNIFORM ALLOCATION

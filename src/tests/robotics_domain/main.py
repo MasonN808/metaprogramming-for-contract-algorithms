@@ -336,7 +336,7 @@ if __name__ == "__main__":
         # Save the time allcoations for C-variation experimenet
         # times_on_c[ppv_index] += (eu_time[1])
 
-        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="data/eu_data_4.txt", time_file_path="data/time_data_4.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
+        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/robotics_domain/data/eu_data.txt", time_file_path="src/tests/robotics_domain/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
 
     save_analysis_to_file = False
 

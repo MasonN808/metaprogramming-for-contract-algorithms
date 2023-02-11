@@ -717,44 +717,50 @@ class ContractProgram:
         traveresed_meta_nodes = 0
         # Populate suballocations with allocations to any subexpressions
         # Note: the indices in ppv_ordering are different from the node_ids since srings are removed prior to ordering
-        if number_conditionals > 0:
-            proportional_allocations_true = []
-            for i in range(0, self.generator_dag.order):
+        proportional_allocations_true = []
+        proportional_allocations_false = []
+        proportional_allocations_for = []
+        found_meta_node = False
+        for i in range(0, self.generator_dag.order):
+            if number_conditionals > 0:
                 if (i in true_indices):
                     # Check if its the last element in the list
                     if i == true_indices[-1]:
+                        found_meta_node = True
                         proportional_allocations_true.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
                     else:
                         proportional_allocations_true.append(TimeAllocation(i, ppv_transformed[i - traveresed_meta_nodes] * budget_proportion))
                 else:
                     proportional_allocations_true.append(TimeAllocation(i, None))
 
-            proportional_allocations_false = []
-            for i in range(0, self.generator_dag.order):
                 if (i in false_indices):
                     if i == false_indices[-1]:
+                        # Dont need to increment traveresed_meta_nodes since already done in true indicies
                         proportional_allocations_false.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
                     else:
-                        proportional_allocations_false.append(TimeAllocation(i, ppv_transformed[i] * budget_proportion))
+                        proportional_allocations_false.append(TimeAllocation(i, ppv_transformed[i - traveresed_meta_nodes] * budget_proportion))
                 else:
                     proportional_allocations_false.append(TimeAllocation(i, None))
+                
+                if found_meta_node:
+                    traveresed_meta_nodes += 1
 
-            suballocations.append(proportional_allocations_true)
-            suballocations.append(proportional_allocations_false)
+            found_meta_node = False
 
-        if number_fors > 0:
-            proportional_allocations_for = []
-            for i in range(0, self.generator_dag.order):  # TODO: FIX this next commit
+            if number_fors > 0:
                 if (i in for_indices):
                     if i == for_indices[-1]:
                         proportional_allocations_for.append(TimeAllocation(i, 0))
+                        traveresed_meta_nodes += 1
                     else:
                         # subtract 1 from the index since we encountered a conditional prior
-                        proportional_allocations_for.append(TimeAllocation(i, ppv_transformed[i - 1] * budget_proportion))
+                        proportional_allocations_for.append(TimeAllocation(i, ppv_transformed[i - traveresed_meta_nodes] * budget_proportion))
                 else:
                     proportional_allocations_for.append(TimeAllocation(i, None))
 
-            suballocations.append(proportional_allocations_for)
+        suballocations.append(proportional_allocations_true)
+        suballocations.append(proportional_allocations_false)
+        suballocations.append(proportional_allocations_for)
 
         # proportional_allocations_outer = [TimeAllocation(0, ppv_transformed[0] * budget_proportion), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None),
         #                                   TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, None),
@@ -771,16 +777,16 @@ class ContractProgram:
             if number_conditionals > 0:
                 # See if the node id is equivalent to the node id of the meta conditional node
                 if i == utils.find_true_indices(self.generator_dag, include_meta=True)[-1]:
-                    traveresed_meta_nodes += 1
                     proportional_allocations_outer.append(TimeAllocation(i, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_true)])))
+                    traveresed_meta_nodes += 1
                     continue
             if number_fors > 0:
                 # See if the node id is equivalent to the node id of the meta conditional node
                 if i == utils.find_for_indices(self.generator_dag, include_meta=True)[-1]:
-                    traveresed_meta_nodes += 1
                     proportional_allocations_outer.append(TimeAllocation(i, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])))
+                    traveresed_meta_nodes += 1
                     continue
-            if (i not in true_indices) or (i not in false_indices) or (i not in for_indices):
+            if (i not in true_indices) and (i not in false_indices) and (i not in for_indices):
                 proportional_allocations_outer.append(TimeAllocation(i, ppv_transformed[i - traveresed_meta_nodes] * budget_proportion))
             else:
                 proportional_allocations_outer.append(TimeAllocation(i, None))
