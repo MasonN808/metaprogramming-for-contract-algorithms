@@ -322,6 +322,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
 
 
 def print_eu_data(file_eus, subset_methods):
+    # TODO: Add a small constant to all the EU values before logging --> possible solution but ignores why the 0s appear in the first place (2/12)
     # Load the saved embedded lists to append new data
     pickled_eu_list = pickle.load(file_eus)
 

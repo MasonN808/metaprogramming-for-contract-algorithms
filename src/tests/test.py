@@ -170,6 +170,11 @@ class Test:
         eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
         eu.append(eu_initial)
 
+        if eu_initial == 0:
+            print("BAD Allocations")
+            utils.print_allocations(self.contract_program.allocations)
+            exit()
+
         # Take the outer allocations and declare any expression types with None allocations
         copy_uniform_allocations = copy.deepcopy(self.contract_program.allocations)
         # uniform_allocations_list = [copy_uniform_allocations, self.contract_program.child_programs[0].allocations[:-1],

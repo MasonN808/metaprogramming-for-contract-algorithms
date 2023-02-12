@@ -189,6 +189,9 @@ class ContractProgram:
 
                 probability *= self.performance_profile.query_probability_contract_expression(average_quality,
                                                                                               qualities)
+                # print("PROBABILITY IN EU: {}".format(probability))
+                # if (probability == 0):
+                #     print("prob is 0")
 
         expected_utility = probability * self.global_utility(average_qualities)
 
@@ -278,9 +281,9 @@ class ContractProgram:
                     current_qualities[node.id] = possible_quality
                     node_time = time_allocations[node.id].time
 
-                    # print("TEST: {}, {}".format(node_time, node.id))
-                    # print("PARENT QUALITIES: {}".format(parent_qualities))
-                    # print("ID -- {}".format(node.id))
+                    print("TEST: {}, {}".format(node_time, node.id))
+                    print("PARENT QUALITIES: {}".format(parent_qualities))
+                    print("ID -- {}".format(node.id))
 
                     # Check if the node is the conditional root, then average the quality of the parents for the root
                     if node.is_conditional_root:
