@@ -269,7 +269,6 @@ def find_conditional_indices(dag, include_meta=False):
     for node in dag.nodes:
         if (node.in_true or node.in_false):
             indices.append(node.id)
-    # TODO: This is hardcoded
     if include_meta:
         for node in dag.nodes:
             if node.expression_type == "conditional":
@@ -285,7 +284,6 @@ def find_true_indices(dag, include_meta=False):
     for node in dag.nodes:
         if node.in_true:
             indices.append(node.id)
-    # TODO: This is hardcoded
     if include_meta:
         for node in dag.nodes:
             if node.expression_type == "conditional":
@@ -301,7 +299,6 @@ def find_false_indices(dag, include_meta=False):
     for node in dag.nodes:
         if node.in_false:
             indices.append(node.id)
-    # TODO: This is hardcoded
     if include_meta:
         for node in dag.nodes:
             if node.expression_type == "conditional":
@@ -317,11 +314,21 @@ def find_for_indices(dag, include_meta=False):
     for node in dag.nodes:
         if (node.in_for):
             indices.append(node.id)
-    # TODO: This is hardcoded
     if include_meta:
         for node in dag.nodes:
             if node.expression_type == "for":
                 indices.append(node.id)
+    return indices
+
+
+def find_non_meta_indicies(dag):
+    '''
+    Finds the indicies that are not meta/placeholder nodes (e.g., conditional nodes and for nodes that are not contract algorithms)
+    '''
+    indices = []
+    for node in dag.nodes:
+        if node.expression_type == "contract":
+            indices.append(node.id)
     return indices
 
 

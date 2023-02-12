@@ -281,7 +281,7 @@ if __name__ == "__main__":
         # Convert to a contract program
         node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
                                                        quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
-                                                       generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
+                                                       generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="true")
 
         # Initialize the pointers of the nodes to the program it is in
         utils.initialize_node_pointers_current_program(node_outer_1.true_subprogram)
@@ -292,7 +292,7 @@ if __name__ == "__main__":
         # Convert to a contract program
         node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, child_programs=None, program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
                                                         quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
-                                                        generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
+                                                        generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="false")
 
         # Initialize the pointers of the nodes to the program it is in
         utils.initialize_node_pointers_current_program(node_outer_1.false_subprogram)
@@ -300,7 +300,7 @@ if __name__ == "__main__":
         # Convert to a contract program
         node_outer_3.for_subprogram = ContractProgram(program_id=3, parent_program=program_outer, child_programs=None, program_dag=for_subtree, budget=0, scale=10 ** 6, decimals=3,
                                                       quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, generator_dag=program_dag,
-                                                      expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, number_of_loops=NUMBER_OF_LOOPS)
+                                                      expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, number_of_loops=NUMBER_OF_LOOPS, subprogram_expression_type="for")
 
         # Initialize the pointers of the nodes to the program it is in
         utils.initialize_node_pointers_current_program(node_outer_3.for_subprogram)
@@ -322,7 +322,8 @@ if __name__ == "__main__":
         node_outer_3.for_subprogram.subprogram_expression_type = "for"
 
         # Get all the node_ids that aren't fors or conditionals
-        node_indicies_list = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
+        # node_indicies_list = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
+        node_indicies_list = utils.find_non_meta_indicies(dag=program_dag)
 
         # TODO: Get rid of None params later
         test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, num_plot_methods=NUM_METHODS, plot_type=None, plot_nodes=None)

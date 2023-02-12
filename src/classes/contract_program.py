@@ -36,10 +36,10 @@ class ContractProgram:
     def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals,
                  quality_interval, time_interval, time_step_size, in_child_contract_program, generator_dag,
                  expected_utility_type, possible_qualities, performance_profile_velocities=None,
-                 number_of_loops=None):
+                 number_of_loops=None, subprogram_expression_type=None):
 
         self.program_id = program_id
-        self.subprogram_expression_type = None
+        self.subprogram_expression_type = subprogram_expression_type  # for or false or true
         self.program_dag = program_dag
         self.budget = budget
         self.scale = scale

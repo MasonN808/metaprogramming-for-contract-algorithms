@@ -172,14 +172,17 @@ class Test:
 
         # Take the outer allocations and declare any expression types with None allocations
         copy_uniform_allocations = copy.deepcopy(self.contract_program.allocations)
-        uniform_allocations_list = [copy_uniform_allocations, self.contract_program.child_programs[0].allocations,
-                                    self.contract_program.child_programs[1].allocations[:-1], self.contract_program.child_programs[2].allocations[:-1]]
+        # uniform_allocations_list = [copy_uniform_allocations, self.contract_program.child_programs[0].allocations[:-1],
+        #                             self.contract_program.child_programs[1].allocations[:-1], self.contract_program.child_programs[2].allocations[:-1]]
 
-        # TODO: This code is redundant (refactor)
-        cleaned_allocations_list = []
+        # Iteratively append the suballocations in order of expression type
+        uniform_allocations_list = [copy_uniform_allocations]
+        if self.contract_program.child_programs:
+            for child_program in self.contract_program.child_programs:
+                uniform_allocations_list.append(child_program.allocations)
 
-        # THIS IS ANOTHER implementation from up top
         # Remove all none time allocations and append to list
+        cleaned_allocations_list = []
         for index, allocations in enumerate(uniform_allocations_list):
             # Remove nones
             # Also remove the last time allocations of the different expressions
@@ -187,7 +190,6 @@ class Test:
             if index != 0:
                 # Truncate the last element for all non functional expressions
                 cleaned_allocations = cleaned_allocations[:-1]
-            # utils.print_allocations(allocations)
             cleaned_allocations_list.append(cleaned_allocations)
 
         # Flatten all the allocations
@@ -209,7 +211,6 @@ class Test:
                 # Check that it's not None
                 if time_allocation.time is None:
                     continue
-
                 initial_time_allocations_outer.append(round(time_allocation.time, self.contract_program.decimals))
 
             if self.contract_program.child_programs:
@@ -219,26 +220,22 @@ class Test:
                         # Check that it's not None
                         if time_allocation.time is None:
                             continue
-
                         initial_time_allocations_inner[child_index].append(round(time_allocation.time, self.contract_program.decimals))
 
             eu_initial = round(eu_initial, self.contract_program.decimals)
 
         else:
             if outer_program.child_programs:
-
                 initial_time_allocations_outer = [time_allocation.time for time_allocation in
                                                   self.contract_program.allocations]
                 for child_index in range(0, len(self.contract_program.child_programs)):
                     initial_time_allocations_inner[child_index] = [time_allocation.time for time_allocation in
                                                                    self.contract_program.child_programs[child_index].allocations]
-
             else:
                 initial_time_allocations_outer = [time_allocation.time for time_allocation in
                                                   self.contract_program.allocations]
 
         if outer_program.child_programs:
-            # print(" {} \n ----------------------".format(initial_allocation))
             # The initial time allocations for each contract algorithm
             print("         Initial (Uniform) ==> Expected Utility: {:<5} ==> "
                   "Time Allocations (outer): {}".format(eu_initial, initial_time_allocations_outer))
@@ -274,9 +271,7 @@ class Test:
             optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])
             optimal_time_allocations_inner_for = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[3]])
 
-            eu_optimal = self.contract_program.global_expected_utility(allocations[0],
-                                                                       self.contract_program.best_allocations_inner) * self.contract_program.scale
-
+            eu_optimal = self.contract_program.global_expected_utility(allocations[0], self.contract_program.best_allocations_inner) * self.contract_program.scale
             eu.append(eu_optimal)
 
             ehc_allocations_list = [allocations[0], allocations[1], allocations[2], allocations[3]]
@@ -342,6 +337,10 @@ class Test:
             optimal_time_allocations = utils.remove_nones_times([time_allocation.time for time_allocation in allocations])
 
             eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
+            eu.append(eu_optimal)
+
+            for index in range(0, len(self.node_indicies_list)):
+                time[index].append(sorted_allocations_list[index])
 
             if self.contract_program.decimals is not None:
 

@@ -34,7 +34,7 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 100
+    ITERATIONS = 50
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     # Use a Dirichlet distribution to generate random ppvs
     performance_profile_velocities = utils.dirichlet_ppv(iterations=ITERATIONS, dag=program_dag, alpha=.9, constant=10)
 
-    performance_profile_velocities = [[10, 20, 0.1]]
+    # performance_profile_velocities = [[10, 20, 0.1]]
 
     for ppv_index, ppv in enumerate(performance_profile_velocities):
         # Used to create the synthetic data as instances and a populous file
@@ -96,7 +96,7 @@ if __name__ == "__main__":
             generator.populate(nodes, "quality_mappings/populous.json")
 
         # Create the program with some budget
-        program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
+        program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag, child_programs=None, budget=BUDGET, scale=10, decimals=3, quality_interval=QUALITY_INTERVAL,
                                         time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
                                         possible_qualities=POSSIBLE_QUALITIES, performance_profile_velocities=ppv)
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
         utils.initialize_node_pointers_current_program(program_outer)
 
         # Get all the node_ids that aren't fors or conditionals
-        node_indicies_list = [0, 1, 2]
+        node_indicies_list = utils.find_non_meta_indicies(program_dag)
 
         # TODO: Get rid of None params later
         test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, num_plot_methods=NUM_METHODS, plot_type=None, plot_nodes=None)

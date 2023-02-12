@@ -31,18 +31,51 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
     pickled_c_times = pickle.load(file_c_times)
 
     iterations = len(pickled_eu_list[0])
+    print("SIMULATIONS: {}".format(iterations))
 
     if (plot_type == "box_whisker"):
         # Check if subset of methods is equal to all possible methods by simply comparing lengths
         method_type = "all_methods"
         if (len(subset_methods) != len(POSSIBLE_METHODS)):
             method_type = "subset_methods"
-        FILENAME = 'box_whisker_charts/{}-{}-iterations{}.png'.format(plot_type, method_type, iterations)
+        FILENAME = 'src/tests/small-func/plots/{}-{}-iterations{}.png'.format(plot_type, method_type, iterations)
         logged_eus = []
 
         # Remove 0s in arrays
         for i in range(0, len(pickled_eu_list)):
             pickled_eu_list[i] = [i for i in pickled_eu_list[i] if i != 0]
+
+        # for method in subset_methods:
+        #     match method:  # noqa
+        #         case 'PA (ß=10)':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[0])))
+        #         case 'PA (ß=5)':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[1])))
+        #         case 'PA (ß=4)':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[2])))
+        #         case 'PA (ß=3)':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[3])))
+        #         case 'PA (ß=2)':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[4])))
+        #         case 'PA (ß=1)':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[5])))
+        #         case 'PA (ß=.8)':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[6])))
+        #         case 'PA (ß=.6)':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[7])))
+        #         case 'PA (ß=.5)':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[8])))
+        #         case 'PA (ß=.1)':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[9])))
+        #         case 'PA (ß=0)':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[10])))
+        #         case 'Uniform':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[11])))
+        #         case 'RHC':
+        #             logged_eus.append(np.log(np.array(pickled_eu_list[12])))
+        #         case _:
+        #             print("Invalid method")
+        #             exit()
 
         for method in subset_methods:
             match method:  # noqa
@@ -288,18 +321,84 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         plt.show()
 
 
+def print_eu_data(file_eus, subset_methods):
+    # Load the saved embedded lists to append new data
+    pickled_eu_list = pickle.load(file_eus)
+
+    # Remove 0s in arrays
+    # for i in range(0, len(pickled_eu_list)):
+    #     pickled_eu_list[i] = [j for j in pickled_eu_list[i] if j != 0]
+
+    # Make 0s small postive floats (Justin's suggestion)
+    for eu_list_index in range(0, len(pickled_eu_list)):
+        for eu_value_index in range(0, len(pickled_eu_list[eu_list_index])):
+            if pickled_eu_list[eu_list_index][eu_value_index] == 0:
+                pickled_eu_list[eu_list_index][eu_value_index] = .001
+
+    for method in subset_methods:
+        eu = 0
+        eu_std = 0
+        match method:  # noqa
+            case 'PA (ß=10)':
+                eu = np.mean(np.log(np.array(pickled_eu_list[0])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[0])))
+            case 'PA (ß=5)':
+                eu = np.mean(np.log(np.array(pickled_eu_list[1])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[1])))
+            case 'PA (ß=4)':
+                eu = np.mean(np.log(np.array(pickled_eu_list[2])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[2])))
+            case 'PA (ß=3)':
+                eu = np.mean(np.log(np.array(pickled_eu_list[3])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[3])))
+            case 'PA (ß=2)':
+                eu = np.mean(np.log(np.array(pickled_eu_list[4])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[4])))
+            case 'PA (ß=1)':
+                eu = np.mean(np.log(np.array(pickled_eu_list[5])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[5])))
+            case 'PA (ß=.8)':
+                eu = np.mean(np.log(np.array(pickled_eu_list[6])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[6])))
+            case 'PA (ß=.6)':
+                eu = np.mean(np.log(np.array(pickled_eu_list[7])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[7])))
+            case 'PA (ß=.5)':
+                eu = np.mean(np.log(np.array(pickled_eu_list[8])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[8])))
+            case 'PA (ß=.1)':
+                eu = np.mean(np.log(np.array(pickled_eu_list[9])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[9])))
+            case 'PA (ß=0)':
+                eu = np.mean(np.log(np.array(pickled_eu_list[10])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[10])))
+            case 'Uniform':
+                eu = np.mean(np.log(np.array(pickled_eu_list[11])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[11])))
+            case 'RHC':
+                eu = np.mean(np.log(np.array(pickled_eu_list[12])))
+                eu_std = np.std(np.log(np.array(pickled_eu_list[12])))
+            case _:
+                print("Invalid method")
+                exit()
+        print("{} EU --> mean: {} --> std: {}".format(method, eu, eu_std))
+
+
 if __name__ == "__main__":
     # Get all the node_ids that aren't fors or conditionals
-    node_indicies = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
-    c_list = np.arange(.01, 5.11, .1)
-    # c_list = np.arange(.1, 1.1, .2)
+    node_indicies = [0, 1, 2]  # TODO: Unhardcode this
+    # c_list = np.arange(.01, 5.11, .1)
+    c_list = np.arange(.1, 1.1, .2)
     c_node_id = 6
 
     # Pull all the data from the .txt files
-    file_eus = open('data/eu_data_4.txt', 'rb')
-    file_times = open('data/time_data_4.txt', 'rb')
+    file_eus = open('src/tests/small-func/data/eu_data.txt', 'rb')
+    file_times = open('src/tests/small-func/data/time_data.txt', 'rb')
     file_c_times = open('data/time_on_c_data_node6_TEST2.txt', 'rb')
     subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
+    subset_methods = ['PA (ß=5)', 'PA (ß=1)', 'PA (ß=0)', 'Uniform', 'RHC']
 
-    plot(plot_type="scatter", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
-         file_eus=file_eus, file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=[1])
+    print_eu_data(file_eus=file_eus, subset_methods=subset_methods)
+
+    # plot(plot_type="box_whisker", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
+    #      file_eus=file_eus, file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=[1])
