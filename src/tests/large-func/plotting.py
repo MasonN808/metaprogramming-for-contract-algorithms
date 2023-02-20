@@ -49,7 +49,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
 
         # vectorize
         for i in range(0, len(pickled_eu_list)):
-            pickled_eu_list[i] = np.array(pickled_eu_list[i])
+            pickled_eu_list[i] = np.array(pickled_eu_list[i]) / 1000
 
         for method in subset_methods:
             match method:  # noqa
@@ -371,13 +371,13 @@ if __name__ == "__main__":
     c_node_id = 6
 
     # Pull all the data from the .txt files
-    file_eus = open('src/tests/small-func/data/eu_data.txt', 'rb')
-    file_times = open('src/tests/small-func/data/time_data.txt', 'rb')
+    file_eus = open('src/tests/med-func/data/eu_data.txt', 'rb')
+    file_times = open('src/tests/med-func/data/time_data.txt', 'rb')
     file_c_times = open('data/time_on_c_data_node6_TEST2.txt', 'rb')
     subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
     subset_methods = ['PA (ß=5)', 'PA (ß=1)', 'PA (ß=0)', 'Uniform', 'RHC']
 
-    # print_eu_data(file_eus=file_eus, subset_methods=subset_methods)
+    print_eu_data(file_eus=file_eus, subset_methods=subset_methods)
 
     plot(plot_type="box_whisker", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
          file_eus=file_eus, file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=[1])

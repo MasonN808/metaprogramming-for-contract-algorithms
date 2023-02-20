@@ -2,6 +2,7 @@ import copy
 import sys
 import numpy as np
 from os.path import exists  # noqa
+from tqdm import tqdm
 
 # TODO: Try and fix this absolute path
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
@@ -34,26 +35,30 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 150
+    ITERATIONS = 47
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
     # ----------------------------------------------------------------------------------------
     # Leaf node
+    node_3 = Node(3, [], [], expression_type="contract", in_child_contract_program=False)
+
+    # Leaf node
     node_2 = Node(2, [], [], expression_type="contract", in_child_contract_program=False)
 
     # For Node
-    node_1 = Node(1, [node_2], [], expression_type="contract", in_child_contract_program=False)
+    node_1 = Node(1, [node_2, node_3], [], expression_type="contract", in_child_contract_program=False)
 
     # Root node
     root = Node(0, [node_1], [], expression_type="contract", in_child_contract_program=False)
 
     # Append the children
+    node_3.children = [node_1]
     node_2.children = [node_1]
     node_1.children = [root]
 
     # Nodes
-    nodes = [root, node_1, node_2]
+    nodes = [root, node_1, node_2, node_3]
     # Create and verify the DAG from the node list
     dag = DirectedAcyclicGraph(nodes, root)
 
@@ -67,8 +72,7 @@ if __name__ == "__main__":
     performance_profile_velocities = utils.dirichlet_ppv(iterations=ITERATIONS, dag=program_dag, alpha=.9, constant=10)
 
     # performance_profile_velocities = [[10, 20, 0.1]]
-
-    for ppv_index, ppv in enumerate(performance_profile_velocities):
+    for ppv in tqdm(performance_profile_velocities, desc='Progress Bar'):
         # Used to create the synthetic data as instances and a populous file
         generate = True
         if not exists("quality_mappings/populous.json") or generate:
@@ -119,9 +123,9 @@ if __name__ == "__main__":
             if eu == 0:
                 performance_profile_velocities.extend(utils.dirichlet_ppv(iterations=1, dag=program_dag, alpha=.9, constant=10))
                 found_zero = True
+                print("Found 0 in EU")
                 exit()
-                break
 
         if not found_zero:
             # Save the EU and Time data to an external files
-            test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/small-func/data/eu_data.txt", time_file_path="src/tests/small-func/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
+            test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/med-func/data/eu_data.txt", time_file_path="src/tests/med-func/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)

@@ -30,57 +30,56 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
     pickled_time_list = pickle.load(file_times)
     pickled_c_times = pickle.load(file_c_times)
 
-    iterations = len(pickled_eu_list[0])
+    simulations = len(pickled_eu_list[0])
+    print("Simulations: {}".format(simulations))
 
     if (plot_type == "box_whisker"):
         # Check if subset of methods is equal to all possible methods by simply comparing lengths
         method_type = "all_methods"
         if (len(subset_methods) != len(POSSIBLE_METHODS)):
             method_type = "subset_methods"
-        FILENAME = 'box_whisker_charts/{}-{}-iterations{}.png'.format(plot_type, method_type, iterations)
+        FILENAME = 'box_whisker_charts/{}-{}-iterations{}.png'.format(plot_type, method_type, simulations)
         logged_eus = []
 
-        # Remove 0s in arrays
+        # vectorize
         for i in range(0, len(pickled_eu_list)):
-            pickled_eu_list[i] = [i for i in pickled_eu_list[i] if i != 0]
+            pickled_eu_list[i] = np.array(pickled_eu_list[i]) / 1000
 
         for method in subset_methods:
             match method:  # noqa
                 case 'PA (ß=10)':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[0])))
+                    logged_eus.append(pickled_eu_list[0])
                 case 'PA (ß=5)':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[1])))
+                    logged_eus.append(pickled_eu_list[1])
                 case 'PA (ß=4)':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[2])))
+                    logged_eus.append(pickled_eu_list[2])
                 case 'PA (ß=3)':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[3])))
+                    logged_eus.append(pickled_eu_list[3])
                 case 'PA (ß=2)':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[4])))
+                    logged_eus.append(pickled_eu_list[4])
                 case 'PA (ß=1)':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[5])))
+                    logged_eus.append(pickled_eu_list[5])
                 case 'PA (ß=.8)':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[6])))
+                    logged_eus.append(pickled_eu_list[6])
                 case 'PA (ß=.6)':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[7])))
+                    logged_eus.append(pickled_eu_list[7])
                 case 'PA (ß=.5)':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[8])))
+                    logged_eus.append(pickled_eu_list[8])
                 case 'PA (ß=.1)':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[9])))
+                    logged_eus.append(pickled_eu_list[9])
                 case 'PA (ß=0)':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[10])))
+                    logged_eus.append(pickled_eu_list[10])
                 case 'Uniform':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[11])))
+                    logged_eus.append(pickled_eu_list[11])
                 case 'RHC':
-                    logged_eus.append(np.log(np.array(pickled_eu_list[12])))
+                    logged_eus.append(pickled_eu_list[12])
                 case _:
                     print("Invalid method")
                     exit()
 
         figure = plt.figure(figsize=(12, 6))
 
-        plt.title("Expected Utility Variation on Solution Methods")
-        plt.ylabel("Log(Expected Utility)")
-        plt.xlabel("Solution Methods")
+        # plt.title("Expected Utility Variation on Solution Methods")
 
         plt.boxplot(logged_eus)
         x_axis = subset_methods
@@ -91,6 +90,9 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         plt.rcParams["font.size"] = 11
         plt.rcParams["grid.linestyle"] = "-"
         plt.grid(True)
+
+        plt.ylabel("Expected Utility")
+        # plt.xlabel("Solution Methods")
 
         axis = plt.gca()
         axis.spines["top"].set_visible(False)
@@ -103,7 +105,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         total = [[0 for j in range(0, MAX_NUM_METHODS)] for i in range(0, len(node_indicies))]
         for node_index in range(0, len(node_indicies)):
             for method_index in range(0, MAX_NUM_METHODS):
-                for iteration in range(0, iterations):
+                for iteration in range(0, simulations):
                     # for sublist in pickled_time_list[iteration]:
                     total[node_index][method_index] += pickled_time_list[node_index][method_index][iteration]
         # print("TOTAL: {}".format(total))
@@ -111,7 +113,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         # Get the average time across all instances
         for node_index in range(0, len(node_indicies)):
             for method_index in range(0, MAX_NUM_METHODS):
-                average_times[node_index][method_index] = total[node_index][method_index] / iterations
+                average_times[node_index][method_index] = total[node_index][method_index] / simulations
 
         # Check if subset of methods is equal to all possible methods by simply comparing lengths
         method_type = "all_methods"
@@ -120,7 +122,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
 
         # Plot results
         for node_id in bar_plot_nodes:
-            FILENAME = 'bar_charts/{}-{}-iterations{}-node{}.png'.format(plot_type, method_type, iterations, node_id)
+            FILENAME = 'bar_charts/{}-{}-iterations{}-node{}.png'.format(plot_type, method_type, simulations, node_id)
             times = []
             for method in subset_methods:
                 match method:  # noqa
@@ -174,12 +176,12 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
             figure.savefig(FILENAME)
 
     elif (plot_type == "scatter"):
-        iterations = len(pickled_c_times)
+        simulations = len(pickled_c_times)
         # Check if subset of methods is equal to all possible methods by simply comparing lengths
         method_type = "all_methods"
         if (len(subset_methods) != len(POSSIBLE_METHODS)):
             method_type = "subset_methods"
-        FILENAME = 'scatter_charts/{}-{}-iterations{}.png'.format(plot_type, method_type, iterations)
+        FILENAME = 'scatter_charts/{}-{}-iterations{}.png'.format(plot_type, method_type, simulations)
 
         # Reduce the node id if for and conditionals exist before it
         transformed_node_id = c_node_id
@@ -256,10 +258,6 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
 
         figure = plt.figure(figsize=(12, 6))
 
-        plt.title("Time Allocation on C Value on Node {}".format(c_node_id))
-        plt.ylabel("Time Allocation")
-        plt.xlabel("C value")
-
         # Make the method colors cycle through the rainbow colors
         # colors = iter(plt.cm.rainbow(np.linspace(0, 1, len(times))))
         # for index, method_str in enumerate(subset_methods):
@@ -280,6 +278,9 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         plt.grid(True)
         plt.legend(loc='upper right')
 
+        plt.ylabel("Time Allocation")
+        plt.xlabel("Growth Rate")
+
         axis = plt.gca()
         axis.spines["top"].set_visible(False)
 
@@ -292,13 +293,12 @@ if __name__ == "__main__":
     # Get all the node_ids that aren't fors or conditionals
     node_indicies = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
     c_list = np.arange(.01, 5.11, .1)
-    # c_list = np.arange(.1, 1.1, .2)
-    c_node_id = 6
+    c_node_id = 8
 
     # Pull all the data from the .txt files
     file_eus = open('src/tests/robotics_domain/data/eu_data.txt', 'rb')
     file_times = open('src/tests/robotics_domain/data/time_data.txt', 'rb')
-    file_c_times = open('data/time_on_c_data_node6_TEST2.txt', 'rb')
+    file_c_times = open('src/tests/robotics_domain/data/time_on_c_data_node8.txt', 'rb')
     subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
 
     plot(plot_type="box_whisker", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,

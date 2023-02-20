@@ -3,6 +3,7 @@ import pickle
 import sys
 import numpy as np
 from os.path import exists  # noqa
+from tqdm import tqdm
 
 # TODO: Try and fix this absolute path
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
@@ -19,7 +20,7 @@ if __name__ == "__main__":
     # Total budget for the DAG
     BUDGET = 10
     # Number of instances/simulations
-    INSTANCES = 10
+    INSTANCES = 1000
     # The time upper-bound for each quality mapping
     TIME_LIMIT = BUDGET
     # The step size when producing the quality mapping
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 100
+    ITERATIONS = 10
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (for subtree)
@@ -223,7 +224,7 @@ if __name__ == "__main__":
     # c_list = np.arange(.1, 5.1, .1)
     c_list = np.arange(.01, 5.11, .1)
     # c_list = np.arange(.1, 1.1, .2)
-    c_node_id = 6
+    c_node_id = 8
     # performance_profile_velocities = utils.ppv_generator(node_id=c_node_id, dag=program_dag, c_list=c_list, constant=1)
 
     # Initialize the velocities for the quality mappings in a list
@@ -239,7 +240,7 @@ if __name__ == "__main__":
     # time_list = [[] for i in range(0, NUM_METHODS)]
     times_on_c = [[] for c in range(0, len(c_list))]
 
-    for ppv_index, ppv in enumerate(performance_profile_velocities):
+    for ppv in tqdm(performance_profile_velocities, desc='Progress Bar'):
         # Used to create the synthetic data as instances and a populous file
         generate = True
         if not exists("quality_mappings/populous.json") or generate:
@@ -337,12 +338,23 @@ if __name__ == "__main__":
         # Save the time allcoations for C-variation experimenet
         # times_on_c[ppv_index] += (eu_time[1])
 
-        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/robotics_domain/data/eu_data.txt", time_file_path="src/tests/robotics_domain/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
+        # Check if any of the EUs are 0
+        found_zero = False
+        for eu in eu_time[0]:
+            if eu == 0:
+                performance_profile_velocities.extend(utils.dirichlet_ppv(iterations=1, dag=program_dag, alpha=.9, constant=10))
+                print("Found 0 in EU")
+                found_zero = True
+                exit()
+
+        if not found_zero:
+            # Save the EU and Time data to an external files
+            test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/robotics_domain/data/eu_data_difGenerator.txt", time_file_path="src/tests/robotics_domain/data/time_data_difGenerator.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
 
     save_analysis_to_file = False
 
     if save_analysis_to_file:
-        file = "data/time_on_c_data_node6_TEST2.txt"
+        file = "src/tests/robotics_domain/data/time_on_c_data_node8.txt"
         # Check if data files exist
         if not os.path.isfile(file):
             with open(file, 'wb') as file_times:
