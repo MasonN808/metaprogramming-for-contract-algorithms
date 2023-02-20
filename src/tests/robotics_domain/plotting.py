@@ -79,8 +79,6 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
 
         figure = plt.figure(figsize=(12, 6))
 
-        # plt.title("Expected Utility Variation on Solution Methods")
-
         plt.boxplot(logged_eus)
         x_axis = subset_methods
 
@@ -257,11 +255,6 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
             times.append(subtimes)
 
         figure = plt.figure(figsize=(12, 6))
-
-        # Make the method colors cycle through the rainbow colors
-        # colors = iter(plt.cm.rainbow(np.linspace(0, 1, len(times))))
-        # for index, method_str in enumerate(subset_methods):
-        #     plt.scatter(x=c_list, y=[times[index]], c=next(colors), marker="o", label=method_str)
 
         # Make the PA methods a single heatmap color
         colors = iter(plt.cm.autumn(np.linspace(0, 1, len(times))))
