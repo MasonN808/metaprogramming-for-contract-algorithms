@@ -7,7 +7,6 @@ from tqdm import tqdm
 
 # TODO: Try and fix this absolute path
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
-# sys.path.append(os.path.join(os.path.dirname(sys.path[0]),'src'))
 
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
 from classes.node import Node  # noqa
@@ -69,9 +68,6 @@ if __name__ == "__main__":
     # Create and verify the DAG from the node list
     for_subtree = DirectedAcyclicGraph(nodes_inner, node_inner_5)
     for_subtree.number_of_loops = NUMBER_OF_LOOPS
-
-    # Rollout the for loop in a seperate DAG
-    # dag_inner_rolled_out = Generator.rollout_for_loops(dag_inner)
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (conditional subtree)
@@ -369,8 +365,6 @@ if __name__ == "__main__":
         # Append the EUs appropriately to list in outer scope
         for ppv_index in range(0, len(performance_profile_velocities)):
             pickled_time_list[ppv_index] += (times_on_c[ppv_index])
-
-        print(pickled_time_list)
 
         with open(file, 'wb') as file_times:
             pickle.dump(pickled_time_list, file_times)

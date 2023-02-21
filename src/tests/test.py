@@ -6,7 +6,6 @@ import numpy as np
 from time import sleep
 from progress.bar import ChargingBar
 from timeit import default_timer as timer
-from geneticalgorithm import geneticalgorithm as ga
 
 
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")

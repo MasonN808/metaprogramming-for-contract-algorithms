@@ -33,111 +33,30 @@ class Generator:
         self.manual_override_index = -1
         self.manual_override = None
 
-    def simulate_performance_profile(self, random_number, node, noise):
+    def generate_nodes(self) -> List[str]:
         """
-        Simulates a performance profile of a contract algorithm using synthetic data
-
-        :param node: Node object
-        :param random_number: a random number from a uniform distribution with some noise
-        :return: dictionary
+        Generates instances using the DAG and number of instances required
+        :param: manual_override: A list of floats to manually adjust the quality mappings
+        :return: a list of the file names of the instances stored in JSON files
         """
-        dictionary = self.recur_build(depth=0, node=node, qualities=[], dictionary={}, random_number=random_number, noise=noise)
-        return dictionary
+        nodes = []  # file names of the nodes
 
-    def recur_build(self, depth, node, qualities, dictionary, random_number, noise):
-        """
-        Used to recursively generate the synthetic quality mappings
+        # Create a finite number of unique nodes and create JSON files for each
+        i = 0
+        for node in self.generator_dag.nodes:
+            dictionary_temp = self.create_dictionary(node)
 
-        :param depth: The depth of the recursion
-        :param node: Node object, Synthetic quality mapping for this particular node given its parents
-        :param qualities: The parent qualities as inputs of the node
-        :param dictionary: The dictionary being generated
-        :param random_number: To produce noise in the quality mappings
-        :return:
-        """
-        potential_parent_qualities = [format(i, '.2f') for i in np.arange(0, 1 + self.quality_interval, self.quality_interval).round(2)]
+            # Compare the generator program_dag with the program program_dag to see if conditional is encountered
+            # If so, go up an index since it's not present in the generator program_dag
+            if Node.is_conditional_node(self.program_dag.nodes[i]) or Node.is_for_node(self.program_dag.nodes[i]):
+                i += 1
 
-        if not node.parents:
-            velocity = self.parent_dependent_transform(node, qualities, random_number)
-
-            for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
-                # Use this function to approximate the performance profile
-                # dictionary[t] = 1 - math.e ** (-velocity * t)
-                dictionary[t] = 1 - math.e ** (-(velocity + noise) * t)
-
-        else:
-            parents_length = len(node.parents)
-
-            if utils.has_conditional_roots_as_parents(node):
-                parents_length -= 1
-
-            for quality in potential_parent_qualities:
-                dictionary[quality] = {quality: {}}
-                qualities.append(quality)
-
-                # Base Case
-                if depth == parents_length - 1:
-                    dictionary[quality] = {}
-                    # To change the quality mapping with respect to the parent qualities
-                    velocity = self.parent_dependent_transform(node, qualities, random_number)
-
-                    # Remove the last quality for next set of potential qualities
-                    qualities = qualities[:-1]
-
-                    for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
-                        # Add some noise to the qualities for each instance
-
-                        generated_quality = (1 - math.e ** (-(velocity + noise) * t))
-                        # generated_quality = (1 - math.e ** (-velocity * t))
-
-                        # Check bounds and truncate
-                        if generated_quality < 0:
-                            generated_quality = 0
-                        if generated_quality > 1:
-                            generated_quality = 1
-
-                        # Use this function to approximate the performance profile
-                        dictionary[quality][t] = generated_quality
-                else:
-                    self.recur_build(depth + 1, node, qualities, dictionary[quality], random_number, noise)
-                    # Remove the last quality for next set of potential qualities
-                    qualities = qualities[:-1]
-
-        return dictionary
-
-    def parent_dependent_transform(self, node, qualities, random_number):
-        if self.manual_override and self.valid_manual_override():
-            if not self.manual_override[node.id] is None:
-                average_parent_quality = 1
-
-                if qualities:
-                    # Convert the list of strings to floats
-                    qualities = [float(quality) for quality in qualities]
-                    # Get the average parent quality (this may not be what we want)
-                    average_parent_quality = sum(qualities) / len(node.parents)
-
-                # print("Sum: {} -- Average: {} -- # Parents: {} -- NODE ID: {}".format(sum(qualities), average_parent_quality, len(node.parents), node.id))
-                return self.manual_override[node.id] * average_parent_quality
-
-            else:
-                return random_number
-
-        else:
-            if qualities:
-                # Convert the list of strings to floats
-                qualities = [float(quality) for quality in qualities]
-
-                # Get the average parent quality (this may not be what we want)
-                average_parent_quality = sum(qualities) / len(node.parents)
-
-                velocity = (10**average_parent_quality) - 1
-
-                return velocity
-
-            else:
-                # If node has no parents (i.e., a leaf node)
-                # Check to see if manual override is in place
-                return random_number
+            with open('quality_mappings/node_{}.json'.format(i), 'w') as f:
+                nodes.append('quality_mappings/node_{}.json'.format(i))
+                json.dump(dictionary_temp, f, indent=2)
+                print("New JSON file created for node_{}".format(i))
+            i += 1
+        return nodes
 
     @staticmethod
     def import_performance_profiles(file_name):
@@ -164,10 +83,6 @@ class Generator:
             # Take a random value from a uniform distribution; used for nodes without parents
             # c = np.random.uniform(low=self.uniform_low, high=self.uniform_high)
 
-            # Add some noise to the random value
-            # c = c + abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
-            c = abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
-
             # Aggregate the noise to produce different quality mappings
             noise += abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
 
@@ -180,30 +95,108 @@ class Generator:
 
         return dictionary
 
-    def generate_nodes(self) -> List[str]:
+    def simulate_performance_profile(self, node, noise):
         """
-        Generates instances using the DAG and number of instances required
-        :param: manual_override: A list of floats to manually adjust the quality mappings
-        :return: a list of the file names of the instances stored in JSON files
+        Simulates a performance profile of a contract algorithm using synthetic data
+
+        :param node: Node object
+        :param random_number: a random number from a uniform distribution with some noise
+        :return: dictionary
         """
-        nodes = []  # file names of the nodes
+        dictionary = self.recur_build(depth=0, node=node, qualities=[], dictionary={}, noise=noise)
+        return dictionary
 
-        # Create a finite number of unique nodes and create JSON files for each
-        i = 0
-        for node in self.generator_dag.nodes:
-            dictionary_temp = self.create_dictionary(node)
+    def recur_build(self, depth, node, qualities, dictionary, noise):
+        """
+        Used to recursively generate the synthetic quality mappings
 
-            # Compare the generator program_dag with the program program_dag to see if conditional is encountered
-            # If so, go up an index since it's not present in the generator program_dag
-            if Node.is_conditional_node(self.program_dag.nodes[i]) or Node.is_for_node(self.program_dag.nodes[i]):
-                i += 1
+        :param depth: The depth of the recursion
+        :param node: Node object, Synthetic quality mapping for this particular node given its parents
+        :param qualities: The parent qualities as inputs of the node
+        :param dictionary: The dictionary being generated
+        :param random_number: To produce noise in the quality mappings
+        :return:
+        """
+        potential_parent_qualities = [format(i, '.2f') for i in np.arange(0, 1 + self.quality_interval, self.quality_interval).round(2)]
 
-            with open('quality_mappings/node_{}.json'.format(i), 'w') as f:
-                nodes.append('quality_mappings/node_{}.json'.format(i))
-                json.dump(dictionary_temp, f, indent=2)
-                print("New JSON file created for node_{}".format(i))
-            i += 1
-        return nodes
+        if not node.parents:
+            growth_factor = self.parent_dependent_transform(node, qualities)
+
+            for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
+                # Use this function to approximate the performance profile
+                dictionary[t] = 1 - math.e ** (-(growth_factor + noise) * t)
+
+        else:
+            parents_length = len(node.parents)
+
+            if utils.has_conditional_roots_as_parents(node):
+                parents_length -= 1
+
+            for quality in potential_parent_qualities:
+                dictionary[quality] = {quality: {}}
+                qualities.append(quality)
+
+                # Base Case
+                if depth == parents_length - 1:
+                    dictionary[quality] = {}
+                    # To change the quality mapping with respect to the parent qualities
+                    growth_factor = self.parent_dependent_transform(node, qualities)
+
+                    # Remove the last quality for next set of potential qualities
+                    qualities = qualities[:-1]
+
+                    for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
+                        # Add some noise to the qualities for each instance
+                        generated_quality = (1 - math.e ** (-(growth_factor + noise) * t))
+
+                        # Check bounds and truncate
+                        if generated_quality < 0:
+                            generated_quality = 0
+                        if generated_quality > 1:
+                            generated_quality = 1
+
+                        # Use this function to approximate the performance profile
+                        dictionary[quality][t] = generated_quality
+                else:
+                    self.recur_build(depth + 1, node, qualities, dictionary[quality], noise)
+                    # Remove the last quality for next set of potential qualities
+                    qualities = qualities[:-1]
+
+        return dictionary
+
+    def parent_dependent_transform(self, node, qualities):
+        if self.manual_override and self.valid_manual_override():
+            if not self.manual_override[node.id] is None:
+                average_parent_quality = 1
+
+                if qualities:
+                    # Convert the list of strings to floats
+                    qualities = [float(quality) for quality in qualities]
+                    # Get the average parent quality (this may not be what we want)
+                    average_parent_quality = sum(qualities) / len(node.parents)
+
+                # print("Sum: {} -- Average: {} -- # Parents: {} -- NODE ID: {}".format(sum(qualities), average_parent_quality, len(node.parents), node.id))
+                return self.manual_override[node.id] * average_parent_quality
+
+            else:
+                return abs(np.random.normal(loc=0, scale=.05))
+
+        else:
+            if qualities:
+                # Convert the list of strings to floats
+                qualities = [float(quality) for quality in qualities]
+
+                # Get the average parent quality (this may not be what we want)
+                average_parent_quality = sum(qualities) / len(node.parents)
+
+                velocity = (10**average_parent_quality) - 1
+
+                return velocity
+
+            else:
+                # If node has no parents (i.e., a leaf node)
+                # Check to see if manual override is in place
+                return abs(np.random.normal(loc=0, scale=.05))
 
     def valid_manual_override(self):
         if len(self.manual_override) != len(self.program_dag.nodes):

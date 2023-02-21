@@ -295,24 +295,11 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
 
 
 def print_eu_data(file_eus, subset_methods):
-    # TODO: Add a small constant to all the EU values before logging --> possible solution but ignores why the 0s appear in the first place (2/12)
     # Load the saved embedded lists to append new data
     pickled_eu_list = pickle.load(file_eus)
 
     iterations = len(pickled_eu_list[0])
     print("SIMULATIONS: {}".format(iterations))
-
-    # # Remove 0s in arrays
-    # for i in range(0, len(pickled_eu_list)):
-    #     pickled_eu_list[i] = [j for j in pickled_eu_list[i] if j != 0]
-
-    # Make 0s small postive floats (Justin's suggestion)
-    # for eu_list_index in range(0, len(pickled_eu_list)):
-    #     for eu_value_index in range(0, len(pickled_eu_list[eu_list_index])):
-    #         # pickled_eu_list[eu_list_index][eu_value_index] += .000001
-    #         if pickled_eu_list[eu_list_index][eu_value_index] == 0:
-    #             # print("FOUND O")
-    #             pickled_eu_list[eu_list_index][eu_value_index] = .001
 
     for method in subset_methods:
         eu = 0
@@ -371,9 +358,9 @@ if __name__ == "__main__":
     c_node_id = 6
 
     # Pull all the data from the .txt files
-    file_eus = open('src/tests/med-func/data/eu_data.txt', 'rb')
-    file_times = open('src/tests/med-func/data/time_data.txt', 'rb')
-    file_c_times = open('data/time_on_c_data_node6_TEST2.txt', 'rb')
+    file_eus = open('src/tests/large-func/data/eu_data.txt', 'rb')
+    file_times = open('src/tests/large-func/data/time_data.txt', 'rb')
+    file_c_times = open('src/tests/large-func/data/eu_data.txt', 'rb')
     subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
     subset_methods = ['PA (ß=5)', 'PA (ß=1)', 'PA (ß=0)', 'Uniform', 'RHC']
 

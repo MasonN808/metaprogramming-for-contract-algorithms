@@ -35,16 +35,20 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 47
+    ITERATIONS = 150
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
     # ----------------------------------------------------------------------------------------
+    node_7 = Node(7, [], [], expression_type="contract", in_child_contract_program=False)
+    node_6 = Node(6, [], [], expression_type="contract", in_child_contract_program=False)
+    node_5 = Node(5, [], [], expression_type="contract", in_child_contract_program=False)
+    node_4 = Node(4, [], [], expression_type="contract", in_child_contract_program=False)
     # Leaf node
-    node_3 = Node(3, [], [], expression_type="contract", in_child_contract_program=False)
+    node_3 = Node(3, [node_6, node_7], [], expression_type="contract", in_child_contract_program=False)
 
     # Leaf node
-    node_2 = Node(2, [], [], expression_type="contract", in_child_contract_program=False)
+    node_2 = Node(2, [node_4, node_5], [], expression_type="contract", in_child_contract_program=False)
 
     # For Node
     node_1 = Node(1, [node_2, node_3], [], expression_type="contract", in_child_contract_program=False)
@@ -53,12 +57,16 @@ if __name__ == "__main__":
     root = Node(0, [node_1], [], expression_type="contract", in_child_contract_program=False)
 
     # Append the children
+    node_7.children = [node_3]
+    node_6.children = [node_3]
+    node_5.children = [node_2]
+    node_4.children = [node_2]
     node_3.children = [node_1]
     node_2.children = [node_1]
     node_1.children = [root]
 
     # Nodes
-    nodes = [root, node_1, node_2, node_3]
+    nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7]
     # Create and verify the DAG from the node list
     dag = DirectedAcyclicGraph(nodes, root)
 
@@ -118,14 +126,10 @@ if __name__ == "__main__":
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
 
         # Check if any of the EUs are 0
-        found_zero = False
         for eu in eu_time[0]:
             if eu == 0:
-                performance_profile_velocities.extend(utils.dirichlet_ppv(iterations=1, dag=program_dag, alpha=.9, constant=10))
-                found_zero = True
                 print("Found 0 in EU")
                 exit()
 
-        if not found_zero:
-            # Save the EU and Time data to an external files
-            test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/med-func/data/eu_data.txt", time_file_path="src/tests/med-func/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
+        # Save the EU and Time data to an external files
+        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-func/data/eu_data.txt", time_file_path="src/tests/large-func/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
