@@ -84,10 +84,10 @@ class Generator:
             # c = np.random.uniform(low=self.uniform_low, high=self.uniform_high)
 
             # Aggregate the noise to produce different quality mappings
-            noise += abs(np.random.normal(loc=0, scale=.05))  # loc is mean; scale is st. dev.
+            noise = np.random.normal(loc=0, scale=.05)  # loc is mean; scale is st. dev.
 
             # Make an embedded dictionary for each instance of the node in the DAG
-            dictionary_inner = self.simulate_performance_profile(c, node, noise)
+            dictionary_inner = self.simulate_performance_profile(node, noise)
 
             dictionary['instances']['instance_{}'.format(i)] = dictionary_inner
 
@@ -120,11 +120,27 @@ class Generator:
         potential_parent_qualities = [format(i, '.2f') for i in np.arange(0, 1 + self.quality_interval, self.quality_interval).round(2)]
 
         if not node.parents:
+            # TODO: Check that this should never be 0
             growth_factor = self.parent_dependent_transform(node, qualities)
 
             for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
-                # Use this function to approximate the performance profile
-                dictionary[t] = 1 - math.e ** (-(growth_factor + noise) * t)
+                # If the growth factor + noise < 0, then the performance curve becomes negative for all values of t,
+                # We find a new noise value from a normal distribution with a smalled sd
+                if growth_factor + noise <= 0:
+                    while growth_factor + noise <= 0:
+                        # Reduce the standard deviation
+                        noise = np.random.normal(loc=0, scale=.02)
+                    generated_quality = 1 - math.e ** (-(growth_factor + noise) * t)
+                else:
+                    # Use this function to approximate the performance profile
+                    generated_quality = 1 - math.e ** (-(growth_factor + noise) * t)
+                # Check bounds and truncate
+                if generated_quality < 0:
+                    generated_quality = 0
+                if generated_quality > 1:
+                    generated_quality = 1
+
+                dictionary[t] = generated_quality
 
         else:
             parents_length = len(node.parents)
@@ -146,16 +162,22 @@ class Generator:
                     qualities = qualities[:-1]
 
                     for t in np.arange(0, self.time_limit + self.time_step_size, self.time_step_size).round(utils.find_number_decimals(self.time_step_size)):
-                        # Add some noise to the qualities for each instance
-                        generated_quality = (1 - math.e ** (-(growth_factor + noise) * t))
-
+                        # If the growth factor + noise < 0, then the performance curve becomes negative for all values of t,
+                        # We find a new noise value from a normal distribution with a smalled sd
+                        if growth_factor + noise <= 0:
+                            while growth_factor + noise <= 0:
+                                # Reduce the standard deviation
+                                noise = np.random.normal(loc=0, scale=.02)
+                            generated_quality = 1 - math.e ** (-(growth_factor + noise) * t)
+                        else:
+                            # Use this function to approximate the performance profile
+                            generated_quality = 1 - math.e ** (-(growth_factor + noise) * t)
                         # Check bounds and truncate
                         if generated_quality < 0:
                             generated_quality = 0
                         if generated_quality > 1:
                             generated_quality = 1
-
-                        # Use this function to approximate the performance profile
+                        
                         dictionary[quality][t] = generated_quality
                 else:
                     self.recur_build(depth + 1, node, qualities, dictionary[quality], noise)

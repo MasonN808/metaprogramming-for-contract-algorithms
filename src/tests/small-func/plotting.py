@@ -5,7 +5,8 @@ import numpy as np
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
 
-POSSIBLE_METHODS = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
+# POSSIBLE_METHODS = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
+POSSIBLE_METHODS = ['PA (ß=5)', 'PA (ß=1)', 'PA (ß=0)', 'Uniform', 'RHC']
 
 MAX_NUM_METHODS = len(POSSIBLE_METHODS)
 
@@ -302,65 +303,37 @@ def print_eu_data(file_eus, subset_methods):
     iterations = len(pickled_eu_list[0])
     print("SIMULATIONS: {}".format(iterations))
 
-    # # Remove 0s in arrays
-    # for i in range(0, len(pickled_eu_list)):
-    #     pickled_eu_list[i] = [j for j in pickled_eu_list[i] if j != 0]
-
-    # Make 0s small postive floats (Justin's suggestion)
-    # for eu_list_index in range(0, len(pickled_eu_list)):
-    #     for eu_value_index in range(0, len(pickled_eu_list[eu_list_index])):
-    #         # pickled_eu_list[eu_list_index][eu_value_index] += .000001
-    #         if pickled_eu_list[eu_list_index][eu_value_index] == 0:
-    #             # print("FOUND O")
-    #             pickled_eu_list[eu_list_index][eu_value_index] = .001
+    # vectorize
+    for i in range(0, len(pickled_eu_list)):
+        pickled_eu_list[i] = np.array(pickled_eu_list[i])
 
     for method in subset_methods:
         eu = 0
         eu_std = 0
         match method:  # noqa
-            case 'PA (ß=10)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[0])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[0])))
-            case 'PA (ß=5)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[1])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[1])))
-            case 'PA (ß=4)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[2])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[2])))
-            case 'PA (ß=3)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[3])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[3])))
-            case 'PA (ß=2)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[4])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[4])))
             case 'PA (ß=1)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[5])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[5])))
-            case 'PA (ß=.8)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[6])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[6])))
-            case 'PA (ß=.6)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[7])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[7])))
+                eu = np.mean(pickled_eu_list[0])
+                eu_std = np.std(pickled_eu_list[0])
             case 'PA (ß=.5)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[8])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[8])))
+                eu = np.mean(pickled_eu_list[1])
+                eu_std = np.std(pickled_eu_list[1])
             case 'PA (ß=.1)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[9])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[9])))
+                eu = np.mean(pickled_eu_list[2])
+                eu_std = np.std(pickled_eu_list[2])
             case 'PA (ß=0)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[10])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[10])))
+                eu = np.mean(pickled_eu_list[3])
+                eu_std = np.std(pickled_eu_list[3])
             case 'Uniform':
-                eu = np.mean(np.log(np.array(pickled_eu_list[11])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[11])))
+                eu = np.mean(pickled_eu_list[4])
+                eu_std = np.std(pickled_eu_list[4])
             case 'RHC':
-                eu = np.mean(np.log(np.array(pickled_eu_list[12])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[12])))
+                eu = np.mean(pickled_eu_list[5])
+                eu_std = np.std(pickled_eu_list[5])
             case _:
                 print("Invalid method")
                 exit()
         print("{} EU --> mean: {} --> std: {}".format(method, eu, eu_std))
+
 
 
 if __name__ == "__main__":
@@ -371,13 +344,13 @@ if __name__ == "__main__":
     c_node_id = 6
 
     # Pull all the data from the .txt files
-    file_eus = open('src/tests/small-func/data/eu_data.txt', 'rb')
-    file_times = open('src/tests/small-func/data/time_data.txt', 'rb')
-    file_c_times = open('data/time_on_c_data_node6_TEST2.txt', 'rb')
+    file_eus = open('src/tests/small-func/data/eu_data3.txt', 'rb')
+    file_times = open('src/tests/small-func/data/time_data3.txt', 'rb')
+    file_c_times = open('src/tests/small-func/data/time_data.txt', 'rb')
     subset_methods = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
-    subset_methods = ['PA (ß=5)', 'PA (ß=1)', 'PA (ß=0)', 'Uniform', 'RHC']
+    subset_methods = ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
 
-    # print_eu_data(file_eus=file_eus, subset_methods=subset_methods)
+    print_eu_data(file_eus=file_eus, subset_methods=subset_methods)
 
-    plot(plot_type="box_whisker", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
-         file_eus=file_eus, file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=[1])
+    # plot(plot_type="box_whisker", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
+    #      file_eus=file_eus, file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=[1])

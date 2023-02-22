@@ -34,10 +34,8 @@ if __name__ == "__main__":
     EXPECTED_UTILITY_TYPE = "approximate"
     # Initialize a list of all possible qualities
     POSSIBLE_QUALITIES = np.arange(0, 1 + QUALITY_INTERVAL, QUALITY_INTERVAL)
-    # The number of methods for experimentation
-    NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 10
+    ITERATIONS = 1
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (for subtree)
@@ -319,11 +317,10 @@ if __name__ == "__main__":
         node_outer_3.for_subprogram.subprogram_expression_type = "for"
 
         # Get all the node_ids that aren't fors or conditionals
-        # node_indicies_list = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14]
         node_indicies_list = utils.find_non_meta_indicies(dag=program_dag)
 
         # TODO: Get rid of None params later
-        test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, num_plot_methods=NUM_METHODS, plot_type=None, plot_nodes=None)
+        test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, plot_type=None, plot_nodes=None)
         test.contract_program = program_outer
 
         # Outputs embeded list of expected utilities and allocations
@@ -335,17 +332,13 @@ if __name__ == "__main__":
         # times_on_c[ppv_index] += (eu_time[1])
 
         # Check if any of the EUs are 0
-        found_zero = False
         for eu in eu_time[0]:
             if eu == 0:
-                performance_profile_velocities.extend(utils.dirichlet_ppv(iterations=1, dag=program_dag, alpha=.9, constant=10))
-                print("Found 0 in EU")
-                found_zero = True
+                print("Found 0 in EU: {}".format(eu_time[0]))
                 exit()
 
-        if not found_zero:
-            # Save the EU and Time data to an external files
-            test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/robotics_domain/data/eu_data_difGenerator.txt", time_file_path="src/tests/robotics_domain/data/time_data_difGenerator.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
+        # Save the EU and Time data to an external files
+        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/robotics_domain/data/eu_data_difGenerator.txt", time_file_path="src/tests/robotics_domain/data/time_data_difGenerator.txt", node_indicies=node_indicies_list)
 
     save_analysis_to_file = False
 

@@ -16,12 +16,12 @@ from classes.node import Node  # noqa
 
 
 class Test:
-    def __init__(self, contract_program, ppv, node_indicies_list, plot_type=None, num_plot_methods=None, plot_nodes=None):
+    def __init__(self, contract_program, ppv, node_indicies_list, plot_type=None, plot_nodes=None):
         self.contract_program = contract_program
         self.ppv = ppv
         self.node_indicies_list = node_indicies_list
         self.plot_type = plot_type
-        self.num_plot_methods = num_plot_methods
+        self.num_plot_methods = 0
         self.plot_nodes = plot_nodes
 
     def test_initial_allocations(self, iterations, initial_allocation, verbose=False):
@@ -89,7 +89,10 @@ class Test:
         ##############################################################################################################################
 
         # Betas for tangent
-        betas = [10, 5, 4, 3, 2, 1, .8, .6, .5, .1, 0]
+        betas = [1, .5, .1, 0]
+        # betas = [10, 5, 4, 3, 2, 1, .8, .6, .5, .1, 0]
+        # Add up the number of methods where 2 represents hill climbing and uniform allocation
+        self.num_plot_methods += len(betas) + 2
 
         # Get the eu for the proportional allocation method
         for beta in betas:
@@ -168,11 +171,6 @@ class Test:
 
         eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
         eu.append(eu_initial)
-
-        # if eu_initial == 0:
-        #     print("BAD Allocations")
-        #     utils.print_allocations(self.contract_program.allocations)
-        # exit()
 
         # Take the outer allocations and declare any expression types with None allocations
         copy_uniform_allocations = copy.deepcopy(self.contract_program.allocations)
@@ -692,16 +690,15 @@ class Test:
             is_last = i == len(root.parents) - 1
             self.print_tree(parent, marker_str, [*level_markers, not is_last])
 
-    @staticmethod
-    def save_eu_time_data(eu_time_list, eu_file_path, time_file_path, node_indicies, num_methods):
+    def save_eu_time_data(self, eu_time_list, eu_file_path, time_file_path, node_indicies):
         # Check if data files exist
         if not os.path.isfile(eu_file_path):
             with open(eu_file_path, 'wb') as file_eus:
-                pickle.dump([[] for i in range(0, num_methods)], file_eus)
+                pickle.dump([[] for i in range(0, self.num_plot_methods)], file_eus)
 
         if not os.path.isfile(time_file_path):
             with open(time_file_path, 'wb') as file_times:
-                pickle.dump([[[] for j in range(0, num_methods)] for i in range(0, len(node_indicies))], file_times)
+                pickle.dump([[[] for j in range(0, self.num_plot_methods)] for i in range(0, len(node_indicies))], file_times)
 
         # Open files in binary mode with wb instead of w
         file_eus = open(eu_file_path, 'rb')
@@ -712,7 +709,7 @@ class Test:
         pickled_time_list = pickle.load(file_times)
 
         # Append the EUs appropriately to list in outer scope
-        for method_index in range(0, num_methods):
+        for method_index in range(0, self.num_plot_methods):
             pickled_eu_list[method_index].append(eu_time_list[0][method_index])
             for node in range(0, len(node_indicies)):
                 pickled_time_list[node][method_index].append(eu_time_list[1][node][method_index])
@@ -722,25 +719,6 @@ class Test:
 
         with open(time_file_path, 'wb') as file_times:
             pickle.dump(pickled_time_list, file_times)
-
-    @staticmethod
-    def genetic_algorithm(program, dag):
-        """
-        Genetic Algorithm implementation
-
-        :param program: ContractProgram object
-        :param dag: DirectedAcyclicGraph object
-        :return: None
-        """
-        # switch to genetic algorithm mode
-        program.using_genetic_algorithm = True
-
-        varbound = np.array([[0, 10]] * len(dag.nodes))
-
-        model = ga(function=program.global_expected_utility_genetic, dimension=len(
-            dag.nodes), variable_type='real', variable_boundaries=varbound)
-
-        model.run()
 
     def initial_allocation_setup(self, initial_allocation, contract_program):
         if initial_allocation == "uniform":

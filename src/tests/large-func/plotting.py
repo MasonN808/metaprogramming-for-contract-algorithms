@@ -300,55 +300,57 @@ def print_eu_data(file_eus, subset_methods):
 
     iterations = len(pickled_eu_list[0])
     print("SIMULATIONS: {}".format(iterations))
+# vectorize
+    for i in range(0, len(pickled_eu_list)):
+        pickled_eu_list[i] = np.array(pickled_eu_list[i])
 
     for method in subset_methods:
         eu = 0
         eu_std = 0
         match method:  # noqa
             case 'PA (ß=10)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[0])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[0])))
+                eu = np.mean(pickled_eu_list[0])
+                eu_std = np.std(pickled_eu_list[0])
             case 'PA (ß=5)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[1])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[1])))
+                eu = np.mean(pickled_eu_list[1])
+                eu_std = np.std(pickled_eu_list[1])
             case 'PA (ß=4)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[2])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[2])))
+                eu = np.mean(pickled_eu_list[2])
+                eu_std = np.std(pickled_eu_list[2])
             case 'PA (ß=3)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[3])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[3])))
+                eu = np.mean(pickled_eu_list[3])
+                eu_std = np.std(pickled_eu_list[3])
             case 'PA (ß=2)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[4])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[4])))
+                eu = np.mean(pickled_eu_list[4])
+                eu_std = np.std(pickled_eu_list[4])
             case 'PA (ß=1)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[5])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[5])))
+                eu = np.mean(pickled_eu_list[5])
+                eu_std = np.std(pickled_eu_list[5])
             case 'PA (ß=.8)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[6])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[6])))
+                eu = np.mean(pickled_eu_list[6])
+                eu_std = np.std(pickled_eu_list[6])
             case 'PA (ß=.6)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[7])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[7])))
+                eu = np.mean(pickled_eu_list[7])
+                eu_std = np.std(pickled_eu_list[7])
             case 'PA (ß=.5)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[8])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[8])))
+                eu = np.mean(pickled_eu_list[8])
+                eu_std = np.std(pickled_eu_list[8])
             case 'PA (ß=.1)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[9])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[9])))
+                eu = np.mean(pickled_eu_list[9])
+                eu_std = np.std(pickled_eu_list[9])
             case 'PA (ß=0)':
-                eu = np.mean(np.log(np.array(pickled_eu_list[10])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[10])))
+                eu = np.mean(pickled_eu_list[10])
+                eu_std = np.std(pickled_eu_list[10])
             case 'Uniform':
-                eu = np.mean(np.log(np.array(pickled_eu_list[11])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[11])))
+                eu = np.mean(pickled_eu_list[11])
+                eu_std = np.std(pickled_eu_list[11])
             case 'RHC':
-                eu = np.mean(np.log(np.array(pickled_eu_list[12])))
-                eu_std = np.std(np.log(np.array(pickled_eu_list[12])))
+                eu = np.mean(pickled_eu_list[12])
+                eu_std = np.std(pickled_eu_list[12])
             case _:
                 print("Invalid method")
                 exit()
         print("{} EU --> mean: {} --> std: {}".format(method, eu, eu_std))
-
 
 if __name__ == "__main__":
     # Get all the node_ids that aren't fors or conditionals

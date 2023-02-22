@@ -187,12 +187,19 @@ class ContractProgram:
                 average_quality = self.performance_profile.average_quality(qualities)
                 average_qualities.append(average_quality)
 
-                probability *= self.performance_profile.query_probability_contract_expression(average_quality,
-                                                                                              qualities)
+                # if (average_quality, qualities) in cache:
+                #     next_probability = cache[(average_quality, qualities)]
+                # else:
+                #     next_probability = self.performance_profile.query_probability_contract_expression(average_quality, qualities)
+                #     cache[(average_quality, qualities)] = next_probability
+                # probability *= next_probability
+
+                probability *= self.performance_profile.query_probability_contract_expression(average_quality, qualities)
                 # print("PROBABILITY IN EU: {}".format(probability))
                 # if (probability == 0):
                 #     print("prob is 0")
-
+        # print("PROB: {}".format(probability))
+        # print("utility: {}".format(self.global_utility(average_qualities)))
         expected_utility = probability * self.global_utility(average_qualities)
 
         return expected_utility
@@ -468,7 +475,7 @@ class ContractProgram:
                 adjusted_allocations = copy.deepcopy(self.allocations)
                 previous_eu_original = eu_original
                 node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
-                node_1 = utils.find_node(permutation[1].node_id, self.program_dag)
+                node_1 = utils.fixnd_node(permutation[1].node_id, self.program_dag)
                 node_0_time = adjusted_allocations[permutation[0].node_id].time
                 node_1_time = adjusted_allocations[permutation[1].node_id].time
 
@@ -709,7 +716,6 @@ class ContractProgram:
         # Get the coefficients proportinal to the budget and ...
         # subtract one of the sums of the branches since that double count is put into the budget
         budget_proportion = taxed_budget / (sum(ppv_transformed) - transformed_branch_sum)
-        # print("BUDGET PROPORTION: {}".format(budget_proportion))
 
         # Add the meta nodes to the index lists
         true_indices = utils.find_true_indices(self.generator_dag, True)
