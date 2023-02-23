@@ -68,10 +68,24 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
                 case r'\textsc{Pa}($0.5$)':
                     logged_eus.append(pickled_eu_list[8])
                 case r'\textsc{Pa}($0.1$)':
+                    print('Best Baseline Technique')
+                    print('Max', max(pickled_eu_list[9]))
+                    print('Min', min(pickled_eu_list[9]))
+                    print('Range', max(pickled_eu_list[9]) - min(pickled_eu_list[9]))
+                    print('Mean', sum(pickled_eu_list[9]) / len(pickled_eu_list[9]))
+                    print('Lower Quartile', np.percentile(pickled_eu_list[9], 25))
+                    print('Upper Quartile', np.percentile(pickled_eu_list[9], 75))
                     logged_eus.append(pickled_eu_list[9])
                 case r'\textsc{Pa}($0.0$)':
                     logged_eus.append(pickled_eu_list[10])
                 case r'\textsc{Rhc}':
+                    print('Rhc')
+                    print('Max', max(pickled_eu_list[12]))
+                    print('Min', min(pickled_eu_list[12]))
+                    print('Range', max(pickled_eu_list[12]) - min(pickled_eu_list[12]))
+                    print('Mean', sum(pickled_eu_list[12]) / len(pickled_eu_list[12]))
+                    print('Lower Quartile', np.percentile(pickled_eu_list[12], 25))
+                    print('Upper Quartile', np.percentile(pickled_eu_list[12], 75))
                     logged_eus.append(pickled_eu_list[12])
                 case _:
                     print("Invalid method")
