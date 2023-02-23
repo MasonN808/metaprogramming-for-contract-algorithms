@@ -1,12 +1,14 @@
 import pickle
 from matplotlib import pyplot as plt
+
+plt.style.use('seaborn-v0_8')
 plt.rcParams["font.family"] = "Times New Roman"
-plt.rcParams["font.size"] = 11
-plt.rcParams["grid.linestyle"] = "-"
+plt.rcParams["font.size"] = 14
+plt.rcParams['text.usetex'] = True
 
 import numpy as np
 
-POSSIBLE_METHODS = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=.8)', 'PA (ß=.6)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
+POSSIBLE_METHODS = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=0.8)', 'PA (ß=0.6)', 'PA (ß=0.5)', 'PA (ß=0.1)', 'PA (ß=0)', r'\textsc{Equal}', r'\textsc{Rhc}']
 
 MAX_NUM_METHODS = len(POSSIBLE_METHODS)
 
@@ -50,47 +52,56 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
 
         for method in subset_methods:
             match method:  # noqa
-                case r'\textsc{Pa}($\phi=10$)':
+                case r'\textsc{Pa}($10$)':
                     logged_eus.append(pickled_eu_list[0])
-                case r'\textsc{Pa}($\phi=5$)':
-                    logged_eus.append(pickled_eu_list[1])
-                case r'\textsc{Pa}($\phi=4$)':
-                    logged_eus.append(pickled_eu_list[2])
-                case r'\textsc{Pa}($\phi=3$)':
-                    logged_eus.append(pickled_eu_list[3])
-                case r'\textsc{Pa}($\phi=2$)':
-                    logged_eus.append(pickled_eu_list[4])
-                case r'\textsc{Pa}($\phi=1$)':
-                    logged_eus.append(pickled_eu_list[5])
-                case r'\textsc{Pa}($\phi=.8$)':
-                    logged_eus.append(pickled_eu_list[6])
-                case r'\textsc{Pa}($\phi=.6$)':
-                    logged_eus.append(pickled_eu_list[7])
-                case r'\textsc{Pa}($\phi=.5$)':
-                    logged_eus.append(pickled_eu_list[8])
-                case r'\textsc{Pa}($\phi=.1$)':
-                    logged_eus.append(pickled_eu_list[9])
-                case r'\textsc{Pa}($\phi=0$)':
-                    logged_eus.append(pickled_eu_list[10])
-                case 'Uniform':
+                case r'\textsc{Equal}':
                     logged_eus.append(pickled_eu_list[11])
-                case 'RHC':
+                case r'\textsc{Pa}($5$)':
+                    logged_eus.append(pickled_eu_list[1])
+                case r'\textsc{Pa}($4$)':
+                    logged_eus.append(pickled_eu_list[2])
+                case r'\textsc{Pa}($3$)':
+                    logged_eus.append(pickled_eu_list[3])
+                case r'\textsc{Pa}($2$)':
+                    logged_eus.append(pickled_eu_list[4])
+                case r'\textsc{Pa}($1$)':
+                    logged_eus.append(pickled_eu_list[5])
+                case r'\textsc{Pa}($0.8$)':
+                    logged_eus.append(pickled_eu_list[6])
+                case r'\textsc{Pa}($0.6$)':
+                    logged_eus.append(pickled_eu_list[7])
+                case r'\textsc{Pa}($0.5$)':
+                    logged_eus.append(pickled_eu_list[8])
+                case r'\textsc{Pa}($0.1$)':
+                    logged_eus.append(pickled_eu_list[9])
+                case r'\textsc{Pa}($0$)':
+                    logged_eus.append(pickled_eu_list[10])
+                case r'\textsc{Rhc}':
                     logged_eus.append(pickled_eu_list[12])
                 case _:
                     print("Invalid method")
                     exit()
 
-        figure = plt.figure(figsize=(12, 6))
+        figure = plt.figure(figsize=(10, 4))
 
-        plt.boxplot(logged_eus)
+        boxplot = plt.boxplot(logged_eus, patch_artist=True, vert=True, zorder=100, widths=0.8, sym="D", boxprops=dict(facecolor="red"), medianprops=dict(linewidth=1.2, color='black'))
         x_axis = subset_methods
 
+        colors = iter(plt.cm.coolwarm(np.linspace(1, 0, 10)))
+        color = ['steelblue'] + [next(colors) for _ in range(10)] + ['seagreen']
+
+        i = 0
+        for patch in boxplot['boxes']:
+            patch.set(facecolor=color[i]) 
+            i += 1
+
         plt.xticks([i + 1 for i in range(0, len(subset_methods))], x_axis)
-        plt.grid(True)
         plt.ylabel("Expected Utility")
+        plt.xlabel("Time Allocation Technique")
 
         axis = plt.gca()
-        axis.spines["top"].set_visible(False)
+        plt.setp(axis.get_xticklabels(), fontsize=14)
+        plt.setp(axis.get_yticklabels(), fontsize=14)
 
         plt.tight_layout()
         figure.savefig(FILENAME)
@@ -143,9 +154,9 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
                         times.append(np.array(average_times[node_id][9]))
                     case 'PA (ß=0)':
                         times.append(np.array(average_times[node_id][10]))
-                    case 'Uniform':
+                    case r'\textsc{Equal}':
                         times.append(np.array(average_times[node_id][11]))
-                    case 'RHC':
+                    case r'\textsc{Rhc}':
                         times.append(np.array(average_times[node_id][12]))
                     case _:
                         print("Invalid method")
@@ -158,11 +169,6 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
             plt.xlabel("Solution Methods")
 
             plt.bar(x=subset_methods, height=times)
-
-            plt.rcParams["font.family"] = "Times New Roman"
-            plt.rcParams["font.size"] = 11
-            plt.rcParams["grid.linestyle"] = "-"
-            plt.grid(True)
 
             axis = plt.gca()
             axis.spines["top"].set_visible(False)
@@ -207,43 +213,43 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         for method in subset_methods:
             subtimes = []
             match method:
-                case r"\textsc{Pa}($\phi$=10)":
+                case r"\textsc{Pa}($10$)":
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][0])
-                case r'\textsc{Pa}($\phi$=5)':
+                case r'\textsc{Pa}($5$)':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][1])
-                case r'\textsc{Pa}($\phi$=4)':
+                case r'\textsc{Pa}($4$)':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][2])
-                case r'\textsc{Pa}($\phi$=3)':
+                case r'\textsc{Pa}($3$)':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][3])
-                case r'\textsc{Pa}($\phi$=2)':
+                case r'\textsc{Pa}($2$)':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][4])
-                case r'\textsc{Pa}($\phi$=1)':
+                case r'\textsc{Pa}($1$)':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][5])
-                case r'\textsc{Pa}($\phi$=.8)':
+                case r'\textsc{Pa}($0.8$)':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][6])
-                case r'\textsc{Pa}($\phi$=.6)':
+                case r'\textsc{Pa}($0.6$)':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][7])
-                case r'\textsc{Pa}($\phi$=.5)':
+                case r'\textsc{Pa}($0.5$)':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][8])
-                case r'\textsc{Pa}($\phi$=.1)':
+                case r'\textsc{Pa}($0.1$)':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][9])
-                case r'\textsc{Pa}($\phi$=0)':
+                case r'\textsc{Pa}($0$)':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][10])
-                case 'Uniform':
+                case r'\textsc{Equal}':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][11])
-                case 'RHC':
+                case r'\textsc{Rhc}':
                     for ppv_index in range(0, len(pickled_c_times)):
                         subtimes.append(node_reduced_pickled_c_times[ppv_index][12])
                 case _:
@@ -251,28 +257,28 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
                     exit()
             times.append(subtimes)
 
-        figure = plt.figure(figsize=(12, 6))
+        figure = plt.figure(figsize=(10, 4))
+
+        # Make Uniform gray
+        plt.plot(c_list, times[10], c="steelblue", label=subset_methods[0])
 
         # Make the PA methods a single heatmap color
-        colors = iter(plt.cm.autumn(np.linspace(0, 1, len(times))))
-        for index, method_str in enumerate(subset_methods[:-2]):
-            plt.scatter(x=c_list, y=[times[index]], c=next(colors), marker="o", label=method_str)
-        # Make Uniform gray
-        plt.scatter(x=c_list, y=[times[11]], c="gray", marker="o", label="Uniform")
+        colors = iter(plt.cm.coolwarm(np.linspace(1, 0, 10)))
+        for index, method_str in enumerate(subset_methods[1:-1]):
+            plt.plot(c_list, times[index], c=next(colors), linestyle='dashed', label=method_str)
+
         # Make RHC green
-        plt.scatter(x=c_list, y=[times[12]], c="green", marker="o", label="RHC")
+        plt.plot(c_list, times[11], c="seagreen", marker="o", label=subset_methods[-1], zorder=100)
 
-        # plt.rcParams["font.family"] = "Times New Roman"
-        # plt.rcParams["font.size"] = 11
-        # plt.rcParams["grid.linestyle"] = "-"
-        plt.grid(True)
-        plt.legend(loc='upper right')
+        plt.legend(loc='upper right', ncol=3, labelspacing=0.8, fontsize=13)
 
-        plt.ylabel("Time Allocation")
+        plt.ylabel("Time Allocation [sec]")
         plt.xlabel("Growth Rate")
 
         axis = plt.gca()
-        axis.spines["top"].set_visible(False)
+        plt.setp(axis.get_xticklabels(), fontsize=14)
+        plt.setp(axis.get_yticklabels(), fontsize=14)
+        axis.set_ylim([0, 2.1])
 
         plt.tight_layout()
         figure.savefig(FILENAME)
@@ -306,10 +312,10 @@ def print_eu_data(file_eus, subset_methods):
             case 'PA (ß=0)':
                 eu = np.mean(pickled_eu_list[3])
                 eu_std = np.std(pickled_eu_list[3])
-            case 'Uniform':
+            case r'\textsc{Equal}':
                 eu = np.mean(pickled_eu_list[4])
                 eu_std = np.std(pickled_eu_list[4])
-            case 'RHC':
+            case r'\textsc{Rhc}':
                 eu = np.mean(pickled_eu_list[5])
                 eu_std = np.std(pickled_eu_list[5])
             case _:
@@ -328,8 +334,8 @@ if __name__ == "__main__":
     file_eus = open('src/tests/robotics_domain/data/eu_data.txt', 'rb')
     file_times = open('src/tests/robotics_domain/data/time_data.txt', 'rb')
     file_c_times = open('src/tests/robotics_domain/data/time_on_c_data_node8.txt', 'rb')
-    subset_methods = [r'\textsc{Pa}($\phi=5$)', r'\textsc{Pa}($\phi=4$)', r'\textsc{Pa}($\phi=3$)', r'\textsc{Pa}($\phi=2$)', r'\textsc{Pa}($\phi=1$)', r'\textsc{Pa}($\phi=.8$)', r'\textsc{Pa}($\phi=.6$)', r'\textsc{Pa}($\phi=.5$)', r'\textsc{Pa}($\phi=.1$)', r'\textsc{Pa}($\phi=0$)', 'Uniform', 'RHC']
-    # subset_methods = ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', 'Uniform', 'RHC']
+    subset_methods = [r'\textsc{Equal}', r'\textsc{Pa}($5$)', r'\textsc{Pa}($4$)', r'\textsc{Pa}($3$)', r'\textsc{Pa}($2$)', r'\textsc{Pa}($1$)', r'\textsc{Pa}($0.8$)', r'\textsc{Pa}($0.6$)', r'\textsc{Pa}($0.5$)', r'\textsc{Pa}($0.1$)', r'\textsc{Pa}($0$)', r'\textsc{Rhc}']
+    # subset_methods = ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', r'\textsc{Equal}', r'\textsc{Rhc}']
     # print_eu_data(file_eus=file_eus, subset_methods=subset_methods)
 
     plot(plot_type="box_whisker", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
