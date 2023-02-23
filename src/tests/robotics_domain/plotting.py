@@ -8,11 +8,6 @@ plt.rcParams['text.usetex'] = True
 
 import numpy as np
 
-POSSIBLE_METHODS = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=0.8)', 'PA (ß=0.6)', 'PA (ß=0.5)', 'PA (ß=0.1)', 'PA (ß=0)', r'\textsc{Equal}', r'\textsc{Rhc}']
-
-MAX_NUM_METHODS = len(POSSIBLE_METHODS)
-
-
 def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_times, bar_plot_nodes=None, c_list=None, c_node_id=None):
     """
     Plots information pertinent to time allocation and expected utiltiy for various allocation methods
@@ -108,51 +103,47 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         plt.show()
 
     elif (plot_type == "bar"):
-        total = [[0 for j in range(0, MAX_NUM_METHODS)] for i in range(0, len(node_indicies))]
+        methods_length = len(pickled_time_list[node_index])
+        total = [[0 for j in range(0, methods_length)] for i in range(0, len(node_indicies))]
         for node_index in range(0, len(node_indicies)):
-            for method_index in range(0, MAX_NUM_METHODS):
+            for method_index in range(0, methods_length):
                 for iteration in range(0, simulations):
-                    # for sublist in pickled_time_list[iteration]:
+                    # TODO: This could be simplified
                     total[node_index][method_index] += pickled_time_list[node_index][method_index][iteration]
-        # print("TOTAL: {}".format(total))
-        average_times = [[None for j in range(0, MAX_NUM_METHODS)] for i in range(0, len(node_indicies))]
-        # Get the average time across all instances
-        for node_index in range(0, len(node_indicies)):
-            for method_index in range(0, MAX_NUM_METHODS):
-                average_times[node_index][method_index] = total[node_index][method_index] / simulations
+        average_times = [[None for j in range(0, methods_length)] for i in range(0, len(node_indicies))]
 
-        # Check if subset of methods is equal to all possible methods by simply comparing lengths
-        method_type = "all_methods"
-        if (len(subset_methods) != len(POSSIBLE_METHODS)):
-            method_type = "subset_methods"
+        # Get the average time across all simulations
+        for node_index in range(0, len(node_indicies)):
+            for method_index in range(0, methods_length):
+                average_times[node_index][method_index] = total[node_index][method_index] / simulations
 
         # Plot results
         for node_id in bar_plot_nodes:
-            FILENAME = 'bar_charts/{}-{}-iterations{}-node{}.png'.format(plot_type, method_type, simulations, node_id)
+            FILENAME = 'bar_charts/{}-iterations{}-node{}.png'.format(plot_type, simulations, node_id)
             times = []
             for method in subset_methods:
                 match method:  # noqa
-                    case 'PA (ß=10)':
+                    case r"\textsc{Pa}($10$)":
                         times.append(np.array(average_times[node_id][0]))
-                    case 'PA (ß=5)':
+                    case r'\textsc{Pa}($5.0$)':
                         times.append(np.array(average_times[node_id][1]))
-                    case 'PA (ß=4)':
+                    case r'\textsc{Pa}($4.0$)':
                         times.append(np.array(average_times[node_id][2]))
-                    case 'PA (ß=3)':
+                    case r'\textsc{Pa}($3.0$)':
                         times.append(np.array(average_times[node_id][3]))
-                    case 'PA (ß=2)':
+                    case r'\textsc{Pa}($2.0$)':
                         times.append(np.array(average_times[node_id][4]))
-                    case 'PA (ß=1)':
+                    case r'\textsc{Pa}($1.0$)':
                         times.append(np.array(average_times[node_id][5]))
-                    case 'PA (ß=.8)':
+                    case r'\textsc{Pa}($0.8$)':
                         times.append(np.array(average_times[node_id][6]))
-                    case 'PA (ß=.6)':
+                    case r'\textsc{Pa}($0.6$)':
                         times.append(np.array(average_times[node_id][7]))
-                    case 'PA (ß=.5)':
+                    case r'\textsc{Pa}($0.5$)':
                         times.append(np.array(average_times[node_id][8]))
-                    case 'PA (ß=.1)':
+                    case r'\textsc{Pa}($0.1$)':
                         times.append(np.array(average_times[node_id][9]))
-                    case 'PA (ß=0)':
+                    case r'\textsc{Pa}($0.0$)':
                         times.append(np.array(average_times[node_id][10]))
                     case r'\textsc{Equal}':
                         times.append(np.array(average_times[node_id][11]))
@@ -179,11 +170,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
 
     elif (plot_type == "scatter"):
         simulations = len(pickled_c_times)
-        # Check if subset of methods is equal to all possible methods by simply comparing lengths
-        method_type = "all_methods"
-        if (len(subset_methods) != len(POSSIBLE_METHODS)):
-            method_type = "subset_methods"
-        FILENAME = 'scatter_charts/{}-{}-iterations{}.png'.format(plot_type, method_type, simulations)
+        FILENAME = 'scatter_charts/{}-iterations{}.png'.format(plot_type, simulations)
 
         # Reduce the node id if for and conditionals exist before it
         transformed_node_id = c_node_id
@@ -292,7 +279,6 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         plt.show()
 
 def print_eu_data(file_eus, subset_methods):
-    # TODO: Add a small constant to all the EU values before logging --> possible solution but ignores why the 0s appear in the first place (2/12)
     # Load the saved embedded lists to append new data
     pickled_eu_list = pickle.load(file_eus)
 
