@@ -164,7 +164,7 @@ class PerformanceProfile:
         allocation
         """
         # Sort in ascending order
-        quality_list = sorted(quality_list)
+        # quality_list = sorted(quality_list)
         number_in_interval = 0
         number_of_decimals = self.find_number_of_decimals(self.quality_interval)
 
@@ -174,7 +174,7 @@ class PerformanceProfile:
 
         # Note: interval of [start_step, end_step]
         for quality in quality_list:
-            if start_quality <= quality <= end_quality:
+            if start_quality <= quality < end_quality:
                 number_in_interval += 1
 
         probability = number_in_interval / len(quality_list)

@@ -35,7 +35,7 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 150
+    ITERATIONS = 1
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
@@ -108,7 +108,7 @@ if __name__ == "__main__":
             generator.populate(nodes, "quality_mappings/populous.json")
 
         # Create the program with some budget
-        program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag, child_programs=None, budget=BUDGET, scale=10, decimals=3, quality_interval=QUALITY_INTERVAL,
+        program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag, child_programs=None, budget=BUDGET, scale=100, decimals=3, quality_interval=QUALITY_INTERVAL,
                                         time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
                                         possible_qualities=POSSIBLE_QUALITIES, performance_profile_velocities=ppv)
 
@@ -119,17 +119,21 @@ if __name__ == "__main__":
         node_indicies_list = utils.find_non_meta_indicies(program_dag)
 
         # TODO: Get rid of None params later
-        test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, num_plot_methods=NUM_METHODS, plot_type=None, plot_nodes=None)
+        test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, plot_type=None, plot_nodes=None)
         test.contract_program = program_outer
 
         # Outputs embeded list of expected utilities and allocations
-        eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
+        # eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
+        sequences = test.monitor_eu_on_rhc(initial_allocation="uniform", outer_program=program_outer, verbose=True)
 
         # Check if any of the EUs are 0
-        for eu in eu_time[0]:
-            if eu == 0:
-                print("Found 0 in EU")
-                exit()
+        # for eu in eu_time[0]:
+        #     if eu == 0:
+        #         print("Found 0 in EU")
+        #         exit()
 
         # Save the EU and Time data to an external files
-        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-func/data/eu_data.txt", time_file_path="src/tests/large-func/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
+        # test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-func/data/eu_data.txt", time_file_path="src/tests/large-func/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
+        test.save_eu_monitoring_data(sequences=sequences, eu_monitoring_file_path="src/tests/large-func/data/eu_monitoring_data.txt")
+        print(ppv)
+

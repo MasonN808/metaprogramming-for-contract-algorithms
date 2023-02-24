@@ -332,5 +332,5 @@ if __name__ == "__main__":
     # subset_methods = ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', r'\textsc{Equal}', r'\textsc{Rhc}']
     # print_eu_data(file_eus=file_eus, subset_methods=subset_methods)
 
-    plot(plot_type="bar", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
+    plot(plot_type="scatter", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
          file_eus=file_eus, file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=[1])

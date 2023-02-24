@@ -319,7 +319,6 @@ if __name__ == "__main__":
         # Get all the node_ids that aren't fors or conditionals
         node_indicies_list = utils.find_non_meta_indicies(dag=program_dag)
 
-        # TODO: Get rid of None params later
         test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, plot_type=None, plot_nodes=None)
         test.contract_program = program_outer
 

@@ -55,26 +55,13 @@ class Test:
                           "Time Allocations: {}".format(eu_optimal, optimal_time_allocations))
         return sorted(expected_utilities)
 
-    def find_utility_and_allocations(self, initial_allocation, outer_program, verbose=False) -> None:
-        """
-        Finds the expected utility and time allocations for an optimal expected utility or initial expected utility
-        given the initial time allocations
+    def monitor_eu_on_rhc(self, initial_allocation, outer_program, verbose=False):
+        # Setup the initial time allocations
+        self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
+        return self.contract_program.naive_hill_climbing_outer(verbose=verbose, monitoring=True)
 
-        :param outer_program: ContractProgram object
-        :param initial_allocation: string, the type of initial allocation given for optimization
-        :param verbose: bool, prints the optimization steps
-        :return: None
-        """
-
-        # if self.contract_program.child_programs:
-        #     return self.find_utility_and_allocations_main(initial_allocation, outer_program, verbose)
-
-        # else:
-        #     self.find_utility_and_allocations_default(initial_allocation, outer_program, verbose)
-        return self.find_utility_and_allocations_main(initial_allocation, outer_program, verbose)
-
-    # For program with both conditionals and fors
-    def find_utility_and_allocations_main(self, initial_allocation, outer_program, verbose=False):
+    # For arbitrary contract programs using a variety of solution methods
+    def find_utility_and_allocations(self, initial_allocation, outer_program, verbose=False):
         number_conditionals_and_fors = utils.number_of_fors_conditionals(self.contract_program.generator_dag)
         number_conditionals = number_conditionals_and_fors[0]
         number_fors = number_conditionals_and_fors[1]
@@ -719,6 +706,18 @@ class Test:
 
         with open(time_file_path, 'wb') as file_times:
             pickle.dump(pickled_time_list, file_times)
+
+    def save_eu_monitoring_data(self, sequences, eu_monitoring_file_path):
+         # Check if data files exist
+        if not os.path.isfile(eu_monitoring_file_path):
+            with open(eu_monitoring_file_path, 'wb') as file:
+                pickle.dump(sequences, file)
+        else:
+            # clear the data in the info file
+            with open(eu_monitoring_file_path,'wb') as file:
+                pass
+            with open(eu_monitoring_file_path,'wb') as file:
+                pickle.dump(sequences, file)
 
     def initial_allocation_setup(self, initial_allocation, contract_program):
         if initial_allocation == "uniform":

@@ -335,7 +335,7 @@ class ContractProgram:
         else:
             return total_sum
 
-    def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
+    def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False, monitoring=False) -> List[float]:
         """
         Does hill climbing on a contract program that has no children or parent contract programs (i.e., no conditional or for nodes)
 
@@ -344,14 +344,18 @@ class ContractProgram:
         :param decay: float, the decay rate of the temperature during annealing
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
+        # Initialize some monitoring lists
+        if monitoring:
+            sequence_best_eu = []
+            sequence_adjusted_eu = []
         # Initialize the amount of time to be switched
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
-
+        eu_original = self.global_expected_utility(self.allocations) * self.scale
         while time_switched > threshold:
             possible_local_max = []
             # Remove the Nones in the list before taking permutations
             refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
-
+            best_allocations_changed = False
             # Go through all permutations of the time allocations
             for permutation in permutations(refactored_allocations, 2):
                 # Makes a deep copy to avoid pointers to the same list
@@ -369,46 +373,43 @@ class ContractProgram:
                     adjusted_allocations[permutation[0].node_id].time -= time_switched
                     adjusted_allocations[permutation[1].node_id].time += time_switched
 
-                    if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(self.allocations):
-                        possible_local_max.append(adjusted_allocations)
-
                     eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
-                    eu_original = self.global_expected_utility(self.allocations) * self.scale
+
+                    # Monitors the adjusted and best EUs during hill climbing
+                    if monitoring:
+                        sequence_best_eu.append(eu_original)
+                        sequence_adjusted_eu.append(eu_adjusted)
+
+                    if eu_adjusted > eu_original:
+                        best_allocations_changed = True
+                        self.allocations = copy.deepcopy(adjusted_allocations)
+                        possible_local_max.append(adjusted_allocations)
+                        eu_original = eu_adjusted
 
                     adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
-
                     print_allocations_outer = [i.time for i in adjusted_allocations]
-
-                    temp_time_switched = time_switched
+                    printed_time_switched = time_switched
 
                     # Check for rounding
                     if self.decimals is not None:
                         print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
-
-                        eu_adjusted = round(eu_adjusted, self.decimals)
-                        eu_original = round(eu_original, self.decimals)
-
-                        temp_time_switched = round(temp_time_switched, self.decimals)
+                        printed_eu_adjusted = round(eu_adjusted, self.decimals)
+                        printed_eu_original = round(eu_original, self.decimals)
+                        printed_time_switched = round(time_switched, self.decimals)
 
                     if verbose:
                         message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
-                        print(message.format(temp_time_switched, eu_adjusted, eu_original, print_allocations_outer))
+                        print(message.format(printed_time_switched, printed_eu_adjusted, printed_eu_original, print_allocations_outer))
 
-            # arg max here
-            if possible_local_max:
-                best_allocation = max([self.global_expected_utility(j) for j in possible_local_max])
-                for j in possible_local_max:
-                    if self.global_expected_utility(j) == best_allocation:
-                        # Make a deep copy to avoid pointers to the same list
-                        self.allocations = copy.deepcopy(j)
-
-            # if local max wasn't found
-            else:
+            if not best_allocations_changed:
                 time_switched = time_switched / decay
 
-        return self.allocations
+        if monitoring:
+            return [sequence_best_eu, sequence_adjusted_eu]
+        else:
+            return self.allocations
 
-    def naive_hill_climbing_outer(self, verbose=False) -> List[float]:
+    def naive_hill_climbing_outer(self, verbose=False, monitoring=False) -> List[float]:
         """
         Does hill climbing on an arbitrary contract program
 
@@ -449,7 +450,7 @@ class ContractProgram:
             return self.naive_hill_climbing_outer_for(for_allocations, verbose=verbose)
 
         else:
-            return self.naive_hill_climbing_no_children_no_parents(verbose=verbose)
+            return self.naive_hill_climbing_no_children_no_parents(verbose=verbose, monitoring=monitoring)
 
     # This case is specifically for a contract program with conditionals, fors, and contracts
     def naive_hill_climbing_outer_main(self, true_allocations, false_allocations, for_allocations, decay=1.1, threshold=.01, verbose=False) -> List[float]:
