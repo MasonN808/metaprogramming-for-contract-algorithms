@@ -8,6 +8,10 @@ plt.rcParams['text.usetex'] = True
 
 import numpy as np
 
+POSSIBLE_METHODS = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=0.8)', 'PA (ß=0.6)', 'PA (ß=0.5)', 'PA (ß=0.1)', 'PA (ß=0)', r'\textsc{Equal}', r'\textsc{Rhc}']
+
+MAX_NUM_METHODS = len(POSSIBLE_METHODS)
+
 def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_times, bar_plot_nodes=None, c_list=None, c_node_id=None):
     """
     Plots information pertinent to time allocation and expected utiltiy for various allocation methods
@@ -97,7 +101,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         x_axis = subset_methods
 
         colors = iter(plt.cm.coolwarm(np.linspace(1, 0, 10)))
-        color = ['steelblue'] + [next(colors) for _ in range(10)] + ['seagreen']
+        color = ['slategray'] + [next(colors) for _ in range(10)] + ['seagreen']
 
         i = 0
         for patch in boxplot['boxes']:
@@ -208,7 +212,6 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
             temp_allocations = []
             for method_index in range(0, len(pickled_c_times[0][0])):
                 # Get the allocations for the specified transformed node_id
-                print(method_index)
                 if method_index != 12:
                     temp_allocations.append(pickled_c_times[ppv_index][transformed_node_id][method_index])
                 else:
@@ -266,19 +269,20 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         figure = plt.figure(figsize=(10, 5))
 
         # Make Uniform gray
-        plt.plot(c_list, times[10], c="steelblue", label=subset_methods[0])
+        plt.plot(c_list, times[0], c="slategray", label=subset_methods[0])
 
         # Make the PA methods a single heatmap color
         colors = iter(plt.cm.coolwarm(np.linspace(1, 0, 10)))
-        for index, method_str in enumerate(subset_methods[1:-1]):
+        for index, method_str in list(enumerate(subset_methods))[1:11]:
+            print(index)
             plt.plot(c_list, times[index], c=next(colors), linestyle='dashed', label=method_str)
 
         # Make RHC green
-        plt.plot(c_list, times[11], c="seagreen", marker="o", label=subset_methods[-1], zorder=100)
+        plt.plot(c_list, times[11], c="seagreen", marker="o", label=subset_methods[11], zorder=100)
 
         plt.legend(loc='upper right', ncol=3, labelspacing=0.8, fontsize=13)
 
-        plt.ylabel("Time Allocation [sec]")
+        plt.ylabel("Average Time Allocation [sec]")
         plt.xlabel("Growth Rate")
 
         axis = plt.gca()
@@ -346,5 +350,5 @@ if __name__ == "__main__":
     # subset_methods = ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', r'\textsc{Equal}', r'\textsc{Rhc}']
     # print_eu_data(file_eus=file_eus, subset_methods=subset_methods)
 
-    plot(plot_type="bar", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
+    plot(plot_type="box_whisker", node_indicies=node_indicies, subset_methods=subset_methods, c_list=c_list, c_node_id=c_node_id,
          file_eus=file_eus, file_times=file_times, file_c_times=file_c_times, bar_plot_nodes=[1])
