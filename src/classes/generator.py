@@ -177,7 +177,7 @@ class Generator:
                             generated_quality = 0
                         if generated_quality > 1:
                             generated_quality = 1
-                        
+
                         dictionary[quality][t] = generated_quality
                 else:
                     self.recur_build(depth + 1, node, qualities, dictionary[quality], noise)

@@ -335,7 +335,6 @@ def print_eu_data(file_eus, subset_methods):
         print("{} EU --> mean: {} --> std: {}".format(method, eu, eu_std))
 
 
-
 if __name__ == "__main__":
     # Get all the node_ids that aren't fors or conditionals
     node_indicies = [0, 1, 2]  # TODO: Unhardcode this

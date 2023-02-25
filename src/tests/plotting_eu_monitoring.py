@@ -17,7 +17,7 @@ print(len(BEST_EUS))
 def plot():
     plt.figure(figsize=(12, 2))
 
-    plt.plot(x_range, BEST_EUS, c="seagreen",  marker="o", markersize=1, label="Best EU", zorder=1, linewidth=1.2)
+    plt.plot(x_range, BEST_EUS, c="seagreen", marker="o", markersize=1, label="Best EU", zorder=1, linewidth=1.2)
 
     plt.ylabel(r"$\mathbb{E}[U_\mathcal{M}(\mathbf{t})]$")
     plt.xlabel("Attempted Swaps")

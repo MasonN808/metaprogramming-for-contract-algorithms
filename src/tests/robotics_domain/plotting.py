@@ -1,3 +1,4 @@
+import numpy as np
 import pickle
 from matplotlib import pyplot as plt
 
@@ -6,11 +7,11 @@ plt.rcParams["font.family"] = "Times New Roman"
 plt.rcParams["font.size"] = 14
 plt.rcParams['text.usetex'] = True
 
-import numpy as np
 
 POSSIBLE_METHODS = ['PA (ß=10)', 'PA (ß=5)', 'PA (ß=4)', 'PA (ß=3)', 'PA (ß=2)', 'PA (ß=1)', 'PA (ß=0.8)', 'PA (ß=0.6)', 'PA (ß=0.5)', 'PA (ß=0.1)', 'PA (ß=0)', r'\textsc{Equal}', r'\textsc{Rhc}']
 
 MAX_NUM_METHODS = len(POSSIBLE_METHODS)
+
 
 def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_times, bar_plot_nodes=None, c_list=None, c_node_id=None):
     """
@@ -105,7 +106,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
 
         i = 0
         for patch in boxplot['boxes']:
-            patch.set(facecolor=color[i]) 
+            patch.set(facecolor=color[i])
             i += 1
 
         plt.xticks([i + 1 for i in range(0, len(subset_methods))], x_axis)
@@ -295,6 +296,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         plt.tight_layout()
         figure.savefig(FILENAME)
         plt.show()
+
 
 def print_eu_data(file_eus, subset_methods):
     # Load the saved embedded lists to append new data

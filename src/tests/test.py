@@ -2,7 +2,6 @@ import copy
 import os
 import pickle
 import sys
-import numpy as np
 from time import sleep
 from progress.bar import ChargingBar
 from timeit import default_timer as timer
@@ -708,15 +707,15 @@ class Test:
             pickle.dump(pickled_time_list, file_times)
 
     def save_eu_monitoring_data(self, sequences, eu_monitoring_file_path):
-         # Check if data files exist
+        # Check if data files exist
         if not os.path.isfile(eu_monitoring_file_path):
             with open(eu_monitoring_file_path, 'wb') as file:
                 pickle.dump(sequences, file)
         else:
             # clear the data in the info file
-            with open(eu_monitoring_file_path,'wb') as file:
+            with open(eu_monitoring_file_path, 'wb') as file:
                 pass
-            with open(eu_monitoring_file_path,'wb') as file:
+            with open(eu_monitoring_file_path, 'wb') as file:
                 pickle.dump(sequences, file)
 
     def initial_allocation_setup(self, initial_allocation, contract_program):

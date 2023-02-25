@@ -9,7 +9,7 @@ plt.rcParams['text.usetex'] = True
 PLOT_TYPE = 'bar-graph'
 SIMULATIONS = 150
 TECHNIQUE_INDEX = 12
-BUDGET =  10
+BUDGET = 10
 
 NODES = {
     1: {'index': 1, 'label': r'$v_1$', 'color': 'seagreen'},
@@ -34,7 +34,7 @@ TIME_ALLOCATIONS.insert(7, {TECHNIQUE_INDEX: [0 for _ in range(SIMULATIONS)]})
 TIME_ALLOCATIONS.insert(13, {TECHNIQUE_INDEX: [0 for _ in range(SIMULATIONS)]})
 
 
-def plot():    
+def plot():
     average_time_allocations = [0 for _ in range(NUM_NODES)]
 
     for id in range(NUM_NODES):
