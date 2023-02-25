@@ -73,12 +73,12 @@
 #                     adjusted_allocations[permutation[0].node_id].time -= time_switched
 #                     adjusted_allocations[permutation[1].node_id].time += time_switched
 
-#                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
+#                     if self.expected_utility(adjusted_allocations) > self.expected_utility(
 #                             self.allocations):
 #                         possible_local_max.append(adjusted_allocations)
 
-#                     eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
-#                     eu_original = self.global_expected_utility(self.allocations) * self.scale
+#                     eu_adjusted = self.expected_utility(adjusted_allocations) * self.scale
+#                     eu_original = self.expected_utility(self.allocations) * self.scale
 
 #                     adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
 
@@ -102,9 +102,9 @@
 
 #             # arg max here
 #             if possible_local_max:
-#                 best_allocation = max([self.global_expected_utility(j) for j in possible_local_max])
+#                 best_allocation = max([self.expected_utility(j) for j in possible_local_max])
 #                 for j in possible_local_max:
-#                     if self.global_expected_utility(j) == best_allocation:
+#                     if self.expected_utility(j) == best_allocation:
 #                         # Make a deep copy to avoid pointers to the same list
 #                         self.allocations = copy.deepcopy(j)
 
@@ -188,12 +188,12 @@
 #                         false_allocations = copy.deepcopy(node_1.false_subprogram.naive_hill_climbing_inner())
 
 #                     # TODO: make a pointer from an element of the list of time allocations to a pointer to the left and right time allocations for conditional time allocations in the outer program
-#                     if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
+#                     if self.expected_utility(adjusted_allocations) > self.expected_utility(
 #                             self.allocations, self.original_allocations_conditional_branches):
 #                         possible_local_max.append([adjusted_allocations, true_allocations, false_allocations])
 
-#                     eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
-#                     eu_original = self.global_expected_utility(self.allocations,
+#                     eu_adjusted = self.expected_utility(adjusted_allocations) * self.scale
+#                     eu_original = self.expected_utility(self.allocations,
 #                                                                self.original_allocations_conditional_branches) * self.scale
 
 #                     adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
@@ -208,7 +208,7 @@
 #                         eu_adjusted = round(eu_adjusted, self.decimals)
 #                         eu_original = round(eu_original, self.decimals)
 
-#                         # self.global_expected_utility(self.allocations) * self.scale
+#                         # self.expected_utility(self.allocations) * self.scale
 #                         temp_time_switched = round(temp_time_switched, self.decimals)
 
 #                     if verbose:
@@ -224,10 +224,10 @@
 #             if possible_local_max:
 
 #                 best_allocation = max(
-#                     [self.global_expected_utility(j[0], [j[1], j[2]]) for j in possible_local_max])
+#                     [self.expected_utility(j[0], [j[1], j[2]]) for j in possible_local_max])
 
 #                 for j in possible_local_max:
-#                     if self.global_expected_utility(j[0], [j[1], j[2]]) == best_allocation:
+#                     if self.expected_utility(j[0], [j[1], j[2]]) == best_allocation:
 #                         # Make a deep copy to avoid pointers to the same list
 #                         self.allocations = copy.deepcopy(j[0])
 #                         ContractProgram.change_allocations(self.allocations)
@@ -300,12 +300,12 @@
 #                         adjusted_allocations[permutation[1].node_id].time += time_switched
 
 #                         # TODO: make a pointer from an element of the list of time allocations to a pointer to the left and right time allocations for conditional time allocations in the outer program
-#                         if self.global_expected_utility(adjusted_allocations) > self.global_expected_utility(
+#                         if self.expected_utility(adjusted_allocations) > self.expected_utility(
 #                                 self.allocations):
 #                             possible_local_max.append(adjusted_allocations)
 
-#                         eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
-#                         eu_original = self.global_expected_utility(self.allocations) * self.scale
+#                         eu_adjusted = self.expected_utility(adjusted_allocations) * self.scale
+#                         eu_original = self.expected_utility(self.allocations) * self.scale
 
 #                         adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
 
@@ -320,7 +320,7 @@
 #                             eu_adjusted = round(eu_adjusted, self.decimals)
 #                             eu_original = round(eu_original, self.decimals)
 
-#                             # self.global_expected_utility(self.allocations) * self.scale
+#                             # self.expected_utility(self.allocations) * self.scale
 #                             temp_time_switched = round(temp_time_switched, self.decimals)
 
 #                         if verbose:
@@ -330,9 +330,9 @@
 
 #                 # arg max here
 #                 if possible_local_max:
-#                     best_allocation = max([self.global_expected_utility(j) for j in possible_local_max])
+#                     best_allocation = max([self.expected_utility(j) for j in possible_local_max])
 #                     for j in possible_local_max:
-#                         if self.global_expected_utility(j) == best_allocation:
+#                         if self.expected_utility(j) == best_allocation:
 #                             # Make a deep copy to avoid pointers to the same list
 #                             self.allocations = copy.deepcopy(j)
 

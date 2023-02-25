@@ -1,7 +1,9 @@
+import math
 import sys
 from typing import List
 import json
 import numpy as np
+import scipy.stats as st
 
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
@@ -24,7 +26,7 @@ class PerformanceProfile:
                  quality_interval, expected_utility_type):
         self.program_dag = program_dag
         self.generator_dag = generator_dag
-        self.dictionary = self.import_quality_mappings(file_name)
+        # self.dictionary = self.import_quality_mappings(file_name)
         self.time_interval = time_interval
         self.time_limit = time_limit
         self.time_step_size = time_step_size
@@ -96,7 +98,7 @@ class PerformanceProfile:
         """
         return [self.round_nearest(quality, step=self.quality_interval) for quality in qualities]
 
-    def query_average_quality(self, id, time_allocation, parent_qualities) -> float:
+    def query_average_quality_old(self, id, time_allocation, parent_qualities) -> float:
         """
         Queries a single, estimated quality given a time allocation and possibly has parent qualities
 
@@ -153,7 +155,24 @@ class PerformanceProfile:
         average = sum(qualities) / len(qualities)
         return average
 
-    def query_probability_contract_expression(self, queried_quality, quality_list) -> float:
+    def calculate_quality_sd(self, node):
+        # Add a small amount to keep the standard deviation > 0
+        return (.05 * np.log(node.time+1) * node.quality_sd) + .0000001
+
+    def query_average_quality(self, node) -> float:
+        return 1 - math.e ** (-node.phi * node.time)
+
+    def query_quality(self, node) -> float:
+        # if the node time is 0, the quality will be 0 so don't add noise
+        if node.time == 0:
+            return 0
+        else:
+            # Generate noise from a guassian distribution with a standard deviation that is dependent on time
+            # Need to also squeeze it to reduce from list to float
+            noise = np.random.normal(loc=0, scale=self.calculate_quality_sd(node), size=1).squeeze()
+            return self.query_average_quality(node) + noise
+
+    def query_probability_contract_expression(self, node) -> float:
         """
         The performance profile (contract expression): Queries the quality mapping at a specific time given the
         previous qualities of the contract algorithm's parents
@@ -163,22 +182,10 @@ class PerformanceProfile:
         :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
         allocation
         """
-        # Sort in ascending order
-        # quality_list = sorted(quality_list)
-        number_in_interval = 0
-        number_of_decimals = self.find_number_of_decimals(self.quality_interval)
-
-        # Initialize the start and end of the quality interval for the posterior
-        start_quality = round((queried_quality // self.quality_interval) * self.quality_interval, number_of_decimals)
-        end_quality = round(start_quality + self.quality_interval, number_of_decimals)
-
-        # Note: interval of [start_step, end_step]
-        for quality in quality_list:
-            if start_quality <= quality < end_quality:
-                number_in_interval += 1
-
-        probability = number_in_interval / len(quality_list)
-
+        # Calculate the z-score
+        z_score = (self.query_quality(node)-self.query_average_quality(node))/self.calculate_quality_sd(node)
+        delta = .2
+        probability = 1 - st.norm.cdf(z_score+delta) + st.norm.cdf(z_score-delta)
         return probability
 
     def query_probability_and_quality_from_conditional_expression(self, conditional_node) -> List[float]:
@@ -327,110 +334,81 @@ class PerformanceProfile:
         """
         # Recur down the DAG
         depth += 1
-
         if node.parents:
             if self.are_conditional_roots(node.parents):
                 conditional_node = self.find_conditional_node(self.program_dag)
-
                 parent_quality = self.query_probability_and_quality_from_conditional_expression(conditional_node)[1]
-
                 return parent_quality
-
             elif self.has_last_for_loop(node.parents):
                 for_node = self.find_for_node(self.program_dag)
-
                 parent_quality = self.query_probability_and_quality_from_for_expression(for_node)[1]
-
                 return parent_quality
-
             # Check that none of the parents are conditional expressions or for expressions
             elif not Node.is_conditional_node(node, "parents") and not Node.is_for_node(node, "parents"):
                 parent_qualities = []
-
                 for parent in node.parents:
-
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
-
                     # Reset the parent qualities for the next node
                     parent_qualities.append(quality)
-
                 if depth == 1:
                     return parent_qualities
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
-                    quality = self.query_average_quality(node.id, time_allocations[node.id], parent_qualities)
+                    quality = self.query_average_quality(node) * np.mean(parent_qualities)
                     return quality
-
             elif Node.is_for_node(node, "parents"):
                 # Assumption: Node only has one parent (the for)
                 # Skip the for node since no relevant mapping exists
                 node_for = node.parents[0]
-
                 # Add a reference to the outer program to pull the qualities of the parents of the conditional
                 if node.in_child_contract_program:
                     # Initialize the parent program since we need to query the qualities from here
                     parent_program = node.current_program.parent_program
-
                     # Repoint the allocations as well
                     time_allocations = parent_program.allocations
-
                     node_for = utils.find_node(node_for.id, parent_program.program_dag)
 
                 parent_qualities = []
-
                 for parent in node_for.parents:
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
-
                     # Reset the parent qualities for the next node_for
                     parent_qualities.append(quality)
-
                 if depth == 1:
                     return parent_qualities
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
-                    quality = self.query_average_quality(node.id, time_allocations[node_for.id],
-                                                         parent_qualities)
+                    quality = self.query_average_quality(node) * np.mean(parent_qualities)
                     return quality
-
             elif Node.is_conditional_node(node, "parents"):
                 # Assumption: Node only has one parent (the conditional)
                 # Skip the conditional node since no relevant mapping exists
                 node_conditional = node.parents[0]
-
                 # Add a reference to the outer program to pull the qualities of the parents of the conditional
                 if node.in_child_contract_program:
                     # Initialize the parent program since we need to query the qualities from here
                     parent_program = node.current_program.parent_program
-
                     # Repoint the allocations as well
                     time_allocations = parent_program.allocations
-
                     node_conditional = utils.find_node(node_conditional.id, parent_program.program_dag)
 
                 parent_qualities = []
-
                 for parent in node_conditional.parents:
                     quality = self.find_parent_qualities(parent, time_allocations, depth)
-
                     # Reset the parent qualities for the next node_conditional
                     parent_qualities.append(quality)
-
                 if depth == 1:
                     return parent_qualities
-
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
-                    quality = self.query_average_quality(node.id, time_allocations[node_conditional.id], parent_qualities)
-
+                    quality = self.query_average_quality(node) * np.mean(parent_qualities)
                     return quality
-
         # Base Case (Leaf Nodes in a functional expression)
         else:
             # Leaf Node as a trivial functional expression
             if depth == 1 or Node.is_conditional_node(node) or Node.is_for_node(node):
                 return []
             else:
-                quality = self.query_average_quality(node.id, time_allocations[node.id], [])
+                quality = self.query_average_quality(node)
                 return quality
 
     @staticmethod

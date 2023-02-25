@@ -152,7 +152,7 @@ def dirichlet_ppv(iterations, dag, alpha=1, constant=10):
     conditional_indices = find_conditional_indices(dag)
     for_indices = find_for_indices(dag)
 
-    for iteration in range(0, iterations):
+    for _ in range(0, iterations):
         # Remove one of the branches and the conditional node before applying the Dirichlet distribution
         velocities_array = np.random.dirichlet(np.repeat(alpha, len(dag.nodes) - number_conditionals - number_fors), size=1).squeeze() * constant
         # Turn the numpy array into a list
@@ -169,7 +169,7 @@ def dirichlet_ppv(iterations, dag, alpha=1, constant=10):
             # Place the sublist in the list
             velocities_list[conditional_indices[0]] = accumlated_velocities
             # Remove the duplicates in outer list
-            for i in range(0, len(conditional_indices) - 1):
+            for _ in range(0, len(conditional_indices) - 1):
                 velocities_list.pop(conditional_indices[0] + 1)
 
         if number_fors > 0:
@@ -191,6 +191,11 @@ def dirichlet_ppv(iterations, dag, alpha=1, constant=10):
 
     return accumulated_ppv
 
+def dirichlet_growth_factor_generator(dag, alpha=1, upper_bound=10):
+    # Apply the Dirichlet distribution to pull ranodm values for the growth factors
+    # Then turn the numpy array into a list
+    growth_factors = (np.random.dirichlet(np.repeat(alpha, len(dag.nodes)), size=1).squeeze() * upper_bound).tolist()
+    return growth_factors
 
 def ppv_generator(node_id, dag, c_list, constant=1):
     # node_id is the index accounting for all nodes in the contract program including fors and conditionals

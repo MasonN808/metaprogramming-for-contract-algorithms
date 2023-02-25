@@ -1,4 +1,4 @@
-def global_expected_utility_genetic(self, time_allocations):
+def expected_utility_genetic(self, time_allocations):
     """
     Gives the expected utility of the contract program given the performance profiles of the nodes
     (i.e., the probability distribution of each contract program's conditional performance profile) and the
@@ -29,7 +29,7 @@ def global_expected_utility_genetic(self, time_allocations):
                 probability *= self.query_probability_contract_expression(average_quality, qualities)
             else:
                 pass
-        expected_utility = probability * self.global_utility(average_qualities)
+        expected_utility = probability * self.utility(average_qualities)
         return -expected_utility
     else:
         return None

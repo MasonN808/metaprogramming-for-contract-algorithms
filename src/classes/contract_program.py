@@ -4,6 +4,8 @@ import copy
 import math
 from itertools import permutations
 
+import numpy as np
+
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
 from classes.time_allocation import TimeAllocation  # noqa
@@ -71,7 +73,7 @@ class ContractProgram:
                                                             in_child_contract_program=self.in_child_contract_program)
 
     @staticmethod
-    def global_utility(qualities) -> float:
+    def utility(qualities) -> float:
         """
         Gives a utility on a list of qualities
 
@@ -84,7 +86,7 @@ class ContractProgram:
 
         return math.prod(qualities)
 
-    def global_expected_utility(self, time_allocations, best_allocations_inner=None) -> float:
+    def expected_utility(self, time_allocations=[], best_allocations_inner=None) -> float:
         """
         Uses approximate methods or exact solutions to query the expected utility of the contract program given the time allocations
 
@@ -95,14 +97,14 @@ class ContractProgram:
         :return: float
         """
         if self.expected_utility_type == "exact":
-            return (self.global_expected_utility_exact(time_allocations))
-            # return (self.global_expected_utility_exact(time_allocations, best_allocations_inner))
+            return (self.expected_utility_exact(time_allocations))
+            # return (self.expected_utility_exact(time_allocations, best_allocations_inner))
         elif self.expected_utility_type == "approximate":
-            return (self.global_expected_utility_approximate(time_allocations, best_allocations_inner))
+            return (self.expected_utility_approximate(time_allocations, best_allocations_inner))
         else:
             raise ValueError("Improper expected utility type")
 
-    def global_expected_utility_approximate(self, time_allocations, best_allocations_inner) -> float:
+    def expected_utility_approximate(self, time_allocations=[], best_allocations_inner=[]) -> float:
         """
         Gives the estimated expected utility of the contract program given the performance profiles of the nodes
         (i.e., the probability distribution of each contract program's conditional performance profile) and the
@@ -115,14 +117,14 @@ class ContractProgram:
         """
         probability = 1.0
         # Input to calculate our utility function
-        average_qualities = []
+        qualities = []
 
         # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
         # The root of the tree is index 0
         refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
 
-        for time_allocation in refactored_allocations:
-            node = utils.find_node(time_allocation.node_id, self.program_dag)
+        for node in self.program_dag.nodes:
+            # node = utils.find_node(time_allocation.node_id, self.program_dag)
 
             # Skip the conditional and for node in a subcontract program since they have no performance profile
             if (node.expression_type == "conditional" or node.expression_type == "for") and node.in_child_contract_program:
@@ -146,7 +148,7 @@ class ContractProgram:
 
                 conditional_quality = probability_and_qualities[1]
 
-                average_qualities.append(conditional_quality)
+                qualities.append(conditional_quality)
 
                 if (best_allocations_inner):
                     node.true_subprogram.allocations = copied_branch_allocations[0]
@@ -169,42 +171,37 @@ class ContractProgram:
                 last_for_quality = probability_and_qualities[1]
 
                 # We use the last quality of the for loop to calculate our utiltiy
-                average_qualities.append(last_for_quality)
+                qualities.append(last_for_quality)
 
                 if (best_allocations_inner):
                     node.for_subprogram.allocations = copied_branch_allocations[0]
 
             else:
                 # Get the parents' qualities given their time allocations
-                parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations, depth=0)
+                parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations=None, depth=0)
 
-                # Outputs a list of qualities from the instances at the specified time given a quality mapping
-                qualities = self.performance_profile.query_quality_list_on_interval(time_allocation.time,
-                                                                                    time_allocation.node_id,
-                                                                                    parent_qualities=parent_qualities)
+                # Query the quality that is pulled from a Guassian distribution
+                # Let the output quality be dependent on the parent qualities
+                if parent_qualities:
+                    quality = self.performance_profile.query_quality(node) * np.mean(parent_qualities)
+                else:
+                    quality = self.performance_profile.query_quality(node)
+                qualities.append(quality)
 
-                # Calculates the average quality on the list of qualities for querying
-                average_quality = self.performance_profile.average_quality(qualities)
-                average_qualities.append(average_quality)
-
-                # if (average_quality, qualities) in cache:
-                #     next_probability = cache[(average_quality, qualities)]
-                # else:
-                #     next_probability = self.performance_profile.query_probability_contract_expression(average_quality, qualities)
-                #     cache[(average_quality, qualities)] = next_probability
-                # probability *= next_probability
-
-                probability *= self.performance_profile.query_probability_contract_expression(average_quality, qualities)
+                probability *= self.performance_profile.query_probability_contract_expression(node)
+                # if quality < 0:
+                #     print(quality)
+                #     exit()
                 # print("PROBABILITY IN EU: {}".format(probability))
-                # if (probability == 0):
-                #     print("prob is 0")
+        #         if (probability == 0):
+        #             print("prob is 0")
         # print("PROB: {}".format(probability))
-        # print("utility: {}".format(self.global_utility(average_qualities)))
-        expected_utility = probability * self.global_utility(average_qualities)
+        # print("utility: {}".format(self.utility(qualities)))
+        expected_utility = probability * self.utility(qualities)
 
         return expected_utility
 
-    def global_expected_utility_exact(self, time_allocations) -> float:
+    def expected_utility_exact(self, time_allocations) -> float:
         """
         Gives the exact expected utility of the contract program given the performance profiles of the nodes
         (i.e., the probability distribution of each contract program's conditional performance profile) and the
@@ -277,7 +274,7 @@ class ContractProgram:
                             continue
                         # Use the qualities from the previous possible qualities in the parent nodes
                         # as parent qualities to query from performance profiles
-                        parent_qualities.append(current_qualities[parent.id])
+                        parent_qualities.append(self.performance_profile.query_quality(parent))
 
                     # remove the for and conditional nodes from the parents list
                     for for_node_or_conditional_node in for_and_conditional_nodes:
@@ -319,7 +316,7 @@ class ContractProgram:
                     # TODO: Subtract by 1 and the number of fors and conditionals in DAG
                     if depth == self.generator_dag.order - 1:
                         # Remove nones from the list since current qualities will have model qualities for every node in the generator dag
-                        utility = self.global_utility(utils.remove_nones_list(current_qualities))
+                        utility = self.utility(utils.remove_nones_list(current_qualities))
                         # print("UTILITY: {}".format(utility))
                         total_sum += conditional_probability * utility
                     else:
@@ -350,30 +347,24 @@ class ContractProgram:
             sequence_adjusted_eu = []
         # Initialize the amount of time to be switched
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
-        eu_original = self.global_expected_utility(self.allocations) * self.scale
+        eu_original = self.expected_utility() * self.scale
         while time_switched > threshold:
-            possible_local_max = []
-            # Remove the Nones in the list before taking permutations
-            refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
             best_allocations_changed = False
             # Go through all permutations of the time allocations
-            for permutation in permutations(refactored_allocations, 2):
-                # Makes a deep copy to avoid pointers to the same list
-                adjusted_allocations = copy.deepcopy(self.allocations)
-
+            for permutation in permutations(self.program_dag.nodes, 2):
+                node_0 = permutation[0]
+                node_1 = permutation[1]
                 # Avoids exchanging time with itself
-                if permutation[0].node_id == permutation[1].node_id:
+                if node_0.id == node_1.id:
                     continue
-
                 # Avoids negative time allocation
-                elif adjusted_allocations[permutation[0].node_id].time - time_switched < 0:
+                elif node_0.time - time_switched < 0:
                     continue
-
                 else:
-                    adjusted_allocations[permutation[0].node_id].time -= time_switched
-                    adjusted_allocations[permutation[1].node_id].time += time_switched
+                    node_0.time -= time_switched
+                    node_1.time += time_switched
 
-                    eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
+                    eu_adjusted = self.expected_utility() * self.scale
 
                     # Monitors the adjusted and best EUs during hill climbing
                     if monitoring:
@@ -382,17 +373,18 @@ class ContractProgram:
 
                     if eu_adjusted > eu_original:
                         best_allocations_changed = True
-                        self.allocations = copy.deepcopy(adjusted_allocations)
-                        possible_local_max.append(adjusted_allocations)
                         eu_original = eu_adjusted
+                    else:
+                        # Revert the time switched
+                        node_0.time += time_switched
+                        node_1.time -= time_switched
 
-                    adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
-                    print_allocations_outer = [i.time for i in adjusted_allocations]
-                    printed_time_switched = time_switched
+                    # print_allocations_outer = [node.time for node in self.program_dag.nodes]
+                    # printed_time_switched = time_switched
 
                     # Check for rounding
                     if self.decimals is not None:
-                        print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
+                        print_allocations_outer = [round(node.time, self.decimals) for node in self.program_dag.nodes]
                         printed_eu_adjusted = round(eu_adjusted, self.decimals)
                         printed_eu_original = round(eu_original, self.decimals)
                         printed_time_switched = round(time_switched, self.decimals)
@@ -465,7 +457,7 @@ class ContractProgram:
         # The initial true_allocations, false_allocations, and for_allocations have uniform alloations
         # Initialize the amount of time to be switched
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
-        eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner) * self.scale
+        eu_original = self.expected_utility(self.allocations, self.best_allocations_inner) * self.scale
         while time_switched > threshold:
             # Remove the Nones in the list before taking permutations
             refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
@@ -528,7 +520,7 @@ class ContractProgram:
 
                     # Best allocations from the previous iterations are needed since the allocations of the subprograms may be adjusted from above
                     # And scale the EU for interprettable results
-                    eu_adjusted = self.global_expected_utility(adjusted_allocations, [true_allocations, false_allocations, for_allocations]) * self.scale
+                    eu_adjusted = self.expected_utility(adjusted_allocations, [true_allocations, false_allocations, for_allocations]) * self.scale
 
                     if eu_adjusted > eu_original:
                         # print("ADJUSTED: {}, ORIGINAL: {}".format(eu_adjusted, eu_original))
@@ -577,7 +569,7 @@ class ContractProgram:
         """
         # Reinitialize the inner metareasoning problem with a uniform budget
         self.allocations = self.initialize_allocations.uniform_budget()
-        eu_original = self.global_expected_utility(self.allocations) * self.scale
+        eu_original = self.expected_utility(self.allocations) * self.scale
 
         # Initialize the amount of time to be switched
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
@@ -616,7 +608,7 @@ class ContractProgram:
                     adjusted_allocations[permutation[0].node_id].time -= time_switched
                     adjusted_allocations[permutation[1].node_id].time += time_switched
 
-                    eu_adjusted = self.global_expected_utility(adjusted_allocations) * self.scale
+                    eu_adjusted = self.expected_utility(adjusted_allocations) * self.scale
 
                     if eu_adjusted > eu_original:
                         self.allocations = copy.deepcopy(adjusted_allocations)
@@ -665,7 +657,7 @@ class ContractProgram:
         #         proportional_allocations_outer.append(TimeAllocation(node_index, order*budget_proportion))
         #     node_index += 1
 
-    def proportional_allocation_tangent(self, beta=1) -> List[float]:
+    def proportional_allocation_tangent(self, phi=1) -> List[float]:
         number_conditionals_and_fors = utils.number_of_fors_conditionals(self.generator_dag)
         number_conditionals = number_conditionals_and_fors[0]
         number_fors = number_conditionals_and_fors[1]
@@ -678,14 +670,14 @@ class ContractProgram:
         # Tax the budget given any conditionals present in the program
         taxed_budget = copy_budget - number_conditionals * self.performance_profile.calculate_tau()
 
-        ppv = copy.deepcopy(self.performance_profile_velocities)
+        ppv = [node.phi for node in self.program_dag]
         flattend_ppv = utils.flatten_list(ppv)
 
         # Get rid of all the strings (e.g., conditionals and fors)
         ppv_no_strings = [velocity for velocity in flattend_ppv if not isinstance(velocity, str)]
 
         # Use the inverse tangent function to transform coefficients from (0, infinity) -> (0,1)
-        ppv_transformed = [1 - (math.atan(beta * c) / (math.pi / 2)) for c in ppv_no_strings]
+        ppv_transformed = [1 - (math.atan(phi * c) / (math.pi / 2)) for c in ppv_no_strings]
 
         # Make sure to reduce the indices since we removed strings from ppv
         # Make sure that the left and right branches get the same time allocation
@@ -812,115 +804,6 @@ class ContractProgram:
 
         return [proportional_allocations_outer, suballocations]
 
-    def proportional_allocation_linear(self) -> List[float]:
-        # Must be < 1 and > 0
-        budget = copy.deepcopy(self.budget)
-        # TODO: This does not work -> fix
-        # taxed_budget = budget - self.initialize_allocations.count_conditionals()*self.performance_profile.calculate_tau()
-        taxed_budget = budget - .1
-
-        ppv = copy.deepcopy(self.performance_profile_velocities)
-        flattend_ppv = utils.flatten_list(ppv)
-
-        # Get rid of all the strings (e.g., conditionals and fors)
-        ppv_no_strings = [velocity for velocity in flattend_ppv if not isinstance(velocity, str)]
-
-        # Use a linear function to transform coefficients from (0, infinity) -> (0,1)
-        ppv_transformed = [max(ppv_no_strings) - c for c in ppv_no_strings]
-
-        true_indices = [1, 3, 4, 5]
-        false_indices = [2, 6]
-        # Make sure to reduce the indices since we removed strings from ppv
-        for_indices = [9, 10, 11, 12, 13]
-
-        # Make sure that the left and right branches get the same time allocation
-        true_sum = 0
-        false_sum = 0
-
-        for index in true_indices:
-            true_sum += ppv_transformed[index]
-        for index in false_indices:
-            false_sum += ppv_transformed[index]
-
-        transformed_branch_sum = 0
-        if (false_sum > true_sum):
-            difference = false_sum - true_sum
-            for index in true_indices:
-                # Add the difference
-                ppv_transformed[index] += difference / len(true_indices)
-                transformed_branch_sum += ppv_transformed[index]
-        else:
-            difference = true_sum - false_sum
-            for index in false_indices:
-                # Add the difference
-                ppv_transformed[index] += difference / len(false_indices)
-                transformed_branch_sum += ppv_transformed[index]
-
-        # Get the coefficients proportinal to the budget and ...
-        # subtract one of the sums of the branches since that double count is put into the budget
-        budget_proportion = taxed_budget / (sum(ppv_transformed) - transformed_branch_sum)
-
-        # Append the conditional node to the lists
-        true_indices.append(7)
-        false_indices.append(7)
-
-        # TODO: This is hardcoded
-        # Note: the indices in ppv_ordering are different from the node_ids since srings are removed prior to ordering
-        proportional_allocations_true = []
-        for i in range(0, 15):
-            if (i in true_indices):
-                # Check if its the last element in the list
-                if (true_indices.index(i) == len(true_indices) - 1):
-                    proportional_allocations_true.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
-                else:
-                    proportional_allocations_true.append(TimeAllocation(i, ppv_transformed[i] * budget_proportion))
-            else:
-                proportional_allocations_true.append(TimeAllocation(i, None))
-
-        proportional_allocations_false = []
-        for i in range(0, 15):
-            if (i in false_indices):
-                if (false_indices.index(i) == len(false_indices) - 1):
-                    proportional_allocations_false.append(TimeAllocation(i, self.performance_profile.calculate_tau()))
-                else:
-                    proportional_allocations_false.append(TimeAllocation(i, ppv_transformed[i] * budget_proportion))
-            else:
-                proportional_allocations_false.append(TimeAllocation(i, None))
-
-        proportional_allocations_for = []
-        for i in range(0, 15):
-            if (i in for_indices):
-                if (for_indices.index(i) == len(for_indices) - 1):
-                    proportional_allocations_for.append(TimeAllocation(i, 0))
-                else:
-                    # subtract 1 from the index since we encountered a conditional prior
-                    proportional_allocations_for.append(TimeAllocation(i, ppv_transformed[i - 1] * budget_proportion))
-            else:
-                proportional_allocations_for.append(TimeAllocation(i, None))
-
-        proportional_allocations_outer = [TimeAllocation(0, ppv_transformed[0] * budget_proportion), TimeAllocation(1, None), TimeAllocation(2, None), TimeAllocation(3, None),
-                                          TimeAllocation(4, None), TimeAllocation(5, None), TimeAllocation(6, None),
-                                          TimeAllocation(7, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_true)])),
-                                          TimeAllocation(8, ppv_transformed[7] * budget_proportion), TimeAllocation(9, None), TimeAllocation(10, None), TimeAllocation(11, None),
-                                          TimeAllocation(12, None), TimeAllocation(13, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])),
-                                          TimeAllocation(14, ppv_transformed[12] * budget_proportion)]
-
-        allocations = [proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
-
-        # Assign the allocations
-        for child_index in range(0, len(self.child_programs)):
-            self.child_programs[child_index].allocations = allocations[child_index]
-
-        self.allocations = proportional_allocations_outer
-        print("---------------------")
-        print("RAW: {}".format(ppv_no_strings))
-        print("TRANSFORMED: {}".format(ppv_transformed))
-        utils.print_allocations(proportional_allocations_outer)
-        utils.print_allocations(proportional_allocations_true)
-        utils.print_allocations(proportional_allocations_false)
-        utils.print_allocations(proportional_allocations_for)
-        return [proportional_allocations_outer, proportional_allocations_true, proportional_allocations_false, proportional_allocations_for]
-
     def naive_hill_climbing_outer_conditional(self, true_allocations, false_allocations, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
         Does hill climbing specific to an outer contract program with conditional subprograms
@@ -979,8 +862,8 @@ class ContractProgram:
                         true_allocations = copy.deepcopy(node_1.true_subprogram.naive_hill_climbing_inner())
                         false_allocations = copy.deepcopy(node_1.false_subprogram.naive_hill_climbing_inner())
 
-                    eu_adjusted = self.global_expected_utility(adjusted_allocations)
-                    eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner, "conditional")
+                    eu_adjusted = self.expected_utility(adjusted_allocations)
+                    eu_original = self.expected_utility(self.allocations, self.best_allocations_inner, "conditional")
 
                     if eu_adjusted > eu_original:
                         possible_local_max.append([adjusted_allocations, true_allocations, false_allocations])
@@ -1001,7 +884,7 @@ class ContractProgram:
                         eu_adjusted = round(eu_adjusted, self.decimals)
                         eu_original = round(eu_original, self.decimals)
 
-                        # self.global_expected_utility(self.allocations) * self.scale
+                        # self.expected_utility(self.allocations) * self.scale
                         temp_time_switched = round(temp_time_switched, self.decimals)
 
                     if verbose:
@@ -1015,9 +898,9 @@ class ContractProgram:
 
             # arg max here
             if possible_local_max:
-                best_allocation = max([self.global_expected_utility(j[0]) for j in possible_local_max])
+                best_allocation = max([self.expected_utility(j[0]) for j in possible_local_max])
                 for j in possible_local_max:
-                    if self.global_expected_utility(j[0]) == best_allocation:
+                    if self.expected_utility(j[0]) == best_allocation:
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j[0])
 
@@ -1082,9 +965,9 @@ class ContractProgram:
                         # Do naive hill climbing on the branches
                         for_allocations = copy.deepcopy(node_1.for_subprogram.naive_hill_climbing_inner())
 
-                    # eu_adjusted = self.global_expected_utility(adjusted_allocations, best_allocations_inner=[for_allocations], expression_type="for")
-                    eu_adjusted = self.global_expected_utility(adjusted_allocations)
-                    eu_original = self.global_expected_utility(self.allocations, self.best_allocations_inner, expression_type="for")
+                    # eu_adjusted = self.expected_utility(adjusted_allocations, best_allocations_inner=[for_allocations], expression_type="for")
+                    eu_adjusted = self.expected_utility(adjusted_allocations)
+                    eu_original = self.expected_utility(self.allocations, self.best_allocations_inner, expression_type="for")
 
                     if eu_adjusted > eu_original:
                         possible_local_max.append([adjusted_allocations, for_allocations])
@@ -1117,9 +1000,9 @@ class ContractProgram:
 
             # arg max here
             if possible_local_max:
-                best_allocation = max([self.global_expected_utility(j[0]) for j in possible_local_max])
+                best_allocation = max([self.expected_utility(j[0]) for j in possible_local_max])
                 for j in possible_local_max:
-                    if self.global_expected_utility(j[0]) == best_allocation:
+                    if self.expected_utility(j[0]) == best_allocation:
                         # Make a deep copy to avoid pointers to the same list
                         self.allocations = copy.deepcopy(j[0])
 

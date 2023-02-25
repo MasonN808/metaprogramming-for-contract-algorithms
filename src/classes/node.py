@@ -20,6 +20,8 @@ class Node:
         self.parents = parents
         self.children = children
         self.expression_type = expression_type
+        self.phi = None
+        self.quality_sd = .03
 
         # pointer to the contract program that it's in (This should be initialized after creating the contract program
         self.current_program = None

@@ -15,9 +15,8 @@ from classes.node import Node  # noqa
 
 
 class Test:
-    def __init__(self, contract_program, ppv, node_indicies_list, plot_type=None, plot_nodes=None):
+    def __init__(self, contract_program, node_indicies_list, plot_type=None, plot_nodes=None):
         self.contract_program = contract_program
-        self.ppv = ppv
         self.node_indicies_list = node_indicies_list
         self.plot_type = plot_type
         self.num_plot_methods = 0
@@ -39,7 +38,7 @@ class Test:
                 self.initial_allocation_setup(initial_allocation)
                 optimal_allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
                 optimal_time_allocations = [i.time for i in optimal_allocations]
-                eu_optimal = self.contract_program.global_expected_utility(
+                eu_optimal = self.contract_program.expected_utility(
                     optimal_allocations) * self.contract_program.scale
                 # Round the numbers
                 if self.contract_program.decimals is not None:
@@ -60,7 +59,7 @@ class Test:
         return self.contract_program.naive_hill_climbing_outer(verbose=verbose, monitoring=True)
 
     # For arbitrary contract programs using a variety of solution methods
-    def find_utility_and_allocations(self, initial_allocation, outer_program, verbose=False):
+    def find_utility_and_allocations(self, initial_allocation, outer_program, test_phis=[], verbose=False):
         number_conditionals_and_fors = utils.number_of_fors_conditionals(self.contract_program.generator_dag)
         number_conditionals = number_conditionals_and_fors[0]
         number_fors = number_conditionals_and_fors[1]
@@ -74,17 +73,14 @@ class Test:
         # PROPORTIONAL ALLOCATION
         ##############################################################################################################################
 
-        # Betas for tangent
-        betas = [1, .5, .1, 0]
-        # betas = [10, 5, 4, 3, 2, 1, .8, .6, .5, .1, 0]
-        # Add up the number of methods where 2 represents hill climbing and uniform allocation
-        self.num_plot_methods += len(betas) + 2
+        # Add up the number of methods where +2 represents hill climbing and uniform allocation
+        self.num_plot_methods += len(test_phis) + 2
 
         # Get the eu for the proportional allocation method
-        for beta in betas:
-            proportional_allocations = self.contract_program.proportional_allocation_tangent(beta)
+        for phi in test_phis:
+            proportional_allocations = self.contract_program.proportional_allocation_tangent(phi)
 
-            eu_proportional = self.contract_program.global_expected_utility(proportional_allocations[0], proportional_allocations[1]) * self.contract_program.scale
+            eu_proportional = self.contract_program.expected_utility(proportional_allocations[0], proportional_allocations[1]) * self.contract_program.scale
             eu.append(eu_proportional)
 
             # Flatten the proportional allocations
@@ -127,11 +123,10 @@ class Test:
             # Sort the flattened list in ascending order wrt to the node id
             sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=True)
 
-            for index in range(0, len(self.node_indicies_list)):
-                time[index].append(sorted_allocations_list[index].time)
+            for node in self.contract_program.program_dag.nodes:
+                time[index].append(node.time)
 
         if self.contract_program.decimals is not None:
-            print("PPV ==> ", *self.ppv)
             print("         Proportional (inverse Tangent) ==> Expected Utility: {:<5} ==> "
                   "Time Allocations (outer): {}".format(round(eu_proportional, self.contract_program.decimals), [round(time, self.contract_program.decimals) for time in utils.remove_nones_times([time_allocation.time for time_allocation in proportional_allocations_flattened[0]])]))
             if number_conditionals > 0:  # TODO: HARDCODED
@@ -155,7 +150,7 @@ class Test:
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
 
-        eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
+        eu_initial = self.contract_program.expected_utility(self.contract_program.allocations) * self.contract_program.scale
         eu.append(eu_initial)
 
         # Take the outer allocations and declare any expression types with None allocations
@@ -259,7 +254,7 @@ class Test:
             optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])
             optimal_time_allocations_inner_for = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[3]])
 
-            eu_optimal = self.contract_program.global_expected_utility(allocations[0], self.contract_program.best_allocations_inner) * self.contract_program.scale
+            eu_optimal = self.contract_program.expected_utility(allocations[0], self.contract_program.best_allocations_inner) * self.contract_program.scale
             eu.append(eu_optimal)
 
             ehc_allocations_list = [allocations[0], allocations[1], allocations[2], allocations[3]]
@@ -324,7 +319,7 @@ class Test:
         else:
             optimal_time_allocations = utils.remove_nones_times([time_allocation.time for time_allocation in allocations])
 
-            eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
+            eu_optimal = self.contract_program.expected_utility(allocations) * self.contract_program.scale
             eu.append(eu_optimal)
 
             for index in range(0, len(self.node_indicies_list)):
@@ -356,7 +351,7 @@ class Test:
 
         # utils.print_allocations(self.contract_program.allocations)
 
-        eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
+        eu_initial = self.contract_program.expected_utility(self.contract_program.allocations) * self.contract_program.scale
 
         if self.contract_program.decimals is not None:
             initial_time_allocations_outer = []
@@ -415,7 +410,7 @@ class Test:
             optimal_time_allocations_outer = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[0]])
             optimal_time_allocations_inner_for = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
 
-            eu_optimal = self.contract_program.global_expected_utility(allocations[0],
+            eu_optimal = self.contract_program.expected_utility(allocations[0],
                                                                        self.contract_program.best_allocations_inner) * self.contract_program.scale
 
             if self.contract_program.decimals is not None:
@@ -441,7 +436,7 @@ class Test:
         else:
             optimal_time_allocations = utils.remove_nones_times([time_allocation.time for time_allocation in allocations])
 
-            eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
+            eu_optimal = self.contract_program.expected_utility(allocations) * self.contract_program.scale
 
             if self.contract_program.decimals is not None:
 
@@ -464,7 +459,7 @@ class Test:
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
 
-        eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
+        eu_initial = self.contract_program.expected_utility(self.contract_program.allocations) * self.contract_program.scale
 
         if self.contract_program.decimals is not None:
 
@@ -544,7 +539,7 @@ class Test:
             optimal_time_allocations_inner_true = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
             optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])
 
-            eu_optimal = self.contract_program.global_expected_utility(allocations[0],
+            eu_optimal = self.contract_program.expected_utility(allocations[0],
                                                                        self.contract_program.best_allocations_inner) * self.contract_program.scale
 
             if self.contract_program.decimals is not None:
@@ -575,7 +570,7 @@ class Test:
         else:
             optimal_time_allocations = utils.remove_nones_times([time_allocation.time for time_allocation in allocations])
 
-            eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
+            eu_optimal = self.contract_program.expected_utility(allocations) * self.contract_program.scale
 
             if self.contract_program.decimals is not None:
 
@@ -601,7 +596,7 @@ class Test:
 
         utils.print_allocations(self.contract_program.allocations)
 
-        eu_initial = self.contract_program.global_expected_utility(self.contract_program.allocations) * self.contract_program.scale
+        eu_initial = self.contract_program.expected_utility(self.contract_program.allocations) * self.contract_program.scale
 
         if self.contract_program.decimals is not None:
 
@@ -630,7 +625,7 @@ class Test:
 
         optimal_time_allocations = utils.remove_nones_times([time_allocation.time for time_allocation in allocations])
 
-        eu_optimal = self.contract_program.global_expected_utility(allocations) * self.contract_program.scale
+        eu_optimal = self.contract_program.expected_utility(allocations) * self.contract_program.scale
 
         if self.contract_program.decimals is not None:
 
@@ -720,7 +715,9 @@ class Test:
 
     def initial_allocation_setup(self, initial_allocation, contract_program):
         if initial_allocation == "uniform":
-
+            for node in contract_program.program_dag.nodes:
+                # Skip any meta/placeholder nodes
+                node.time = contract_program.initialize_allocations.find_uniform_allocation(contract_program.budget)
             contract_program.allocations = contract_program.initialize_allocations.uniform_budget()
 
             # Find inner contract programs
@@ -728,7 +725,6 @@ class Test:
 
             if inner_contract_programs:
                 for inner_contract_program in inner_contract_programs:
-
                     # initialize the allocations to the inner contract programs with the time allocation of the outer conditonal node
                     if inner_contract_program.subprogram_expression_type == "for":
                         inner_contract_program.change_budget(contract_program.allocations[self.find_node_id_of_for(contract_program)].time)
