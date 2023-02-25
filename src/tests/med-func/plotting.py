@@ -361,7 +361,7 @@ if __name__ == "__main__":
     # c_list = np.arange(.01, 5.11, .1)
     c_list = np.arange(.1, 1.1, .2)
     c_node_id = 6
-
+ 
     # Pull all the data from the .txt files
     file_eus = open('src/tests/med-func/data/eu_data.txt', 'rb')
     file_times = open('src/tests/med-func/data/time_data.txt', 'rb')
