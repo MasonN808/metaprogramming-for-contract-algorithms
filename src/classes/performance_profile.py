@@ -33,17 +33,6 @@ class PerformanceProfile:
         self.quality_interval = quality_interval
         self.expected_utility_type = expected_utility_type
 
-    @staticmethod
-    def import_quality_mappings(file_name) -> dict:
-        """
-        Imports the performance profiles as dictionary via an external JSON file
-
-        :param: file_name: the name of the file with quality mappings for each node
-        :return An embedded dictionary
-        """
-        f = open('{}'.format(file_name), "r")
-        return json.loads(f.read())
-
     def query_quality_list_on_interval(self, time, id, parent_qualities) -> List[float]:
         """
         Queries the quality mapping at a specific time, using some interval to create a distribution over qualities
@@ -89,78 +78,17 @@ class PerformanceProfile:
 
             return qualities
 
-    def discretize_quality_list(self, qualities) -> List[float]:
-        """
-        Discretizes a list of qualities
-
-        :param qualities: float[], arbitary qualities
-        :return: Discretized qualities
-        """
-        return [self.round_nearest(quality, step=self.quality_interval) for quality in qualities]
-
-    def query_average_quality_old(self, id, time_allocation, parent_qualities) -> float:
-        """
-        Queries a single, estimated quality given a time allocation and possibly has parent qualities
-
-        :param parent_qualities: float[] (order matters), the qualities of the parents given their time allocations
-        :param id: non-negative int: the id of the Node object
-        :param time_allocation: TimeAllocation object, The time allocation to the node
-        :return: A quality
-        """
-        adjusted_id = id
-
-        if Node.is_conditional_node(self.generator_dag.nodes[id]) or Node.is_for_node(self.generator_dag.nodes[id]):
-            adjusted_id = id + 1
-
-        if self.dictionary is None:
-            raise ValueError("The quality mapping for this node is null")
-
-        # For leaf nodes
-        elif not parent_qualities:
-            # ["node_{}".format(id)]: The node
-            # ['qualities']: The node's quality mappings
-            dictionary = self.dictionary["node_{}".format(adjusted_id)]['qualities']
-            estimated_time = self.round_nearest(time_allocation.time, self.time_interval)
-
-            # Use .1f to add a trailing zero
-            qualities = dictionary["{:.1f}".format(estimated_time)]
-
-            average_quality = self.average_quality(qualities)
-
-            return average_quality
-
-        # For intermediate or root nodes
-        else:
-            dictionary = self.dictionary["node_{}".format(adjusted_id)]['qualities']
-            estimated_time = self.round_nearest(time_allocation.time, self.time_interval)
-
-            for parent_quality in parent_qualities:
-                parent_quality = self.round_nearest(parent_quality, step=self.quality_interval)
-                dictionary = dictionary["{:.2f}".format(parent_quality)]
-
-            qualities = dictionary["{:.1f}".format(estimated_time)]
-
-            average_quality = self.average_quality(qualities)
-
-            return average_quality
-
-    @staticmethod
-    def average_quality(qualities) -> float:
-        """
-        Gets the average quality over a list of qualities
-
-        :param qualities: float[]
-        :return: float
-        """
-        average = sum(qualities) / len(qualities)
-        return average
-
     def calculate_quality_sd(self, node):
-        # Add a small amount to keep the standard deviation > 0
-        return (.05 * np.log(node.time+1) * node.quality_sd) + .0000001
+        # TODO: test with sqrt and powers < 1. Possibly make it a function of the mean quality
+        return min(.05 * np.log(node.time+1) * node.quality_sd +.00001, 0.2)
 
+    # TODO: change name to calculate_expected_quality
     def query_average_quality(self, node) -> float:
-        return 1 - math.e ** (-node.phi * node.time)
+        return 1 - math.e ** (-node.c * node.time)
+
+    # TODO: 1) Qualities over time should be monotonic increasing
+    # 2) Qualities should never be negative --> make the sd a function of C?
+    # Solution: Assume the starting quality is 0 for now. Pull from a normal distribution 
 
     def query_quality(self, node) -> float:
         # if the node time is 0, the quality will be 0 so don't add noise
@@ -169,21 +97,16 @@ class PerformanceProfile:
         else:
             # Generate noise from a guassian distribution with a standard deviation that is dependent on time
             # Need to also squeeze it to reduce from list to float
-            noise = np.random.normal(loc=0, scale=self.calculate_quality_sd(node), size=1).squeeze()
-            return self.query_average_quality(node) + noise
+            # noise = np.random.normal(loc=0, scale=self.calculate_quality_sd(node), size=1).squeeze()
 
-    def query_probability_contract_expression(self, node) -> float:
-        """
-        The performance profile (contract expression): Queries the quality mapping at a specific time given the
-        previous qualities of the contract algorithm's parents
+            # return self.query_average_quality(node) + noise
+            return self.query_average_quality(node)
 
-        :param quality_list: A list of qualities from query_quality_list_on_interval()
-        :param queried_quality: The conditional probability of obtaining the queried quality
-        :return: [0,1], the probability of getting the current_quality, given the previous qualities and time
-        allocation
-        """
+    def query_probability_contract_expression(self, quality, node) -> float:
         # Calculate the z-score
-        z_score = (self.query_quality(node)-self.query_average_quality(node))/self.calculate_quality_sd(node)
+        z_score = (quality-self.query_average_quality(node))/self.calculate_quality_sd(node)
+        # TODO: Validate logic
+        # TODO: change delta to a lot smaller value -> Make it a function of standard deviation from above
         delta = .2
         probability = 1 - st.norm.cdf(z_score+delta) + st.norm.cdf(z_score-delta)
         return probability

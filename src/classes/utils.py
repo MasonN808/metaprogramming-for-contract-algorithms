@@ -191,10 +191,10 @@ def dirichlet_ppv(iterations, dag, alpha=1, constant=10):
 
     return accumulated_ppv
 
-def dirichlet_growth_factor_generator(dag, alpha=1, upper_bound=10):
+def dirichlet_growth_factor_generator(dag, alpha=1, lower_bound=0,upper_bound=10):
     # Apply the Dirichlet distribution to pull ranodm values for the growth factors
     # Then turn the numpy array into a list
-    growth_factors = (np.random.dirichlet(np.repeat(alpha, len(dag.nodes)), size=1).squeeze() * upper_bound).tolist()
+    growth_factors = (np.random.dirichlet(np.repeat(alpha, len(dag.nodes)), size=1).squeeze() * (upper_bound-lower_bound) + lower_bound).tolist()
     return growth_factors
 
 def ppv_generator(node_id, dag, c_list, constant=1):

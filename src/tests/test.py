@@ -66,7 +66,7 @@ class Test:
         # Data for plotting
         eu = []
         # To monitor times for specific nodes
-        time = [[] for i in range(0, len(self.node_indicies_list))]  # Remove 2 (TODO: THIS IS HARD CODED) for the for node and conditional node that are not anytime algos
+        time = [[] for i in range(0, len(self.node_indicies_list))]
         start = timer()
 
         ##############################################################################################################################
@@ -80,7 +80,7 @@ class Test:
         for phi in test_phis:
             proportional_allocations = self.contract_program.proportional_allocation_tangent(phi)
 
-            eu_proportional = self.contract_program.expected_utility(proportional_allocations[0], proportional_allocations[1]) * self.contract_program.scale
+            eu_proportional = self.contract_program.expected_utility() * self.contract_program.scale
             eu.append(eu_proportional)
 
             # Flatten the proportional allocations
@@ -123,7 +123,7 @@ class Test:
             # Sort the flattened list in ascending order wrt to the node id
             sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=True)
 
-            for node in self.contract_program.program_dag.nodes:
+            for index, node in enumerate(self.contract_program.program_dag.nodes):
                 time[index].append(node.time)
 
         if self.contract_program.decimals is not None:
@@ -150,7 +150,7 @@ class Test:
         # Generate an initial allocation pointed to self.contract_program.allocations relative to the type of allocation
         self.initial_allocation_setup(initial_allocation=initial_allocation, contract_program=outer_program)
 
-        eu_initial = self.contract_program.expected_utility(self.contract_program.allocations) * self.contract_program.scale
+        eu_initial = self.contract_program.expected_utility() * self.contract_program.scale
         eu.append(eu_initial)
 
         # Take the outer allocations and declare any expression types with None allocations
@@ -180,8 +180,8 @@ class Test:
         # Sort the flattened list in ascending order
         sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=False)
 
-        for index in range(0, len(self.node_indicies_list)):
-            time[index].append(sorted_allocations_list[index].time)
+        for index, node in enumerate(self.contract_program.program_dag.nodes):
+            time[index].append(node.time)
 
         if self.contract_program.decimals is not None:
             initial_time_allocations_outer = []
@@ -242,19 +242,12 @@ class Test:
         allocations = self.contract_program.naive_hill_climbing_outer(verbose=verbose)
 
         if outer_program.child_programs:
-
-            print("TEST 2")
-            utils.print_allocations(allocations[0])
-            utils.print_allocations(allocations[1])
-            utils.print_allocations(allocations[2])
-            utils.print_allocations(allocations[3])
-
             optimal_time_allocations_outer = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[0]])
             optimal_time_allocations_inner_true = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[1]])
             optimal_time_allocations_inner_false = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[2]])
             optimal_time_allocations_inner_for = utils.remove_nones_times([time_allocation.time for time_allocation in allocations[3]])
 
-            eu_optimal = self.contract_program.expected_utility(allocations[0], self.contract_program.best_allocations_inner) * self.contract_program.scale
+            eu_optimal = self.contract_program.expected_utility() * self.contract_program.scale
             eu.append(eu_optimal)
 
             ehc_allocations_list = [allocations[0], allocations[1], allocations[2], allocations[3]]
@@ -289,8 +282,9 @@ class Test:
             # Sort the flattened list in ascending order
             sorted_allocations_list = sorted(flattened_allocations_list, key=lambda time_allocation: time_allocation.node_id, reverse=False)
 
-            for index in range(0, len(self.node_indicies_list)):
-                time[index].append(sorted_allocations_list[index].time)
+
+            for index, node in enumerate(self.contract_program.program_dag.nodes):
+                time[index].append(node.time)
 
             if self.contract_program.decimals is not None:
                 optimal_time_allocations_outer = [round(time, self.contract_program.decimals) for
@@ -319,7 +313,7 @@ class Test:
         else:
             optimal_time_allocations = utils.remove_nones_times([time_allocation.time for time_allocation in allocations])
 
-            eu_optimal = self.contract_program.expected_utility(allocations) * self.contract_program.scale
+            eu_optimal = self.contract_program.expected_utility() * self.contract_program.scale
             eu.append(eu_optimal)
 
             for index in range(0, len(self.node_indicies_list)):
@@ -715,6 +709,7 @@ class Test:
 
     def initial_allocation_setup(self, initial_allocation, contract_program):
         if initial_allocation == "uniform":
+            # TODO: take into account fors and conditionals 2/25
             for node in contract_program.program_dag.nodes:
                 # Skip any meta/placeholder nodes
                 node.time = contract_program.initialize_allocations.find_uniform_allocation(contract_program.budget)

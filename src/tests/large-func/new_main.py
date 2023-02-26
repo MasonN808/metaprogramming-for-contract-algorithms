@@ -72,27 +72,30 @@ if __name__ == "__main__":
     program_dag = DirectedAcyclicGraph(nodes, root)
 
     # ----------------------------------------------------------------------------------------
-    # Create a program_dag with expanded subtrees for quality mapping generation
+    # Run Simulations
     # ----------------------------------------------------------------------------------------
-    SIMULATIONS = 1
-    for _ in tqdm(range(0, SIMULATIONS), desc='Progress Bar'):
+    SIMULATIONS = 50
+    for _ in tqdm(range(0, SIMULATIONS), desc='Progress Bar', position=0, leave=True):
         # Use a Dirichlet distribution to generate random ppvs
-        growth_factors = utils.dirichlet_growth_factor_generator(dag=program_dag, alpha=.9, upper_bound=10)
+        growth_factors = utils.dirichlet_growth_factor_generator(dag=program_dag, alpha=.9, lower_bound=.01, upper_bound=10)
 
-        # Append a growth factor (phi) to each node in the contract program for online performance profile querying
+        # Get the meta nodes
+        try:
+            meta_conditional_index = utils.find_conditional_indices(program_dag, include_meta=True)[-1]
+            meta_for_index = utils.find_for_indices(program_dag, include_meta=True)[-1]
+        except:
+            meta_conditional_index = -1
+            meta_for_index = -1
+
+        # Append a growth factor (c) to each node in the contract program for online performance profile querying
         # This loops through each list in parallel
-        for node, generated_phi in zip(nodes, growth_factors):
-            try:
-                meta_conditional_index = utils.find_conditional_indices(program_dag, include_meta=True)[-1]
-                meta_for_index = utils.find_for_indices(program_dag, include_meta=True)[-1]
-            except:
-                meta_conditional_index = -1
-                meta_for_index = -1
+        for node, generated_c in zip(nodes, growth_factors):
             # Skip any meta/placeholder nodes
             if node.id == meta_conditional_index or node.id == meta_for_index:
-                node.phi = None
-            # Append the growth rate value to the node object
-            node.phi = generated_phi
+                node.c = None
+            else:
+                # Append the growth rate value to the node object
+                node.c = generated_c
 
         # Create the program with some budget
         program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=program_dag, child_programs=None, budget=BUDGET, scale=1000, decimals=3, quality_interval=QUALITY_INTERVAL,
@@ -111,16 +114,15 @@ if __name__ == "__main__":
 
         # Outputs embeded list of expected utilities and allocations
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, test_phis=[10, 5, 4, 3, 2, 1, .8, .6, .5, .1, 0], verbose=True)
-
-        sequences = test.monitor_eu_on_rhc(initial_allocation="uniform", outer_program=program_outer, verbose=True)
+        # sequences = test.monitor_eu_on_rhc(initial_allocation="uniform", outer_program=program_outer, verbose=True)
         print("Growth Factors: {}".format(growth_factors))
 
         # Check if any of the EUs are 0
-        # for eu in eu_time[0]:
-        #     if eu == 0:
-        #         print("Found 0 in EU")
-        #         exit()
+        for eu in eu_time[0]:
+            if eu == 0:
+                print("Found 0 in EU")
+                print(eu_time[0])
+                exit()
 
         # Save the EU and Time data to an external files
-        # test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-func/data/eu_data.txt", time_file_path="src/tests/large-func/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
-        # test.save_eu_monitoring_data(sequences=sequences, eu_monitoring_file_path="src/tests/large-func/data/eu_monitoring_data.txt")
+        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-func/data/eu_data1.txt", time_file_path="src/tests/large-func/data/time_data1.txt", node_indicies=node_indicies_list)

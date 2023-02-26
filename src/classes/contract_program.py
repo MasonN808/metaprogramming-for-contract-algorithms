@@ -188,7 +188,7 @@ class ContractProgram:
                     quality = self.performance_profile.query_quality(node)
                 qualities.append(quality)
 
-                probability *= self.performance_profile.query_probability_contract_expression(node)
+                probability *= self.performance_profile.query_probability_contract_expression(quality, node)
                 # if quality < 0:
                 #     print(quality)
                 #     exit()
@@ -332,7 +332,7 @@ class ContractProgram:
         else:
             return total_sum
 
-    def naive_hill_climbing_no_children_no_parents(self, decay=1.1, threshold=.01, verbose=False, monitoring=False) -> List[float]:
+    def naive_hill_climbing_no_children_no_parents(self, decay=1.01, threshold=.01, verbose=False, monitoring=False) -> List[float]:
         """
         Does hill climbing on a contract program that has no children or parent contract programs (i.e., no conditional or for nodes)
 
@@ -341,10 +341,6 @@ class ContractProgram:
         :param decay: float, the decay rate of the temperature during annealing
         :return: A stream of optimized time allocations associated with each contract algorithm
         """
-        # Initialize some monitoring lists
-        if monitoring:
-            sequence_best_eu = []
-            sequence_adjusted_eu = []
         # Initialize the amount of time to be switched
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
         eu_original = self.expected_utility() * self.scale
@@ -363,13 +359,7 @@ class ContractProgram:
                 else:
                     node_0.time -= time_switched
                     node_1.time += time_switched
-
                     eu_adjusted = self.expected_utility() * self.scale
-
-                    # Monitors the adjusted and best EUs during hill climbing
-                    if monitoring:
-                        sequence_best_eu.append(eu_original)
-                        sequence_adjusted_eu.append(eu_adjusted)
 
                     if eu_adjusted > eu_original:
                         best_allocations_changed = True
@@ -378,9 +368,6 @@ class ContractProgram:
                         # Revert the time switched
                         node_0.time += time_switched
                         node_1.time -= time_switched
-
-                    # print_allocations_outer = [node.time for node in self.program_dag.nodes]
-                    # printed_time_switched = time_switched
 
                     # Check for rounding
                     if self.decimals is not None:
@@ -396,10 +383,7 @@ class ContractProgram:
             if not best_allocations_changed:
                 time_switched = time_switched / decay
 
-        if monitoring:
-            return [sequence_best_eu, sequence_adjusted_eu]
-        else:
-            return self.allocations
+        return self.allocations
 
     def naive_hill_climbing_outer(self, verbose=False, monitoring=False) -> List[float]:
         """
@@ -670,16 +654,12 @@ class ContractProgram:
         # Tax the budget given any conditionals present in the program
         taxed_budget = copy_budget - number_conditionals * self.performance_profile.calculate_tau()
 
-        ppv = [node.phi for node in self.program_dag]
-        flattend_ppv = utils.flatten_list(ppv)
-
-        # Get rid of all the strings (e.g., conditionals and fors)
-        ppv_no_strings = [velocity for velocity in flattend_ppv if not isinstance(velocity, str)]
+        growth_factors = [node.c for node in self.program_dag.nodes if node.c is not None]
 
         # Use the inverse tangent function to transform coefficients from (0, infinity) -> (0,1)
-        ppv_transformed = [1 - (math.atan(phi * c) / (math.pi / 2)) for c in ppv_no_strings]
+        growth_factors_transformed = [1 - (math.atan(phi * c) / (math.pi / 2)) for c in growth_factors]
 
-        # Make sure to reduce the indices since we removed strings from ppv
+        # Make sure to reduce the indices since we removed strings from growth_factors
         # Make sure that the left and right branches get the same time allocation
         transformed_branch_sum = 0
         if number_conditionals > 0:  # TODO: what if there are more than one conditional
@@ -687,9 +667,9 @@ class ContractProgram:
             false_sum = 0
             # if
             for index in true_indices:
-                true_sum += ppv_transformed[index]
+                true_sum += growth_factors_transformed[index]
             for index in false_indices:
-                false_sum += ppv_transformed[index]
+                false_sum += growth_factors_transformed[index]
 
             # Check which branch has a greater sum of growth factors
             # Then normalize the branch with the greater sum of growth factors by adding the average difference to each node
@@ -698,18 +678,22 @@ class ContractProgram:
                 difference = false_sum - true_sum
                 for index in true_indices:
                     # Add the difference to the true nodes
-                    ppv_transformed[index] += difference / len(true_indices)
-                    transformed_branch_sum += ppv_transformed[index]
+                    growth_factors_transformed[index] += difference / len(true_indices)
+                    transformed_branch_sum += growth_factors_transformed[index]
             else:
                 difference = true_sum - false_sum
                 for index in false_indices:
                     # Add the difference to the false nodes
-                    ppv_transformed[index] += difference / len(false_indices)
-                    transformed_branch_sum += ppv_transformed[index]
+                    growth_factors_transformed[index] += difference / len(false_indices)
+                    transformed_branch_sum += growth_factors_transformed[index]
 
         # Get the coefficients proportinal to the budget and ...
         # subtract a sum of growth factors in one the branches since it double counts
-        budget_proportion = taxed_budget / (sum(ppv_transformed) - transformed_branch_sum)
+        budget_proportion = taxed_budget / (sum(growth_factors_transformed) - transformed_branch_sum)
+
+        # Assign the time allocations
+        for node, transformed_growth_factor in zip(self.program_dag.nodes, growth_factors_transformed):
+            node.time = transformed_growth_factor * budget_proportion
 
         # Add the meta nodes to the index lists
         true_indices = utils.find_true_indices(self.generator_dag, True)
@@ -719,7 +703,7 @@ class ContractProgram:
         suballocations = []
         traveresed_meta_nodes = 0
         # Populate suballocations with allocations to any subexpressions
-        # Note: the indices in ppv_ordering are different from the node_ids since srings are removed prior to ordering
+        # Note: the indices in growth_factors_ordering are different from the node_ids since srings are removed prior to ordering
         proportional_allocations_true = []
         proportional_allocations_false = []
         proportional_allocations_for = []
@@ -733,7 +717,7 @@ class ContractProgram:
                         found_meta_node = True
                         proportional_allocations_true.append(TimeAllocation(node_index, self.performance_profile.calculate_tau()))
                     else:
-                        proportional_allocations_true.append(TimeAllocation(node_index, ppv_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
+                        proportional_allocations_true.append(TimeAllocation(node_index, growth_factors_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
                 else:
                     proportional_allocations_true.append(TimeAllocation(node_index, None))
 
@@ -742,7 +726,7 @@ class ContractProgram:
                         # Dont need to increment traveresed_meta_nodes since already done in true indicies
                         proportional_allocations_false.append(TimeAllocation(node_index, self.performance_profile.calculate_tau()))
                     else:
-                        proportional_allocations_false.append(TimeAllocation(node_index, ppv_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
+                        proportional_allocations_false.append(TimeAllocation(node_index, growth_factors_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
                 else:
                     proportional_allocations_false.append(TimeAllocation(node_index, None))
 
@@ -758,7 +742,7 @@ class ContractProgram:
                         traveresed_meta_nodes += 1
                     else:
                         # subtract the number of times we traveresed a meta node prior
-                        proportional_allocations_for.append(TimeAllocation(node_index, ppv_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
+                        proportional_allocations_for.append(TimeAllocation(node_index, growth_factors_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
                 else:
                     proportional_allocations_for.append(TimeAllocation(node_index, None))
 
@@ -784,7 +768,7 @@ class ContractProgram:
                     traveresed_meta_nodes += 1
                     continue
             if (node_index not in true_indices) and (node_index not in false_indices) and (node_index not in for_indices):
-                proportional_allocations_outer.append(TimeAllocation(node_index, ppv_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
+                proportional_allocations_outer.append(TimeAllocation(node_index, growth_factors_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
             else:
                 proportional_allocations_outer.append(TimeAllocation(node_index, None))
 
@@ -795,8 +779,8 @@ class ContractProgram:
 
         self.allocations = proportional_allocations_outer
         print("---------------------")
-        print("RAW: {}".format(ppv_no_strings))
-        print("TRANSFORMED: {}".format(ppv_transformed))
+        print("RAW: {}".format(growth_factors))
+        print("TRANSFORMED: {}".format(growth_factors_transformed))
         utils.print_allocations(proportional_allocations_outer)
         utils.print_allocations(proportional_allocations_true)
         utils.print_allocations(proportional_allocations_false)
