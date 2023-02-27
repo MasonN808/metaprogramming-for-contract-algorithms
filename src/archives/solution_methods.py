@@ -3,7 +3,7 @@
 
 # class SolutionMethods(ContractProgram):
 #     def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals,
-#                  quality_interval, time_interval, time_step_size, in_child_contract_program, generator_dag, allocations,
+#                  quality_interval, time_interval, time_step_size, in_child_contract_program, full_dag, allocations,
 #                  performance_profile, initialize_allocations):
 
 #         self.program_id = program_id
@@ -21,7 +21,7 @@
 #         self.parent_program = parent_program
 #         self.child_programs = child_programs
 
-#         self.generator_dag = generator_dag
+#         self.full_dag = full_dag
 
 #         self.allocations = allocations
 

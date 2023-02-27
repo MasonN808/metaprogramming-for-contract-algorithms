@@ -65,7 +65,7 @@ if __name__ == "__main__":
         # generator.trivial_root = True
 
         # Adjust the DAG structure that has conditionals for generation
-        generator.generator_dag = generator.adjust_dag_with_conditionals(dag)
+        generator.full_dag = generator.adjust_dag_with_conditionals(dag)
 
         # Initialize the velocities for the quality mappings in a list
         # Need to initialize it after adjusting program_dag

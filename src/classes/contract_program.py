@@ -36,9 +36,9 @@ class ContractProgram:
     POPULOUS_FILE_NAME = "quality_mappings/populous.json"
 
     def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals,
-                 quality_interval, time_interval, time_step_size, in_child_contract_program, generator_dag,
+                 quality_interval, time_interval, time_step_size, in_child_contract_program, full_dag,
                  expected_utility_type, possible_qualities, performance_profile_velocities=None,
-                 number_of_loops=None, subprogram_expression_type=None):
+                 number_of_loops=None, subprogram_expression_type=None, subprogram_map=None):
 
         self.program_id = program_id
         self.subprogram_expression_type = subprogram_expression_type  # for or false or true
@@ -51,16 +51,17 @@ class ContractProgram:
         self.time_step_size = time_step_size
         self.allocations = None
         self.in_child_contract_program = in_child_contract_program
+        self.subprogram_map = subprogram_map
         # Pointer to the parent program that the subprogram is an induced subgraph of
         self.parent_program = parent_program
         self.child_programs = child_programs
-        self.generator_dag = generator_dag
+        self.full_dag = full_dag
         self.best_allocations_inner = None
         self.expected_utility_type = expected_utility_type
         self.possible_qualities = possible_qualities
         self.performance_profile_velocities = performance_profile_velocities
         self.number_of_loops = number_of_loops
-        self.performance_profile = PerformanceProfile(program_dag=self.program_dag, generator_dag=self.generator_dag,
+        self.performance_profile = PerformanceProfile(program_dag=self.program_dag, full_dag=self.full_dag,
                                                       file_name=self.POPULOUS_FILE_NAME,
                                                       time_interval=self.time_interval, time_limit=budget,
                                                       quality_interval=self.quality_interval,
@@ -68,7 +69,7 @@ class ContractProgram:
                                                       expected_utility_type=self.expected_utility_type)
 
         self.initialize_allocations = InitializeAllocations(budget=self.budget, program_dag=self.program_dag,
-                                                            generator_dag=self.generator_dag,
+                                                            full_dag=self.full_dag,
                                                             performance_profile=self.performance_profile,
                                                             in_child_contract_program=self.in_child_contract_program)
 
@@ -97,14 +98,13 @@ class ContractProgram:
         :return: float
         """
         if self.expected_utility_type == "exact":
-            return (self.expected_utility_exact(time_allocations))
-            # return (self.expected_utility_exact(time_allocations, best_allocations_inner))
+            return (self.expected_utility_exact())
         elif self.expected_utility_type == "approximate":
-            return (self.expected_utility_approximate(time_allocations, best_allocations_inner))
+            return (self.expected_utility_approximate())
         else:
             raise ValueError("Improper expected utility type")
 
-    def expected_utility_approximate(self, time_allocations=[], best_allocations_inner=[]) -> float:
+    def expected_utility_approximate(self) -> float:
         """
         Gives the estimated expected utility of the contract program given the performance profiles of the nodes
         (i.e., the probability distribution of each contract program's conditional performance profile) and the
@@ -118,68 +118,30 @@ class ContractProgram:
         probability = 1.0
         # Input to calculate our utility function
         qualities = []
-
-        # The for-loop is a breadth-first search given that the time-allocations is ordered correctly
-        # The root of the tree is index 0
-        refactored_allocations = utils.remove_nones_time_allocations(time_allocations)
-
         for node in self.program_dag.nodes:
-            # node = utils.find_node(time_allocation.node_id, self.program_dag)
-
             # Skip the conditional and for node in a subcontract program since they have no performance profile
             if (node.expression_type == "conditional" or node.expression_type == "for") and node.in_child_contract_program:
                 continue
-
             # Calculates the EU of a conditional expression in the outermost contract program
             elif (node.expression_type == "conditional" and not node.in_child_contract_program):
-                if (best_allocations_inner):
-                    copied_branch_allocations = [copy.deepcopy(node.true_subprogram.allocations),
-                                                 copy.deepcopy(node.false_subprogram.allocations)]
-
-                    # Replace the allocations with the previous iteration's allocations
-                    node.true_subprogram.allocations = best_allocations_inner[0]
-                    node.false_subprogram.allocations = best_allocations_inner[1]
-
                 # Since in conditional node of the outermost contract program, evaluate the inner probability of the child conditional subprogram
                 probability_and_qualities = self.performance_profile.query_probability_and_quality_from_conditional_expression(node)
-
                 # Multiply the current probability by the performance profile of the conditional node
                 probability *= probability_and_qualities[0]
-
                 conditional_quality = probability_and_qualities[1]
-
                 qualities.append(conditional_quality)
-
-                if (best_allocations_inner):
-                    node.true_subprogram.allocations = copied_branch_allocations[0]
-                    node.false_subprogram.allocations = copied_branch_allocations[1]
-
             # Calculates the EU of a for expression in the outermost contract program
             elif node.expression_type == "for" and not node.in_child_contract_program:
-                if (best_allocations_inner):
-                    copied_branch_allocations = [copy.deepcopy(node.for_subprogram.allocations)]
-                    # Replace the allocations with the previous iteration's allocations
-                    # TODO: This is hard coded for a program with one conditional and a for
-                    node.for_subprogram.allocations = best_allocations_inner[2]
-
                 # Since in for node of the outermost contract program, evaluate the inner probability of the child for subprogram
-                probability_and_qualities = self.performance_profile.query_probability_and_quality_from_for_expression(node)
-
+                probability_and_qualities = self.performance_profile.query_probability_and_quality_from_for_expression(node.for_subprogram)
                 # Multiply the current probability by the performance profile of the conditional node
                 probability *= probability_and_qualities[0]
-
                 last_for_quality = probability_and_qualities[1]
-
                 # We use the last quality of the for loop to calculate our utiltiy
                 qualities.append(last_for_quality)
-
-                if (best_allocations_inner):
-                    node.for_subprogram.allocations = copied_branch_allocations[0]
-
             else:
                 # Get the parents' qualities given their time allocations
-                parent_qualities = self.performance_profile.find_parent_qualities(node, time_allocations=None, depth=0)
-
+                parent_qualities = self.performance_profile.find_parent_qualities(node, depth=0)
                 # Query the quality that is pulled from a Guassian distribution
                 # Let the output quality be dependent on the parent qualities
                 if parent_qualities:
@@ -187,7 +149,6 @@ class ContractProgram:
                 else:
                     quality = self.performance_profile.query_quality(node)
                 qualities.append(quality)
-
                 probability *= self.performance_profile.query_probability_contract_expression(quality, node)
                 # if quality < 0:
                 #     print(quality)
@@ -214,8 +175,8 @@ class ContractProgram:
                 The time allocations for each contract algorithm
         :return: float
         """
-        # Use the generator_dag since we want the entire program and not the hierarcy of programs (outer and inners)
-        leaves = utils.find_leaves_in_dag(self.generator_dag)
+        # Use the full_dag since we want the entire program and not the hierarcy of programs (outer and inners)
+        leaves = utils.find_leaves_in_dag(self.full_dag)
 
         time_allocations = copy.deepcopy(time_allocations)
         # Unions the time allocation vectors in all the contract programs (does not do embedded yet)
@@ -232,7 +193,7 @@ class ContractProgram:
 
         # utils.print_allocations(time_allocations)
         return self.find_exact_expected_utility(time_allocations=time_allocations, possible_qualities=self.possible_qualities, expected_utility=0,
-                                                current_qualities=[0.0 for i in range(self.generator_dag.order)], parent_qualities=[],
+                                                current_qualities=[0.0 for i in range(self.full_dag.order)], parent_qualities=[],
                                                 depth=0, leaves=leaves, total_sum=0)
 
     # eu = 0
@@ -314,7 +275,7 @@ class ContractProgram:
                     # print([i.id for i in new_leaves])
 
                     # TODO: Subtract by 1 and the number of fors and conditionals in DAG
-                    if depth == self.generator_dag.order - 1:
+                    if depth == self.full_dag.order - 1:
                         # Remove nones from the list since current qualities will have model qualities for every node in the generator dag
                         utility = self.utility(utils.remove_nones_list(current_qualities))
                         # print("UTILITY: {}".format(utility))
@@ -332,15 +293,7 @@ class ContractProgram:
         else:
             return total_sum
 
-    def naive_hill_climbing_no_children_no_parents(self, decay=1.01, threshold=.01, verbose=False, monitoring=False) -> List[float]:
-        """
-        Does hill climbing on a contract program that has no children or parent contract programs (i.e., no conditional or for nodes)
-
-        :param verbose: Verbose mode
-        :param threshold: float, the threshold of the temperature decay during annealing
-        :param decay: float, the decay rate of the temperature during annealing
-        :return: A stream of optimized time allocations associated with each contract algorithm
-        """
+    def naive_hill_climbing_no_children_no_parents(self, decay=1.01, threshold=.01, verbose=False) -> float:
         # Initialize the amount of time to be switched
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
         eu_original = self.expected_utility() * self.scale
@@ -383,31 +336,12 @@ class ContractProgram:
             if not best_allocations_changed:
                 time_switched = time_switched / decay
 
-        return self.allocations
+        return eu_original
 
     def naive_hill_climbing_outer(self, verbose=False, monitoring=False) -> List[float]:
-        """
-        Does hill climbing on an arbitrary contract program
-
-        :param verbose: Verbose mode
-        :param threshold: float, the threshold of the temperature decay during annealing
-        :param decay: float, the decay rate of the temperature during annealing
-        :return: A stream of optimized time allocations associated with each contract algorithm
-        """
-        # TODO: Integrate this with a contract program that may have conditionals and for nodes (i.e., more than one child program) (9/22)
-
         # This case is specifically for a contract program with conditionals, fors, and contracts
         if self.child_programs:
-            # These should all be uniform allocations
-            true_allocations = copy.deepcopy(self.child_programs[0].allocations)
-            false_allocations = copy.deepcopy(self.child_programs[1].allocations)
-            for_allocations = copy.deepcopy(self.child_programs[2].allocations)
-
-            self.best_allocations_inner = [copy.deepcopy(self.child_programs[0].allocations),
-                                           copy.deepcopy(self.child_programs[1].allocations),
-                                           copy.deepcopy(self.child_programs[2].allocations)]
-
-            return self.naive_hill_climbing_outer_main(true_allocations, false_allocations, for_allocations, verbose=verbose)
+            return self.naive_hill_climbing_outer_main(verbose=verbose)
 
         # Check if it has child programs and what type of child programs
         elif self.child_programs and self.child_programs[0].subprogram_expression_type == "conditional":
@@ -426,10 +360,10 @@ class ContractProgram:
             return self.naive_hill_climbing_outer_for(for_allocations, verbose=verbose)
 
         else:
-            return self.naive_hill_climbing_no_children_no_parents(verbose=verbose, monitoring=monitoring)
+            return self.naive_hill_climbing_outer_main(verbose=verbose)
 
     # This case is specifically for a contract program with conditionals, fors, and contracts
-    def naive_hill_climbing_outer_main(self, true_allocations, false_allocations, for_allocations, decay=1.1, threshold=.01, verbose=False) -> List[float]:
+    def naive_hill_climbing_outer_main(self, depth=0, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
         Does hill climbing specific to an outer contract program with conditional subprograms
 
@@ -441,98 +375,66 @@ class ContractProgram:
         # The initial true_allocations, false_allocations, and for_allocations have uniform alloations
         # Initialize the amount of time to be switched
         time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
-        eu_original = self.expected_utility(self.allocations, self.best_allocations_inner) * self.scale
+        eu_original = self.expected_utility() * self.scale
         while time_switched > threshold:
-            # Remove the Nones in the list before taking permutations
-            refactored_allocations = utils.remove_nones_time_allocations(self.allocations)
             best_allocations_changed = False
             # Go through all permutations of the time allocations
-            for permutation in permutations(refactored_allocations, 2):
+            for permutation in permutations(self.program_dag.nodes, 2):
                 # Makes a deep copy to avoid pointers to the same list
-                adjusted_allocations = copy.deepcopy(self.allocations)
-                previous_eu_original = eu_original
-                node_0 = utils.find_node(permutation[0].node_id, self.program_dag)
-                node_1 = utils.fixnd_node(permutation[1].node_id, self.program_dag)
-                node_0_time = adjusted_allocations[permutation[0].node_id].time
-                node_1_time = adjusted_allocations[permutation[1].node_id].time
-
+                node_0 = permutation[0]
+                node_1 = permutation[1]
                 # Avoids exchanging time with itself
-                if permutation[0].node_id == permutation[1].node_id:
+                if node_0.id == node_1.id:
                     continue
                 # Avoids negative time allocation
-                elif node_0_time - time_switched < 0:
+                elif node_0.time - time_switched < 0:
                     continue
                 # Avoids reducing the time allocation below the conditional time lower bound (tau)
-                elif ((node_0.expression_type == "conditional") and (node_0_time - time_switched < self.performance_profile.calculate_tau())) or ((node_1.expression_type == "conditional") and (node_1_time + time_switched < self.performance_profile.calculate_tau())):
+                elif ((node_0.expression_type == "conditional") and (node_0.time - time_switched < self.performance_profile.calculate_tau())) or ((node_1.expression_type == "conditional") and (node_1.time + time_switched < self.performance_profile.calculate_tau())):
                     continue
                 else:
-                    adjusted_allocations[permutation[0].node_id].time -= time_switched
-                    adjusted_allocations[permutation[1].node_id].time += time_switched
-
-                    altered_node_0_time = adjusted_allocations[permutation[0].node_id].time
-                    altered_node_1_time = adjusted_allocations[permutation[1].node_id].time
-
-                    # Does hill climbing on the outer metareasoning problem that is a conditional
-                    if node_0.expression_type == "conditional":
-                        # Reallocate the budgets for the inner metareasoning problems
-                        node_0.true_subprogram.change_budget(copy.deepcopy(altered_node_0_time))
-                        node_0.false_subprogram.change_budget(copy.deepcopy(altered_node_0_time))
-
-                        # Do naive hill climbing on the branches
-                        true_allocations = copy.deepcopy(node_0.true_subprogram.naive_hill_climbing_inner())
-                        false_allocations = copy.deepcopy(node_0.false_subprogram.naive_hill_climbing_inner())
-                    elif node_0.expression_type == "for":
-                        # Reallocate the budgets for the inner metareasoning problems
-                        node_0.for_subprogram.change_budget(copy.deepcopy(altered_node_0_time))
-
-                        # Do naive hill climbing on the chain
-                        for_allocations = copy.deepcopy(node_0.for_subprogram.naive_hill_climbing_inner())
-                    if node_1.expression_type == "conditional":
-                        # Reallocate the budgets for the inner metareasoning problems
-                        node_1.true_subprogram.change_budget(copy.deepcopy(altered_node_1_time))
-                        node_1.false_subprogram.change_budget(copy.deepcopy(altered_node_1_time))
-
-                        # Do naive hill climbing on the branches
-                        true_allocations = copy.deepcopy(node_1.true_subprogram.naive_hill_climbing_inner())
-                        false_allocations = copy.deepcopy(node_1.false_subprogram.naive_hill_climbing_inner())
-                    elif node_1.expression_type == "for":
-                        # Reallocate the budgets for the inner metareasoning problems
-                        node_1.for_subprogram.change_budget(copy.deepcopy(altered_node_1_time))
-
-                        # Do naive hill climbing on the chain
-                        for_allocations = copy.deepcopy(node_1.for_subprogram.naive_hill_climbing_inner())
+                    original_program_dag_nodes = copy.deepcopy(self.program_dag.nodes)
+                    node_0.time -= time_switched
+                    node_1.time += time_switched
+                    # Make a copy just in case recursvie hill climbing solution is suboptimal
+                    for node in [node_0, node_1]:
+                        # Does hill climbing on the outer metareasoning problem that is a conditional
+                        # TODO: For emebedded subprograms, make the recursion a function of depth
+                        if node.expression_type == "conditional" and depth == 0:
+                            # Reallocate the budgets for the inner metareasoning problems
+                            node.true_subprogram.change_budget(copy.deepcopy(node.time))
+                            node.false_subprogram.change_budget(copy.deepcopy(node.time))
+                            # Do recursive naive hill climbing on the branches
+                            node.true_subprogram.naive_hill_climbing_main(depth=depth + 1)
+                            node.false_subprogram.naive_hill_climbing_main(depth=depth + 1)
+                            # Change the time allocations in the outer program
+                            self.change_time_allocations(node.true_subprogram.program_dag.nodes)
+                            self.change_time_allocations(node.false_subprogram.program_dag.nodes)
+                        elif node.expression_type == "for" and depth == 0:
+                            # Reallocate the budgets for the inner metareasoning problems
+                            node.for_subprogram.change_budget(copy.deepcopy(node.time))
+                            # Do recursive naive hill climbing on the loop
+                            node.for_subprogram.naive_hill_climbing_main(depth=depth + 1)
+                            # Change the time allocations in the outer program
+                            self.change_time_allocations(node.for_subprogram.program_dag.nodes)
 
                     # Best allocations from the previous iterations are needed since the allocations of the subprograms may be adjusted from above
                     # And scale the EU for interprettable results
-                    eu_adjusted = self.expected_utility(adjusted_allocations, [true_allocations, false_allocations, for_allocations]) * self.scale
+                    eu_adjusted = self.expected_utility() * self.scale
 
                     if eu_adjusted > eu_original:
-                        # print("ADJUSTED: {}, ORIGINAL: {}".format(eu_adjusted, eu_original))
-                        self.allocations = copy.deepcopy(adjusted_allocations)
-                        self.best_allocations_inner = [copy.deepcopy(true_allocations), copy.deepcopy(false_allocations), copy.deepcopy(for_allocations)]
                         best_allocations_changed = True
                         eu_original = eu_adjusted
                     else:
-                        # Reset the branches of the inner conditional (go back to the original allocations for the next permutation)
-                        true_allocations = copy.deepcopy(self.best_allocations_inner[0])
-                        false_allocations = copy.deepcopy(self.best_allocations_inner[1])
-                        for_allocations = copy.deepcopy(self.best_allocations_inner[2])
-
-                    # print("ADJUSTED: {}, ORIGINAL: {}".format(eu_adjusted, eu_original))
-
-                    # eu_original *= self.scale
-
-                    adjusted_allocations = utils.remove_nones_time_allocations(adjusted_allocations)
-
-                    print_allocations_outer = [i.time for i in adjusted_allocations]
-                    temp_time_switched = time_switched
+                        # Revert to the orginal time allocations before switch
+                        self.change_time_allocations(original_program_dag_nodes)
 
                     # Check for rounding
                     if self.decimals is not None:
-                        print_allocations_outer = [round(i.time, self.decimals) for i in adjusted_allocations]
+                        print_allocations_outer = [round(node.time, self.decimals) for node in self.program_dag.nodes]
                         printed_eu_adjusted = round(eu_adjusted, self.decimals)
-                        printed_eu_original = round(previous_eu_original, self.decimals)
-                        temp_time_switched = round(temp_time_switched, self.decimals)
+                        printed_eu_original = round(eu_original, self.decimals)
+                        temp_time_switched = round(time_switched, self.decimals)
                     if verbose:
                         message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
                         print(message.format(temp_time_switched, printed_eu_adjusted, printed_eu_original, print_allocations_outer))
@@ -540,7 +442,7 @@ class ContractProgram:
             if not best_allocations_changed:
                 time_switched = time_switched / decay
 
-        return [self.allocations, self.best_allocations_inner[0], self.best_allocations_inner[1], self.best_allocations_inner[2]]
+        return eu_original
 
     def naive_hill_climbing_inner(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
@@ -642,22 +544,27 @@ class ContractProgram:
         #     node_index += 1
 
     def proportional_allocation_tangent(self, phi=1) -> List[float]:
-        number_conditionals_and_fors = utils.number_of_fors_conditionals(self.generator_dag)
+        number_conditionals_and_fors = utils.number_of_fors_conditionals(self.full_dag)
         number_conditionals = number_conditionals_and_fors[0]
         number_fors = number_conditionals_and_fors[1]
 
         # Find the indicies for the for and conditional expressions if they exist
-        true_indices = utils.find_true_indices(self.generator_dag)
-        false_indices = utils.find_false_indices(self.generator_dag)
+        true_indices = utils.find_true_indices(self.full_dag)
+        false_indices = utils.find_false_indices(self.full_dag)
 
         copy_budget = self.budget
         # Tax the budget given any conditionals present in the program
         taxed_budget = copy_budget - number_conditionals * self.performance_profile.calculate_tau()
 
-        growth_factors = [node.c for node in self.program_dag.nodes if node.c is not None]
+        growth_factors = [node.c for node in self.full_dag.nodes]
 
         # Use the inverse tangent function to transform coefficients from (0, infinity) -> (0,1)
-        growth_factors_transformed = [1 - (math.atan(phi * c) / (math.pi / 2)) for c in growth_factors]
+        growth_factors_transformed = []
+        for c in growth_factors:
+            if c is None:
+                growth_factors_transformed.append(None)
+            else:
+                growth_factors_transformed.append(1 - (math.atan(phi * c) / (math.pi / 2)))
 
         # Make sure to reduce the indices since we removed strings from growth_factors
         # Make sure that the left and right branches get the same time allocation
@@ -665,7 +572,6 @@ class ContractProgram:
         if number_conditionals > 0:  # TODO: what if there are more than one conditional
             true_sum = 0
             false_sum = 0
-            # if
             for index in true_indices:
                 true_sum += growth_factors_transformed[index]
             for index in false_indices:
@@ -687,106 +593,31 @@ class ContractProgram:
                     growth_factors_transformed[index] += difference / len(false_indices)
                     transformed_branch_sum += growth_factors_transformed[index]
 
+        real_growth_factors = [growth_factor for growth_factor in growth_factors_transformed if growth_factor is not None]
+
         # Get the coefficients proportinal to the budget and ...
         # subtract a sum of growth factors in one the branches since it double counts
-        budget_proportion = taxed_budget / (sum(growth_factors_transformed) - transformed_branch_sum)
+        budget_proportion = taxed_budget / (sum(real_growth_factors) - transformed_branch_sum)
 
         # Assign the time allocations
-        for node, transformed_growth_factor in zip(self.program_dag.nodes, growth_factors_transformed):
+        for node, transformed_growth_factor in zip(self.full_dag.nodes, growth_factors_transformed):
+            if transformed_growth_factor is None:
+                continue
             node.time = transformed_growth_factor * budget_proportion
 
-        # Add the meta nodes to the index lists
-        true_indices = utils.find_true_indices(self.generator_dag, True)
-        false_indices = utils.find_false_indices(self.generator_dag, True)
-        for_indices = utils.find_for_indices(self.generator_dag, True)
+        # Assign the allocations to the subprograms
+        for _, subprogram in self.subprogram_map.items():
+            self.change_time_allocations(subprogram.program_dag.nodes, self.full_dag.nodes)
 
-        suballocations = []
-        traveresed_meta_nodes = 0
-        # Populate suballocations with allocations to any subexpressions
-        # Note: the indices in growth_factors_ordering are different from the node_ids since srings are removed prior to ordering
-        proportional_allocations_true = []
-        proportional_allocations_false = []
-        proportional_allocations_for = []
-        found_meta_node = False
-        for node_index in range(0, self.generator_dag.order):
-            # Populate the allocation lists for the conditional's branches
-            if number_conditionals > 0:
-                if (node_index in true_indices):
-                    # Check if its the last element in the list
-                    if node_index == true_indices[-1]:
-                        found_meta_node = True
-                        proportional_allocations_true.append(TimeAllocation(node_index, self.performance_profile.calculate_tau()))
-                    else:
-                        proportional_allocations_true.append(TimeAllocation(node_index, growth_factors_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
-                else:
-                    proportional_allocations_true.append(TimeAllocation(node_index, None))
+        # Assign the allocations to the outer program
+        self.change_time_allocations(self.program_dag.nodes, self.full_dag.nodes)
+        print([(node.id, node.time) for node in self.full_dag.nodes])
 
-                if (node_index in false_indices):
-                    if node_index == false_indices[-1]:
-                        # Dont need to increment traveresed_meta_nodes since already done in true indicies
-                        proportional_allocations_false.append(TimeAllocation(node_index, self.performance_profile.calculate_tau()))
-                    else:
-                        proportional_allocations_false.append(TimeAllocation(node_index, growth_factors_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
-                else:
-                    proportional_allocations_false.append(TimeAllocation(node_index, None))
-
-                if found_meta_node:
-                    traveresed_meta_nodes += 1
-            found_meta_node = False
-
-            # Populate the allocation list for the for loop
-            if number_fors > 0:
-                if (node_index in for_indices):
-                    if node_index == for_indices[-1]:
-                        proportional_allocations_for.append(TimeAllocation(node_index, 0))
-                        traveresed_meta_nodes += 1
-                    else:
-                        # subtract the number of times we traveresed a meta node prior
-                        proportional_allocations_for.append(TimeAllocation(node_index, growth_factors_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
-                else:
-                    proportional_allocations_for.append(TimeAllocation(node_index, None))
-
-        suballocations.append(proportional_allocations_true)
-        suballocations.append(proportional_allocations_false)
-        suballocations.append(proportional_allocations_for)
-
-        # Populate outer allocations
-        proportional_allocations_outer = []
-        traveresed_meta_nodes = 0
-        for node_index in range(0, self.generator_dag.order):
-            # Check if node id is a meta level node
-            if number_conditionals > 0:
-                # See if the node id is equivalent to the node id of the meta conditional node
-                if node_index == utils.find_true_indices(self.generator_dag, include_meta=True)[-1]:
-                    proportional_allocations_outer.append(TimeAllocation(node_index, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_true)])))
-                    traveresed_meta_nodes += 1
-                    continue
-            if number_fors > 0:
-                # See if the node id is equivalent to the node id of the meta conditional node
-                if node_index == utils.find_for_indices(self.generator_dag, include_meta=True)[-1]:
-                    proportional_allocations_outer.append(TimeAllocation(node_index, sum([ta.time for ta in utils.remove_nones_time_allocations(proportional_allocations_for)])))
-                    traveresed_meta_nodes += 1
-                    continue
-            if (node_index not in true_indices) and (node_index not in false_indices) and (node_index not in for_indices):
-                proportional_allocations_outer.append(TimeAllocation(node_index, growth_factors_transformed[node_index - traveresed_meta_nodes] * budget_proportion))
-            else:
-                proportional_allocations_outer.append(TimeAllocation(node_index, None))
-
-        # Assign the suballocations
-        if self.child_programs:
-            for child_index in range(0, len(self.child_programs)):
-                self.child_programs[child_index].allocations = suballocations[child_index]
-
-        self.allocations = proportional_allocations_outer
         print("---------------------")
-        print("RAW: {}".format(growth_factors))
-        print("TRANSFORMED: {}".format(growth_factors_transformed))
-        utils.print_allocations(proportional_allocations_outer)
-        utils.print_allocations(proportional_allocations_true)
-        utils.print_allocations(proportional_allocations_false)
-        utils.print_allocations(proportional_allocations_for)
+        print("Growth Factors: {}".format(growth_factors))
+        print("Transformed Growth Factors: {}".format(growth_factors_transformed))
 
-        return [proportional_allocations_outer, suballocations]
+        return [node.time for node in self.full_dag.nodes]
 
     def naive_hill_climbing_outer_conditional(self, true_allocations, false_allocations, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
@@ -1006,3 +837,25 @@ class ContractProgram:
         """
         self.budget = new_budget
         self.initialize_allocations.budget = new_budget
+
+    def change_time_allocations(self, receiving_program_nodes, giving_program_nodes):
+        # TODO: optimize this using a hash table (2/26)
+        for receiving_node in receiving_program_nodes:
+            for giving_node in giving_program_nodes:
+                if receiving_node.id == giving_node.id:
+                    receiving_node.time = giving_node.time
+
+    def append_growth_factors_to_subprograms(self):
+        # TODO: optimize this using a hash table (2/26)
+        for _, subprogram in self.subprogram_map.items():
+            for program_node in self.full_dag.nodes:
+                for subprogram_node in subprogram.program_dag.nodes:
+                    if program_node.id == subprogram_node.id:
+                        subprogram_node.c = program_node.c
+                        # print("ID: {} --> {}".format(subprogram_node.id, subprogram_node.c))
+
+        # Append growth factors to outer program as well
+        for program_node in self.full_dag.nodes:
+            for outer_node in self.program_dag.nodes:
+                if program_node.id == outer_node.id:
+                    outer_node.c = program_node.c

@@ -17,12 +17,12 @@ class Generator:
     A generator to create synthetic performance profiles
 
     :param instances: the number of instances to be produced
-    :param generator_dag: the program_dag to be used for performance profile simulation
+    :param full_dag: the program_dag to be used for performance profile simulation
     """
 
-    def __init__(self, instances, program_dag, time_limit, time_step_size, uniform_low, uniform_high, generator_dag=None, quality_interval=.05):
+    def __init__(self, instances, program_dag, time_limit, time_step_size, uniform_low, uniform_high, full_dag=None, quality_interval=.05):
         self.instances = instances
-        self.generator_dag = generator_dag
+        self.full_dag = full_dag
         self.program_dag = program_dag
         self.time_limit = time_limit
         self.time_step_size = time_step_size
@@ -43,7 +43,7 @@ class Generator:
 
         # Create a finite number of unique nodes and create JSON files for each
         i = 0
-        for node in self.generator_dag.nodes:
+        for node in self.full_dag.nodes:
             dictionary_temp = self.create_dictionary(node)
 
             # Compare the generator program_dag with the program program_dag to see if conditional is encountered
@@ -259,7 +259,7 @@ class Generator:
                     recursion_dictionary = temp_dictionary['instances'][instance]
                     populate_dictionary = bundle["node_{}".format(i)]['qualities']
 
-                    self.recur_traverse(0, self.generator_dag.nodes[j], [], recursion_dictionary, populate_dictionary)
+                    self.recur_traverse(0, self.full_dag.nodes[j], [], recursion_dictionary, populate_dictionary)
 
                 bundle["node_{}".format(i)]['parents'] = temp_dictionary['parents']
                 j += 1

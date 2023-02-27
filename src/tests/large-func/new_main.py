@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
     # Run Simulations
     # ----------------------------------------------------------------------------------------
-    SIMULATIONS = 50
+    SIMULATIONS = 1
     for _ in tqdm(range(0, SIMULATIONS), desc='Progress Bar', position=0, leave=True):
         # Use a Dirichlet distribution to generate random ppvs
         growth_factors = utils.dirichlet_growth_factor_generator(dag=program_dag, alpha=.9, lower_bound=.01, upper_bound=10)
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
         # Create the program with some budget
         program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=program_dag, child_programs=None, budget=BUDGET, scale=1000, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                        time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
+                                        time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
                                         possible_qualities=POSSIBLE_QUALITIES)
 
         # Initialize the pointers of the nodes to the program it is in
@@ -114,15 +114,6 @@ if __name__ == "__main__":
 
         # Outputs embeded list of expected utilities and allocations
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, test_phis=[10, 5, 4, 3, 2, 1, .8, .6, .5, .1, 0], verbose=True)
-        # sequences = test.monitor_eu_on_rhc(initial_allocation="uniform", outer_program=program_outer, verbose=True)
-        print("Growth Factors: {}".format(growth_factors))
-
-        # Check if any of the EUs are 0
-        for eu in eu_time[0]:
-            if eu == 0:
-                print("Found 0 in EU")
-                print(eu_time[0])
-                exit()
-
+        print(growth_factors)
         # Save the EU and Time data to an external files
         test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-func/data/eu_data1.txt", time_file_path="src/tests/large-func/data/time_data1.txt", node_indicies=node_indicies_list)

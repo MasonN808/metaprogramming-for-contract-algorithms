@@ -14,7 +14,7 @@ class Node:
         Used directly for contract conditionals
     """
 
-    def __init__(self, id, parents, children, expression_type, in_child_contract_program, is_conditional_root=False, time=None):
+    def __init__(self, id, parents, children, expression_type, program_id=0, in_child_contract_program=False, is_conditional_root=False, time=None):
         # id of the node in the tree
         self.id = id
         self.parents = parents
@@ -22,6 +22,7 @@ class Node:
         self.expression_type = expression_type
         self.c = None
         self.quality_sd = .03
+        self.program_id = program_id
 
         # pointer to the contract program that it's in (This should be initialized after creating the contract program
         self.current_program = None

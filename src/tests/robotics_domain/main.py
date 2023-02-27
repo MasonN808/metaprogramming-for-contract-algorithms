@@ -244,15 +244,15 @@ if __name__ == "__main__":
                                   uniform_high=0.9)
 
             # Adjust the DAG structure that has conditionals for generation
-            generator.generator_dag = generator.adjust_dag_with_fors(program_dag)
+            generator.full_dag = generator.adjust_dag_with_fors(program_dag)
 
             # Adjust the DAG structure that has conditionals for generation
-            generator.generator_dag = generator.adjust_dag_with_conditionals(generator.generator_dag)
+            generator.full_dag = generator.adjust_dag_with_conditionals(generator.full_dag)
 
-            for i in generator.generator_dag.nodes:
-                print("generator_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
-            for i in generator.generator_dag.nodes:
-                print("generator_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
+            for i in generator.full_dag.nodes:
+                print("full_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
+            for i in generator.full_dag.nodes:
+                print("full_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
 
             generator.activate_manual_override(ppv)
 
@@ -263,7 +263,7 @@ if __name__ == "__main__":
 
         # Create the program with some budget
         program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=10 ** 6, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                        time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
+                                        time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
                                         possible_qualities=POSSIBLE_QUALITIES, performance_profile_velocities=ppv)
 
         # Initialize the pointers of the nodes to the program it is in
@@ -276,7 +276,7 @@ if __name__ == "__main__":
         # Convert to a contract program
         node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=true_subtree, budget=0, scale=10 ** 6, decimals=3,
                                                        quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
-                                                       generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="true")
+                                                       full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="true")
 
         # Initialize the pointers of the nodes to the program it is in
         utils.initialize_node_pointers_current_program(node_outer_1.true_subprogram)
@@ -287,14 +287,14 @@ if __name__ == "__main__":
         # Convert to a contract program
         node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, child_programs=None, program_dag=false_subtree, budget=0, scale=10 ** 6, decimals=3,
                                                         quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
-                                                        generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="false")
+                                                        full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="false")
 
         # Initialize the pointers of the nodes to the program it is in
         utils.initialize_node_pointers_current_program(node_outer_1.false_subprogram)
 
         # Convert to a contract program
         node_outer_3.for_subprogram = ContractProgram(program_id=3, parent_program=program_outer, child_programs=None, program_dag=for_subtree, budget=0, scale=10 ** 6, decimals=3,
-                                                      quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, generator_dag=program_dag,
+                                                      quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, full_dag=program_dag,
                                                       expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, number_of_loops=NUMBER_OF_LOOPS, subprogram_expression_type="for")
 
         # Initialize the pointers of the nodes to the program it is in
@@ -308,9 +308,9 @@ if __name__ == "__main__":
         node_outer_3.for_subprogram.parent_program = program_outer
 
         # Add the pointers from the generator dag to the subprograms
-        node_outer_1.true_subprogram.generator_dag = program_dag
-        node_outer_1.false_subprogram.generator_dag = program_dag
-        node_outer_3.for_subprogram.generator_dag = program_dag
+        node_outer_1.true_subprogram.full_dag = program_dag
+        node_outer_1.false_subprogram.full_dag = program_dag
+        node_outer_3.for_subprogram.full_dag = program_dag
 
         node_outer_1.true_subprogram.subprogram_expression_type = "conditional"
         node_outer_1.false_subprogram.subprogram_expression_type = "conditional"

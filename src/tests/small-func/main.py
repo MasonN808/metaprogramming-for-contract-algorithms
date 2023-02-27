@@ -77,15 +77,15 @@ if __name__ == "__main__":
                                   uniform_high=0.9)
 
             # Adjust the DAG structure that has conditionals for generation
-            generator.generator_dag = generator.adjust_dag_with_fors(program_dag)
+            generator.full_dag = generator.adjust_dag_with_fors(program_dag)
 
             # Adjust the DAG structure that has conditionals for generation
-            generator.generator_dag = generator.adjust_dag_with_conditionals(generator.generator_dag)
+            generator.full_dag = generator.adjust_dag_with_conditionals(generator.full_dag)
 
-            for i in generator.generator_dag.nodes:
-                print("generator_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
-            for i in generator.generator_dag.nodes:
-                print("generator_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
+            for i in generator.full_dag.nodes:
+                print("full_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
+            for i in generator.full_dag.nodes:
+                print("full_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
 
             generator.activate_manual_override(ppv)
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
         # Create the program with some budget
         program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag, child_programs=None, budget=BUDGET, scale=10, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                        time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, generator_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
+                                        time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
                                         possible_qualities=POSSIBLE_QUALITIES, performance_profile_velocities=ppv)
 
         # Initialize the pointers of the nodes to the program it is in

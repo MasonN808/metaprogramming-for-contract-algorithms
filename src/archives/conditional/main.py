@@ -53,7 +53,7 @@ if __name__ == "__main__":
                               uniform_high=.9)
 
         # Adjust the DAG structure that has conditionals for generation
-        generator.generator_dag = generator.adjust_dag_with_conditionals(dag)
+        generator.full_dag = generator.adjust_dag_with_conditionals(dag)
 
         # Generate the nodes' quality mappings
         nodes = generator.generate_nodes()  # Return a list of file names of the nodes
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         generator.populate(nodes, "populous.json")
 
     # Create the program with some budget
-    program = ContractProgram(program_dag=dag, budget=BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.1, time_step_size=STEP_SIZE, child_programs=None, generator_dag=dag,
+    program = ContractProgram(program_dag=dag, budget=BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.1, time_step_size=STEP_SIZE, child_programs=None, full_dag=dag,
                               in_child_contract_program=False, parent_program=None, program_id=0)
 
     # Adjust allocations (hardcode)

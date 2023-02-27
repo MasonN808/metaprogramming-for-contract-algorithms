@@ -17,16 +17,17 @@ SIMULATIONS = len(EUs)
 SAVE_FILENAME = 'src/tests/large-func/plots/{}-simulations{}.png'.format(PLOT_TYPE, SIMULATIONS)
 
 METHODS = [r'\textsc{Equal}', r'\textsc{Pa}($5.0$)', r'\textsc{Pa}($4.0$)', r'\textsc{Pa}($3.0$)', r'\textsc{Pa}($2.0$)', r'\textsc{Pa}($1.0$)', r'\textsc{Pa}($0.8$)', r'\textsc{Pa}($0.6$)', r'\textsc{Pa}($0.5$)', r'\textsc{Pa}($0.1$)', r'\textsc{Pa}($0.0$)', r'\textsc{Rhc}']
-    #MAKE IT SO THAT THE TODO PARENTS HAVE A HUGE DIFFEREENCE ON CHILDREN
+# MAKE IT SO THAT THE TODO PARENTS HAVE A HUGE DIFFEREENCE ON CHILDREN
+
 
 def plot():
     # vectorize and scale
     for i in range(0, len(EUs)):
         # EUs[i] = np.log(np.array(EUs[i])*100)
-        EUs[i] = np.log(np.array(EUs[i]))
-    
+        EUs[i] = (np.array(EUs[i]) * 1000)
+
     ordered_EUs = []
-    
+
     for method in METHODS:
         match method:  # noqa
             case r'\textsc{Pa}($10$)':
@@ -97,6 +98,7 @@ def plot():
     plt.tight_layout()
     figure.savefig(SAVE_FILENAME)
     plt.show()
+
 
 def main():
     plot()

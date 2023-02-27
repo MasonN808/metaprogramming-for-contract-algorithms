@@ -55,7 +55,7 @@ if __name__ == "__main__":
     if not exists("populous.json") or generate:
         # Initialize a generator
         generator = Generator(INSTANCES, program_dag=dag, time_limit=TIME_LIMIT, time_step_size=STEP_SIZE, uniform_low=.05,
-                              uniform_high=.9, generator_dag=dag)
+                              uniform_high=.9, full_dag=dag)
 
         # Initialize the velocities for the quality mappings in a list
         # Need to initialize it after adjusting program_dag
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         generator.populate(nodes, "populous.json")
 
     # Create the program with some budget
-    program = ContractProgram(program_dag=dag, budget=BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.1, time_step_size=STEP_SIZE, child_programs=None, generator_dag=dag,
+    program = ContractProgram(program_dag=dag, budget=BUDGET, scale=10**6, decimals=3, quality_interval=QUALITY_INTERVAL, time_interval=.1, time_step_size=STEP_SIZE, child_programs=None, full_dag=dag,
                               in_child_contract_program=False, parent_program=None, program_id=0, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES)
 
     test = Test(program)

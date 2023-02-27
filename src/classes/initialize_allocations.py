@@ -17,7 +17,7 @@ class InitializeAllocations:
         The budget of the contract program represented as seconds
     :param: program_dag : DAG object
         The DAG that the contract program inherits
-    :param: generator_dag : DAG object
+    :param: full_dag : DAG object
         The DAG that unions all inner and outer DAGS
     :param: performance_profile : PerformanceProfile
         The performance_profile of the contract program
@@ -25,10 +25,10 @@ class InitializeAllocations:
         Determines whether the contract program is a child of another contract program
     """
 
-    def __init__(self, budget, program_dag, generator_dag, performance_profile, in_child_contract_program):
+    def __init__(self, budget, program_dag, full_dag, performance_profile, in_child_contract_program):
         self.budget = budget
         self.program_dag = program_dag
-        self.generator_dag = generator_dag
+        self.full_dag = full_dag
         self.performance_profile = performance_profile
         self.in_child_contract_program = in_child_contract_program
 
@@ -40,7 +40,7 @@ class InitializeAllocations:
         """
         # Initialize a list of time allocations of the entire dag that includes the subdags from the conditionals
         time_allocations = []
-        for i in range(self.generator_dag.order):
+        for i in range(self.full_dag.order):
             time_allocations.append(TimeAllocation(i, None))
 
         budget = float(self.budget)
