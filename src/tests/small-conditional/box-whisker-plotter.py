@@ -11,7 +11,7 @@ PLOT_TYPE = 'box-whisker'
 BUDGET = 10
 
 # EU_FILE = 'src/tests/large-func/data/eu-data-truncated-c-min.txt'
-EU_FILE = 'src/tests/large-func/data/eu-data-tranformed.txt'
+EU_FILE = 'src/tests/small-conditional/data/eu-data.txt'
 EUs = pickle.load(open(EU_FILE, 'rb'))
 SIMULATIONS = len(EUs)
 

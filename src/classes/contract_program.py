@@ -12,8 +12,6 @@ from classes.time_allocation import TimeAllocation  # noqa
 from classes import utils  # noqa
 from classes.node import Node  # noqa
 from classes.performance_profile import PerformanceProfile  # noqa
-from classes.initialize_allocations import InitializeAllocations  # noqa
-
 
 class ContractProgram:
     """
@@ -38,7 +36,7 @@ class ContractProgram:
     def __init__(self, program_id, parent_program, child_programs, program_dag, budget, scale, decimals,
                  quality_interval, time_interval, time_step_size, in_child_contract_program, full_dag,
                  expected_utility_type, possible_qualities, performance_profile_velocities=None,
-                 number_of_loops=None, subprogram_expression_type=None, subprogram_map={}):
+                 number_of_loops=None, subprogram_expression_type=None, subprogram_map={}, sum_growth_factors = None):
 
         self.program_id = program_id
         self.subprogram_expression_type = subprogram_expression_type  # for or false or true
@@ -52,6 +50,8 @@ class ContractProgram:
         self.allocations = None
         self.in_child_contract_program = in_child_contract_program
         self.subprogram_map = subprogram_map
+
+        self.sum_growth_factors = sum_growth_factors
         # Pointer to the parent program that the subprogram is an induced subgraph of
         self.parent_program = parent_program
         self.child_programs = child_programs
@@ -67,11 +67,6 @@ class ContractProgram:
                                                       quality_interval=self.quality_interval,
                                                       time_step_size=self.time_step_size,
                                                       expected_utility_type=self.expected_utility_type)
-
-        self.initialize_allocations = InitializeAllocations(budget=self.budget, program_dag=self.program_dag,
-                                                            full_dag=self.full_dag,
-                                                            performance_profile=self.performance_profile,
-                                                            in_child_contract_program=self.in_child_contract_program)
 
     @staticmethod
     def utility(qualities) -> float:
@@ -332,11 +327,8 @@ class ContractProgram:
 
         return eu_original
 
-    def naive_hill_climbing_outer(self, verbose=False) -> List[float]:
-        return self.naive_hill_climbing_outer_main(verbose=verbose)
-
     # This case is specifically for a contract program with conditionals, fors, and contracts
-    def naive_hill_climbing_outer_main(self, depth=0, decay=1.1, threshold=.01, verbose=False) -> List[float]:
+    def recursive_hill_climbing(self, depth=0, decay=1.1, threshold=.01, verbose=False) -> List[float]:
         """
         Does hill climbing specific to an outer contract program with conditional subprograms
 
@@ -347,7 +339,8 @@ class ContractProgram:
         """
         # The initial true_allocations, false_allocations, and for_allocations have uniform alloations
         # Initialize the amount of time to be switched
-        time_switched = self.initialize_allocations.find_uniform_allocation(self.budget)
+        self.initial_allocation_setup(initial_allocation="uniform", depth=depth)
+        time_switched = self.find_uniform_allocation(self.budget)
         eu_original = self.expected_utility() * self.scale
         while time_switched > threshold:
             best_allocations_changed = False
@@ -359,14 +352,14 @@ class ContractProgram:
                 # Avoids exchanging time with itself
                 if node_0.id == node_1.id:
                     continue
-                # Avoids negative time allocation
-                elif node_0.time - time_switched < 0:
-                    continue
                 # Avoids reducing the time allocation below the conditional time lower bound (tau)
                 elif ((node_0.expression_type == "conditional") and (node_0.time - time_switched < self.performance_profile.calculate_tau())) or ((node_1.expression_type == "conditional") and (node_1.time + time_switched < self.performance_profile.calculate_tau())):
                     continue
+                # Avoids negative time allocation
+                elif node_0.time - time_switched < 0:
+                    continue
                 else:
-                    original_program_dag_nodes = copy.deepcopy(self.program_dag.nodes)
+                    original_program_dag_nodes = copy.deepcopy(self.full_dag.nodes)
                     node_0.time -= time_switched
                     node_1.time += time_switched
                     # Make a copy just in case recursvie hill climbing solution is suboptimal
@@ -377,9 +370,11 @@ class ContractProgram:
                             # Reallocate the budgets for the inner metareasoning problems
                             node.true_subprogram.change_budget(copy.deepcopy(node.time))
                             node.false_subprogram.change_budget(copy.deepcopy(node.time))
+
                             # Do recursive naive hill climbing on the branches
-                            node.true_subprogram.naive_hill_climbing_outer_main(depth=depth + 1)
-                            node.false_subprogram.naive_hill_climbing_outer_main(depth=depth + 1)
+                            node.true_subprogram.recursive_hill_climbing(depth=depth + 1)
+                            node.false_subprogram.recursive_hill_climbing(depth=depth + 1)
+                            print([node.time for node in node.true_subprogram.program_dag.nodes])
                             # Change the time allocations in the outer program
                             self.change_time_allocations(self.full_dag.nodes, node.true_subprogram.program_dag.nodes)
                             self.change_time_allocations(self.full_dag.nodes, node.false_subprogram.program_dag.nodes)
@@ -387,7 +382,7 @@ class ContractProgram:
                             # Reallocate the budgets for the inner metareasoning problems
                             node.for_subprogram.change_budget(copy.deepcopy(node.time))
                             # Do recursive naive hill climbing on the loop
-                            node.for_subprogram.naive_hill_climbing_outer_main(depth=depth + 1)
+                            node.for_subprogram.recursive_hill_climbing(depth=depth + 1)
                             # Change the time allocations in the outer program
                             self.change_time_allocations(self.full_dag.nodes, node.for_subprogram.program_dag.nodes)
 
@@ -401,20 +396,23 @@ class ContractProgram:
                     else:
                         # Revert to the orginal time allocations before switch
                         self.change_time_allocations(self.full_dag.nodes, original_program_dag_nodes)
+                        if self.subprogram_map:
+                            for _, subprogram in self.subprogram_map.items():
+                                self.change_time_allocations(subprogram.program_dag.nodes, self.full_dag.nodes)
 
                     # Check for rounding
                     if self.decimals is not None:
-                        print_allocations_outer = []
+                        print_allocations = []
                         for node in self.full_dag.nodes:
                             if node.time is not None:
-                                print_allocations_outer.append(round(node.time, self.decimals))
-
+                                print_allocations.append(round(node.time, self.decimals))
                         printed_eu_adjusted = round(eu_adjusted, self.decimals)
                         printed_eu_original = round(eu_original, self.decimals)
                         temp_time_switched = round(time_switched, self.decimals)
+                        
                     if verbose:
                         message = "Amount of time switched: {:<12} ==> EU(adjusted): {:<12} EU(original): {:<12} ==> Allocations: {}"
-                        print(message.format(temp_time_switched, printed_eu_adjusted, printed_eu_original, print_allocations_outer))
+                        print(message.format(temp_time_switched, printed_eu_adjusted, printed_eu_original, print_allocations))
 
             if not best_allocations_changed:
                 time_switched = time_switched / decay
@@ -446,7 +444,7 @@ class ContractProgram:
         # Find the indicies for the for and conditional expressions if they exist
         true_indices = utils.find_true_indices(self.full_dag)
         false_indices = utils.find_false_indices(self.full_dag)
-
+        
         copy_budget = self.budget
         # Tax the budget given any conditionals present in the program
         taxed_budget = copy_budget - number_conditionals * self.performance_profile.calculate_tau()
@@ -545,3 +543,74 @@ class ContractProgram:
             for outer_node in self.program_dag.nodes:
                 if program_node.id == outer_node.id:
                     outer_node.c = program_node.c
+
+    def find_uniform_allocation(self, budget) -> float:
+        """
+        Finds the allocation that can uniformly be distributed given the budget
+
+        :param budget: float
+        :return: uniformed allocation
+        """
+        number_of_conditionals = self.count_conditionals()
+        number_of_fors = self.count_fors()
+        allocation = budget / (self.program_dag.order - number_of_conditionals - number_of_fors)
+        # allocation = budget / (self.program_dag.order)
+        return allocation
+
+    def count_conditionals(self) -> int:
+        """
+        Counts the number of conditionals in the contract program
+
+        :return: number of conditionals:
+        """
+        number_of_conditionals = 0
+        if self.subprogram_expression_type == "false" or self.subprogram_expression_type == "true":
+            number_of_conditionals += 1
+        return number_of_conditionals
+
+    def count_fors(self) -> int:
+        """
+        Counts the number of fors in the contract program
+
+        :return: number of fors:
+        """
+        number_of_fors = 0
+        if self.subprogram_expression_type == "for":
+            number_of_fors += 1
+        return number_of_fors
+
+    def initial_allocation_setup(self, initial_allocation, depth=0):
+        if initial_allocation != "uniform":
+            raise ValueError("Invalid initial allocation type")
+        else:
+            for node in self.program_dag.nodes:
+                # Give a uniform allocation to each node
+                uniform_allocation = self.find_uniform_allocation(self.budget)
+                if (node.expression_type == "conditional" or node.expression_type == "for") and depth == 1:
+                    continue
+                # TODO: use the previous depth as well to make arbitrary contract programs work
+                elif node.expression_type == "conditional" and depth == 0:
+                    node.time = uniform_allocation
+                    print(node.time)
+                    print(node.id)
+                    print(node.program_id)
+                    print(depth)
+                    node.true_subprogram.budget = uniform_allocation
+                    node.false_subprogram.budget = uniform_allocation
+                elif node.expression_type == "for" and depth == 0:
+                    node.time = uniform_allocation
+                    node.for_subprogram.budget = uniform_allocation
+                else:
+                    node.time = uniform_allocation
+            if self.subprogram_map:
+                for _, subprogram in self.subprogram_map.items():
+                    # Recursively allocate a uniform allocation to each subprogram
+                    subprogram.initial_allocation_setup(initial_allocation, depth=depth + 1)
+            # Append all the allocations in the subprograms and outer program to the full dag
+            if depth == 0:
+                # Revert to the orginal time allocations before switch
+                if self.subprogram_map:
+                    for _, subprogram in self.subprogram_map.items():
+                        self.change_time_allocations(self.full_dag.nodes, subprogram.program_dag.nodes)
+                self.change_time_allocations(self.full_dag.nodes, self.program_dag.nodes)
+

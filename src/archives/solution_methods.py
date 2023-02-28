@@ -114,7 +114,7 @@
 
 #         return self.allocations
 
-#     def naive_hill_climbing_outer(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
+#     def recursive_hill_climbing(self, decay=1.1, threshold=.01, verbose=False) -> List[float]:
 #         """
 #         Does outer naive hill climbing search by randomly replacing a set amount of time s between two different contract
 #         algorithms. If the expected value of the root node of the contract algorithm increases, we commit to the

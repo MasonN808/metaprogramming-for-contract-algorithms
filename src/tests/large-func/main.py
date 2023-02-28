@@ -1,4 +1,5 @@
 import copy
+import math
 import sys
 import numpy as np
 from os.path import exists  # noqa
@@ -77,8 +78,8 @@ if __name__ == "__main__":
     SIMULATIONS = 150
     for _ in tqdm(range(0, SIMULATIONS), desc='Progress Bar', position=0, leave=True):
         # Use a Dirichlet distribution to generate random ppvs
-        growth_factors = utils.uniform_growth_factor_generator(dag=program_dag, lower_bound=4, upper_bound=6)
-
+        growth_factors = utils.uniform_growth_factor_generator(dag=program_dag, lower_bound=.05, upper_bound=10)
+        sum_growth_factors = math.e** (-sum(growth_factors))
         # Get the meta nodes
         try:
             meta_conditional_index = utils.find_conditional_indices(program_dag, include_meta=True)[-1]
@@ -98,9 +99,9 @@ if __name__ == "__main__":
                 node.c = generated_c
 
         # Create the program with some budget
-        program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=program_dag, child_programs=None, budget=BUDGET, scale=10**5, decimals=3, quality_interval=QUALITY_INTERVAL,
+        program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=program_dag, child_programs=None, budget=BUDGET, scale=10**-18, decimals=3, quality_interval=QUALITY_INTERVAL,
                                         time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
-                                        possible_qualities=POSSIBLE_QUALITIES)
+                                        possible_qualities=POSSIBLE_QUALITIES, sum_growth_factors=sum_growth_factors)
 
         # Initialize the pointers of the nodes to the program it is in
         utils.initialize_node_pointers_current_program(program_outer)
@@ -116,4 +117,4 @@ if __name__ == "__main__":
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, test_phis=[10, 5, 4, 3, 2, 1, .8, .6, .5, .1, 0], verbose=True)
         print(growth_factors)
         # Save the EU and Time data to an external files
-        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-func/data/eu-data-truncated-c-min.txt", time_file_path="src/tests/large-func/data/time_data-truncated-c-min.txt", node_indicies=node_indicies_list)
+        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-func/data/eu-data-transformed.txt", time_file_path="src/tests/large-func/data/time-data-transformed.txt", node_indicies=node_indicies_list)

@@ -190,7 +190,7 @@ class PerformanceProfile:
                 parent_quality = self.query_probability_and_quality_from_conditional_expression(conditional_node)[1]
                 # print(parent_quality)
                 # exit()
-                return parent_quality
+                return [parent_quality]
             # Check if any of the parents are the last node of a for loop
             elif self.has_last_for_loop(node.parents):
                 # print([node.id for node in self.program_dag.nodes])
@@ -255,6 +255,8 @@ class PerformanceProfile:
             # Leaf Node as a trivial functional expression
             if depth == 1 and (Node.is_conditional_node(node) or Node.is_for_node(node)):
                 # exit()
+                return [1]
+            elif Node.is_conditional_node(node) or Node.is_for_node(node):
                 return 1
             else:
                 quality = self.query_expected_quality(node)
