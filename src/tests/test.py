@@ -40,7 +40,7 @@ class Test:
 
         # Get the eu for the proportional allocation method
         for phi in test_phis:
-            proportional_allocations = self.contract_program.proportional_allocation_tangent(phi)
+            self.contract_program.proportional_allocation_tangent(phi)
 
             eu_proportional = self.contract_program.expected_utility() * self.contract_program.scale
             eu.append(eu_proportional)
@@ -77,8 +77,12 @@ class Test:
         eu_optimal = self.contract_program.expected_utility() * self.contract_program.scale
         eu.append(eu_optimal)
 
-        for index, node in enumerate(self.contract_program.program_dag.nodes):
+        index = 0
+        for node in self.contract_program.full_dag.nodes:
+            if node.time is None:
+                continue
             time[index].append(node.time)
+            index += 1
 
         return [eu, time]
 

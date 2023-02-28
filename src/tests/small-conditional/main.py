@@ -11,7 +11,6 @@ sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-alg
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
 from classes.node import Node  # noqa
 from classes.contract_program import ContractProgram  # noqa
-from classes.generator import Generator  # noqa
 from classes import utils  # noqa
 from tests.test import Test  # noqa
 
@@ -147,8 +146,9 @@ if __name__ == "__main__":
     SIMULATIONS = 150
     for _ in tqdm(range(0, SIMULATIONS), desc='Progress Bar', position=0, leave=True):
         # Use a Dirichlet distribution to generate random ppvs
-        growth_factors = utils.uniform_growth_factor_generator(dag=program_dag, lower_bound=.05, upper_bound=10)
-        # growth_factors = utils.dirichlet_growth_factor_generator(dag=program_dag, alpha=.9, lower_bound=.05, upper_bound=10)
+        # growth_factors = utils.uniform_growth_factor_generator(dag=program_dag, lower_bound=.05, upper_bound=10)
+        growth_factors = utils.dirichlet_growth_factor_generator(dag=program_dag, alpha=.9, lower_bound=.05, upper_bound=10)
+        # growth_factors = [6, .2, .2, 1]
         # sum_growth_factors = math.e** sum(growth_factors)
         # Get the meta nodes
         try:

@@ -242,11 +242,6 @@ class PerformanceProfile:
                     return parent_qualities
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
-                    # print(node.id)
-                    # print(node.program_id)
-                    # print(node.c)
-                    # print(node.time)
-                    # print(node.parents)
                     quality = self.query_expected_quality(node)
                     # quality = self.query_expected_quality(node) * np.mean(parent_qualities)
                     return quality
