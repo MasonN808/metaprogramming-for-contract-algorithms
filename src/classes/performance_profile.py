@@ -35,7 +35,10 @@ class PerformanceProfile:
 
     def calculate_quality_sd(self, node):
         # TODO: test with sqrt and powers < 1. Possibly make it a function of the mean quality
-        return min(.05 * np.log(node.time + 1) * node.quality_sd, 0.2)
+        if node.time == 0:
+            return 0
+        else:
+            return min(.2 * np.log(node.time + 1) * node.quality_sd, 0.2)
 
     # TODO: change name to calculate_expected_quality
     def query_expected_quality(self, node) -> float:
@@ -46,16 +49,13 @@ class PerformanceProfile:
     # Solution: Assume the starting quality is 0 for now. Pull from a normal distribution
 
     def query_quality(self, node) -> float:
-        # if the node time is 0, the quality will be 0 so don't add noise
-        if node.time == 0:
-            return 0
-        else:
-            # Generate noise from a guassian distribution with a standard deviation that is dependent on time
-            # Need to also squeeze it to reduce from list to float
-            # noise = np.random.normal(loc=0, scale=self.calculate_quality_sd(node), size=1).squeeze()
+        return self.query_expected_quality(node)
+        #     # Generate noise from a guassian distribution with a standard deviation that is dependent on time
+        #     # Need to also squeeze it to reduce from list to float
+        #     # noise = np.random.normal(loc=0, scale=self.calculate_quality_sd(node), size=1).squeeze()
 
-            # return self.query_expected_quality(node) + noise
-            return self.query_expected_quality(node)
+        #     # return self.query_expected_quality(node) + noise
+        #     return self.query_expected_quality(node)
 
     def query_probability_contract_expression(self, quality, node) -> float:
         if node.time == 0:
@@ -63,8 +63,6 @@ class PerformanceProfile:
         else:
             # Calculate the z-score
             z_score = (quality - self.query_expected_quality(node)) / self.calculate_quality_sd(node)
-            # TODO: Validate logic
-            # TODO: change delta to a lot smaller value -> Make it a function of standard deviation from above
             delta = .2
             probability = 1 - st.norm.cdf(z_score + delta) + st.norm.cdf(z_score - delta)
             return probability
@@ -90,9 +88,13 @@ class PerformanceProfile:
 
         if not found_embedded_if:
             # Create a list with the joint probability distribution of the conditional branch and the last quality of the branch
+            # print(conditional_node.id)
+            # print(conditional_node.true_subprogram)
             true_probability_quality = self.conditional_contract_program_probability_quality(conditional_node.true_subprogram)
             false_probability_quality = self.conditional_contract_program_probability_quality(conditional_node.false_subprogram)
-
+            # print(true_probability_quality)
+            # print(false_probability_quality)
+            # exit()
             performance_profile_true = true_probability_quality[0]
             performance_profile_false = false_probability_quality[0]
             true_quality = true_probability_quality[1]
@@ -119,7 +121,8 @@ class PerformanceProfile:
             # Skip the identifier node
             if node.expression_type != "conditional":
                 # Get the parents' qualities given their time allocations
-                parent_qualities = self.find_parent_qualities(node, depth=0)
+                parent_qualities = self.find_parent_qualities(utils.find_node_in_full_dag(node, full_dag=self.full_dag), depth=0)
+                # print(parent_qualities)
                 expected_quality = self.query_expected_quality(node)
                 # Use the mean of the parent qualities to alter quality of current node
                 if parent_qualities:
@@ -138,7 +141,7 @@ class PerformanceProfile:
             # Skip the identifier node
             if node.expression_type != "for":
                 # Get the parents' qualities given their time allocations
-                parent_qualities = self.find_parent_qualities(node, depth=0)
+                parent_qualities = self.find_parent_qualities(utils.find_node_in_full_dag(node, full_dag=self.full_dag), depth=0)
                 expected_quality = self.query_expected_quality(node)
                 # Use the mean of the parent qualities to alter quality of current node
                 if parent_qualities:
@@ -180,13 +183,19 @@ class PerformanceProfile:
         # Recur down the DAG
         depth += 1
         if node.parents:
+            # Check if all the parents are conditional roots
+            #TODO: make this more general
             if self.are_conditional_roots(node.parents):
-                conditional_node = self.find_conditional_node(self.program_dag)
+                conditional_node = self.find_conditional_node(self.full_dag)
                 parent_quality = self.query_probability_and_quality_from_conditional_expression(conditional_node)[1]
+                # print(parent_quality)
+                # exit()
                 return parent_quality
+            # Check if any of the parents are the last node of a for loop
             elif self.has_last_for_loop(node.parents):
-                for_node = self.find_for_node(self.program_dag)
-                parent_quality = self.query_probability_and_quality_from_for_expression(for_node)[1]
+                # print([node.id for node in self.program_dag.nodes])
+                for_node = self.find_for_node(self.full_dag)
+                parent_quality = self.query_probability_and_quality_from_for_expression(for_node.for_subprogram)[1]
                 return parent_quality
             # Check that none of the parents are conditional expressions or for expressions
             elif not Node.is_conditional_node(node, "parents") and not Node.is_for_node(node, "parents"):
@@ -199,17 +208,13 @@ class PerformanceProfile:
                     return parent_qualities
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
-                    quality = self.query_expected_quality(node) * np.mean(parent_qualities)
+                    # quality = self.query_expected_quality(node) * np.mean(parent_qualities)
+                    quality = self.query_expected_quality(node)
                     return quality
             elif Node.is_for_node(node, "parents"):
                 # Assumption: Node only has one parent (the for)
                 # Skip the for node since no relevant mapping exists
                 node_for = node.parents[0]
-                # Add a reference to the outer program to pull the qualities of the parents of the conditional
-                if node.in_child_contract_program:
-                    # Initialize the parent program since we need to query the qualities from here
-                    parent_program = node.current_program.parent_program
-                    node_for = utils.find_node(node_for.id, parent_program.program_dag)
 
                 parent_qualities = []
                 for parent in node_for.parents:
@@ -220,47 +225,43 @@ class PerformanceProfile:
                     return parent_qualities
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
-                    quality = self.query_expected_quality(node) * np.mean(parent_qualities)
+                    # quality = self.query_expected_quality(node) * np.mean(parent_qualities)
+                    quality = self.query_expected_quality(node)
                     return quality
             elif Node.is_conditional_node(node, "parents"):
                 # Assumption: Node only has one parent (the conditional)
                 # Skip the conditional node since no relevant mapping exists
                 node_conditional = node.parents[0]
-                # Add a reference to the outer program to pull the qualities of the parents of the conditional
-                if node.in_child_contract_program:
-                    # Initialize the parent program since we need to query the qualities from here
-                    parent_program = node.current_program.parent_program
-                    node_conditional = utils.find_node(node_conditional.id, parent_program.program_dag)
-
                 parent_qualities = []
                 for parent in node_conditional.parents:
                     quality = self.find_parent_qualities(parent, depth)
+                    # print(quality)
                     # Reset the parent qualities for the next node_conditional
                     parent_qualities.append(quality)
                 if depth == 1:
                     return parent_qualities
                 else:
                     # Return a list of parent-dependent qualities (not a leaf or root)
-                    print(node.c)
-                    print(node.id)
-                    print(node.expression_type)
-                    print(node.time)
-                    print(node.program_id)
-
-                    quality = self.query_expected_quality(node) * np.mean(parent_qualities)
+                    # print(node.id)
+                    # print(node.program_id)
+                    # print(node.c)
+                    # print(node.time)
+                    # print(node.parents)
+                    quality = self.query_expected_quality(node)
+                    # quality = self.query_expected_quality(node) * np.mean(parent_qualities)
                     return quality
         # Base Case (Leaf Nodes in a functional expression)
         else:
             # Leaf Node as a trivial functional expression
-            if depth == 1 or Node.is_conditional_node(node) or Node.is_for_node(node):
-                return []
+            if depth == 1 and (Node.is_conditional_node(node) or Node.is_for_node(node)):
+                # exit()
+                return 1
             else:
-                print(node.c)
-                print(node.id)
-                print(node.expression_type)
-                print(node.time)
                 quality = self.query_expected_quality(node)
-                return quality
+                if depth == 1:
+                    return [quality]
+                else:
+                    return quality
 
     @staticmethod
     def round_nearest(number, step) -> float:
@@ -314,7 +315,7 @@ class PerformanceProfile:
         for node in nodes:
             if node.expression_type == "for":
                 return node
-        raise IndexError("Conditional node not found in DAG")
+        raise IndexError("For node not found in DAG")
 
     @staticmethod
     def are_conditional_roots(nodes) -> bool:

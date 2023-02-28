@@ -198,6 +198,12 @@ def dirichlet_growth_factor_generator(dag, alpha=1, lower_bound=0, upper_bound=1
     growth_factors = (np.random.dirichlet(np.repeat(alpha, len(dag.nodes)), size=1).squeeze() * (upper_bound - lower_bound) + lower_bound).tolist()
     return growth_factors
 
+def uniform_growth_factor_generator(dag, lower_bound=0, upper_bound=10):
+    # Apply the Dirichlet distribution to pull ranodm values for the growth factors
+    # Then turn the numpy array into a list
+    growth_factors = (np.random.uniform(lower_bound,upper_bound,len(dag.nodes))).tolist()
+    return growth_factors
+
 
 def ppv_generator(node_id, dag, c_list, constant=1):
     # node_id is the index accounting for all nodes in the contract program including fors and conditionals
@@ -342,3 +348,9 @@ def find_non_meta_indicies(dag):
 def safe_arange(start, stop, step):
     # For arange without the bad floating point accumulation
     return step * np.arange(start / step, stop / step)
+
+
+def find_node_in_full_dag(node, full_dag):
+    for full_node in full_dag.nodes:
+        if node.id == full_node.id:
+            return full_node

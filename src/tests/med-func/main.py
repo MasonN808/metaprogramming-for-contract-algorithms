@@ -15,6 +15,7 @@ from classes import utils  # noqa
 from tests.test import Test  # noqa
 
 if __name__ == "__main__":
+    np.seterr(all='raise')
     # Total budget for the DAG
     BUDGET = 10
     # Number of instances/simulations
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     # The number of methods for experimentation
     NUM_METHODS = 13
     # For number of different performance profiles for experiments
-    ITERATIONS = 47
+    ITERATIONS = 1
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
@@ -44,65 +45,54 @@ if __name__ == "__main__":
     node_3 = Node(3, [], [], expression_type="contract", in_child_contract_program=False)
 
     # Leaf node
-    node_2 = Node(2, [], [], expression_type="contract", in_child_contract_program=False)
+    node_2 = Node(2, [node_3], [], expression_type="contract", in_child_contract_program=False)
 
     # For Node
-    node_1 = Node(1, [node_2, node_3], [], expression_type="contract", in_child_contract_program=False)
+    node_1 = Node(1, [], [], expression_type="contract", in_child_contract_program=False)
 
     # Root node
-    root = Node(0, [node_1], [], expression_type="contract", in_child_contract_program=False)
+    root = Node(0, [node_1, node_2], [], expression_type="contract", in_child_contract_program=False)
 
     # Append the children
-    node_3.children = [node_1]
-    node_2.children = [node_1]
+    node_3.children = [node_2]
+    node_2.children = [root]
     node_1.children = [root]
 
     # Nodes
     nodes = [root, node_1, node_2, node_3]
     # Create and verify the DAG from the node list
-    dag = DirectedAcyclicGraph(nodes, root)
+    program_dag = DirectedAcyclicGraph(nodes, root)
 
     # ----------------------------------------------------------------------------------------
-    # Create a program_dag with expanded subtrees for quality mapping generation
+    # Run Simulations
     # ----------------------------------------------------------------------------------------
-    # Copy the main dag since we don't need to expand any subtrees and adjust pointers
-    program_dag = copy.deepcopy(dag)
+    SIMULATIONS = 150
+    for _ in tqdm(range(0, SIMULATIONS), desc='Progress Bar', position=0, leave=True):
+        # Use a Dirichlet distribution to generate random ppvs
+        growth_factors = utils.dirichlet_growth_factor_generator(dag=program_dag, alpha=.9, lower_bound=.05, upper_bound=10)
 
-    # Use a Dirichlet distribution to generate random ppvs
-    performance_profile_velocities = utils.dirichlet_ppv(iterations=ITERATIONS, dag=program_dag, alpha=.9, constant=10)
+        # Get the meta nodes
+        try:
+            meta_conditional_index = utils.find_conditional_indices(program_dag, include_meta=True)[-1]
+            meta_for_index = utils.find_for_indices(program_dag, include_meta=True)[-1]
+        except:
+            meta_conditional_index = -1
+            meta_for_index = -1
 
-    # performance_profile_velocities = [[10, 20, 0.1]]
-    for ppv in tqdm(performance_profile_velocities, desc='Progress Bar'):
-        # Used to create the synthetic data as instances and a populous file
-        generate = True
-        if not exists("quality_mappings/populous.json") or generate:
-            # Initialize a generator
-            generator = Generator(INSTANCES, program_dag=program_dag, time_limit=TIME_LIMIT, time_step_size=TIME_STEP_SIZE,
-                                  uniform_low=0.05,
-                                  uniform_high=0.9)
-
-            # Adjust the DAG structure that has conditionals for generation
-            generator.full_dag = generator.adjust_dag_with_fors(program_dag)
-
-            # Adjust the DAG structure that has conditionals for generation
-            generator.full_dag = generator.adjust_dag_with_conditionals(generator.full_dag)
-
-            for i in generator.full_dag.nodes:
-                print("full_dag (children): {}, {}".format(i.id, [j.id for j in i.children]))
-            for i in generator.full_dag.nodes:
-                print("full_dag (parents): {}, {}".format(i.id, [j.id for j in i.parents]))
-
-            generator.activate_manual_override(ppv)
-
-            # Generate the nodes' quality mappings
-            nodes = generator.generate_nodes()  # Return a list of file names of the nodes
-            # populate the nodes' quality mappings into one populous file
-            generator.populate(nodes, "quality_mappings/populous.json")
+        # Append a growth factor (c) to each node in the contract program for online performance profile querying
+        # This loops through each list in parallel
+        for node, generated_c in zip(nodes, growth_factors):
+            # Skip any meta/placeholder nodes
+            if node.id == meta_conditional_index or node.id == meta_for_index:
+                node.c = None
+            else:
+                # Append the growth rate value to the node object
+                node.c = generated_c
 
         # Create the program with some budget
-        program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag, child_programs=None, budget=BUDGET, scale=10, decimals=3, quality_interval=QUALITY_INTERVAL,
+        program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=program_dag, child_programs=None, budget=BUDGET, scale=10**5, decimals=3, quality_interval=QUALITY_INTERVAL,
                                         time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
-                                        possible_qualities=POSSIBLE_QUALITIES, performance_profile_velocities=ppv)
+                                        possible_qualities=POSSIBLE_QUALITIES)
 
         # Initialize the pointers of the nodes to the program it is in
         utils.initialize_node_pointers_current_program(program_outer)
@@ -111,21 +101,11 @@ if __name__ == "__main__":
         node_indicies_list = utils.find_non_meta_indicies(program_dag)
 
         # TODO: Get rid of None params later
-        test = Test(program_outer, ppv, node_indicies_list=node_indicies_list, num_plot_methods=NUM_METHODS, plot_type=None, plot_nodes=None)
+        test = Test(program_outer, node_indicies_list=node_indicies_list, plot_type=None, plot_nodes=None)
         test.contract_program = program_outer
 
         # Outputs embeded list of expected utilities and allocations
-        eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, verbose=True)
-
-        # Check if any of the EUs are 0
-        found_zero = False
-        for eu in eu_time[0]:
-            if eu == 0:
-                performance_profile_velocities.extend(utils.dirichlet_ppv(iterations=1, dag=program_dag, alpha=.9, constant=10))
-                found_zero = True
-                print("Found 0 in EU")
-                exit()
-
-        if not found_zero:
-            # Save the EU and Time data to an external files
-            test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/med-func/data/eu_data.txt", time_file_path="src/tests/med-func/data/time_data.txt", node_indicies=node_indicies_list, num_methods=NUM_METHODS)
+        eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, test_phis=[10, 5, 4, 3, 2, 1, .8, .6, .5, .1, 0], verbose=True)
+        print(growth_factors)
+        # Save the EU and Time data to an external files
+        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-func/data/eu_data.txt", time_file_path="src/tests/large-func/data/time_data.txt", node_indicies=node_indicies_list)

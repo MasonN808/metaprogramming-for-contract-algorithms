@@ -10,7 +10,7 @@ plt.rcParams['text.usetex'] = True
 PLOT_TYPE = 'box-whisker'
 BUDGET = 10
 
-EU_FILE = 'src/tests/large-func/data/eu-data-truncated-c-min.txt'
+EU_FILE = 'src/tests/large-func/data/eu_data.txt'
 EUs = pickle.load(open(EU_FILE, 'rb'))
 SIMULATIONS = len(EUs)
 
@@ -23,7 +23,7 @@ METHODS = [r'\textsc{Equal}', r'\textsc{Pa}($5.0$)', r'\textsc{Pa}($4.0$)', r'\t
 def plot():
     # vectorize and scale
     for i in range(0, len(EUs)):
-        EUs[i] = np.log(np.array(EUs[i]))
+        EUs[i] = np.array(EUs[i])
         # EUs[i] = (np.array(EUs[i]) * 1000)
 
     ordered_EUs = []
@@ -33,9 +33,6 @@ def plot():
             case r'\textsc{Pa}($10$)':
                 ordered_EUs.append(EUs[0])
             case r'\textsc{Equal}':
-                print("Equal")
-                print('Mean', sum(EUs[11]) / len(EUs[11]))
-                print('S.D.', np.std(EUs[11]))
                 ordered_EUs.append(EUs[11])
             case r'\textsc{Pa}($5.0$)':
                 ordered_EUs.append(EUs[1])
@@ -56,7 +53,7 @@ def plot():
             case r'\textsc{Pa}($0.1$)':
                 print("PA(.1)")
                 print('Mean', sum(EUs[9]) / len(EUs[9]))
-                print('S.D.', np.std(EUs[9]))
+                print('S.D.', np.std(EUs[12]))
                 ordered_EUs.append(EUs[9])
             case r'\textsc{Pa}($0.0$)':
                 ordered_EUs.append(EUs[10])
