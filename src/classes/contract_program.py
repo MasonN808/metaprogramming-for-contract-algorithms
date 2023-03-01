@@ -357,15 +357,19 @@ class ContractProgram:
                 elif node_0.time - time_switched < 0:
                     continue
                 else:
-                    self.change_time_allocations(self.full_dag.nodes, self.program_dag.nodes)
-                    # print("OUTER 1: {}".format([node.time for node in self.program_dag.nodes]))
-                    # print("FULL 1: {}".format([node.time for node in self.full_dag.nodes]))
+                    # Make sure the bottom two rows don't need to be switched
                     original_program_dag_nodes = copy.deepcopy(self.full_dag.nodes)
+                    self.change_time_allocations(self.full_dag.nodes, self.program_dag.nodes)
+                    # if depth == 0:
+                    #     print("OUTER 1: {} -- {}".format([node.time for node in self.program_dag.nodes], self.program_id))
+                    #     print("FULL 1: {} -- {}".format([node.time for node in self.full_dag.nodes], self.program_id))
                     node_0.time -= time_switched
                     node_1.time += time_switched
-                    # print("OUTER 2: {}".format([node.time for node in self.program_dag.nodes]))
+                    # if depth == 0:
+                    #     print("OUTER 2: {} -- {}".format([node.time for node in self.program_dag.nodes], self.program_id))
                     self.change_time_allocations(self.full_dag.nodes, self.program_dag.nodes)
-                    # print("FULL 2: {}".format([node.time for node in self.full_dag.nodes]))
+                    # if depth == 0:
+                    #     print("FULL 2: {} -- {}".format([node.time for node in self.full_dag.nodes], self.program_id))
                     # If we are in the outermost program
                     if depth == 0:
                         # Make a copy just in case recursvie hill climbing solution is suboptimal
@@ -397,7 +401,6 @@ class ContractProgram:
                     # And scale the EU for interprettable results
                     # print("FULL 3: {}".format([node.time for node in self.full_dag.nodes]))
                     eu_adjusted = self.expected_utility() * self.scale
-
                     if eu_adjusted > eu_original:
                         best_allocations_changed = True
                         eu_original = eu_adjusted
@@ -545,7 +548,6 @@ class ContractProgram:
             for node in self.program_dag.nodes:
                 # Give a uniform allocation to each node
                 uniform_allocation = self.find_uniform_allocation(self.budget)
-                print(uniform_allocation)
                 if (node.expression_type == "conditional" or node.expression_type == "for") and depth == 1:
                     # node.time = None
                     continue

@@ -26,7 +26,6 @@ if __name__ == "__main__":
     TIME_INTERVAL = 0.1
     # The quality interval when querying for the performance profile
     QUALITY_INTERVAL = .05
-    NUMBER_OF_LOOPS = 4
     # For type of performance profile (exact or appproximate)
     EXPECTED_UTILITY_TYPE = "approximate"
     # Initialize a list of all possible qualities
@@ -37,41 +36,38 @@ if __name__ == "__main__":
     # Left (True subtree)
     # ----------------------------------------------------------------------------------------
     # Leaf node
-    node_inner_true_1 = Node(3, [], [], expression_type="conditional", program_id=1)
-    # node_inner_true_1.in_true = True
-   
+    node_inner_true_2 = Node(7, [], [], expression_type="conditional", program_id=1)
+    node_inner_true_1 = Node(3, [node_inner_true_2], [], expression_type="contract", program_id=1)
+
     # Root Node
     node_inner_true_root = Node(1, [node_inner_true_1], [], expression_type="contract", program_id=1, is_conditional_root=True)
-    # node_inner_true_root.in_true = True
 
     # Create a list of the nodes in breadth-first order for the true branch
-    nodes_inner_true = [node_inner_true_root, node_inner_true_1]
+    nodes_inner_true = [node_inner_true_root, node_inner_true_1, node_inner_true_2]
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the second-order metareasoning problem (conditional subtree)
     # Right (False subtree)
     # ----------------------------------------------------------------------------------------
     # Leaf node
-    node_inner_false_1 = Node(3, [], [], expression_type="conditional", program_id=2)
-    # node_inner_false_1.in_false = True
-
+    node_inner_false_4 = Node(7, [], [], expression_type="conditional", program_id=2)
+    node_inner_false_3 = Node(6, [node_inner_false_4], [], expression_type="contract", program_id=2)
+    node_inner_false_2 = Node(5, [node_inner_false_3], [], expression_type="contract", program_id=2)
+    node_inner_false_1 = Node(4, [node_inner_false_3], [], expression_type="contract", program_id=2)
     # Root node
-    node_inner_false_root = Node(2, [node_inner_false_1], [], expression_type="contract", program_id=2, is_conditional_root=True)
-    # node_inner_false_root.in_false = True
+    node_inner_false_root = Node(2, [node_inner_false_1, node_inner_false_2], [], expression_type="contract", program_id=2, is_conditional_root=True)
+
     # Create a list of the nodes in breadth-first order for the false branch
-    nodes_inner_false = [node_inner_false_root, node_inner_false_1]
+    nodes_inner_false = [node_inner_false_root, node_inner_false_1, node_inner_false_2, node_inner_false_3, node_inner_false_4]
 
     # ----------------------------------------------------------------------------------------
     # Create a DAG manually for the first-order metareasoning problem
     # ----------------------------------------------------------------------------------------
     # conditional nodes
-    node_outer_1 = Node(3, [], [], expression_type="conditional", program_id=0, in_child_contract_program=False)
+    node_outer_1 = Node(7, [], [], expression_type="conditional", program_id=0, in_child_contract_program=False)
 
     # Root node
     root_outer = Node(0, [node_outer_1], [], expression_type="contract", program_id=0)
-
-    # Append the children
-    # node_outer_1.children = [root_outer]
 
     nodes_outer = [root_outer, node_outer_1]
     # Create and verify the DAG from the node list
@@ -82,28 +78,27 @@ if __name__ == "__main__":
     # Create the expanded or full DAG
     # ----------------------------------------------------------------------------------------
     # Conditional node
-    node_3 = Node(3, [], [], expression_type="conditional", in_child_contract_program=False)
+    node_7 = Node(7, [], [], expression_type="conditional", in_child_contract_program=False)
 
     # false node
-    node_2 = Node(2, [node_3], [], expression_type="contract", in_child_contract_program=False, in_false=True, is_conditional_root=True)
+    node_6 = Node(6, [node_7], [], expression_type="contract", in_child_contract_program=False)
+    node_5 = Node(5, [node_6], [], expression_type="contract", in_child_contract_program=False)
+    node_4 = Node(4, [node_6], [], expression_type="contract", in_child_contract_program=False)
+    node_2 = Node(2, [node_4, node_5], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
 
     # true Node
-    node_1 = Node(1, [node_3], [], expression_type="contract", in_child_contract_program=False, in_true=True, is_conditional_root=True)
+    node_3 = Node(3, [node_7], [], expression_type="contract", in_child_contract_program=False)
+    node_1 = Node(1, [node_3], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
 
     # Root node
-    root = Node(0, [node_1], [], expression_type="contract", in_child_contract_program=False)
-
-    # Append the children
-    # node_3.children = [node_1, node_2]
-    # node_2.children = [root]
-    # node_1.children = [root]
+    root = Node(0, [node_1, node_2], [], expression_type="contract", in_child_contract_program=False)
 
     # Nodes
-    nodes = [root, node_1, node_2, node_3]
+    nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7]
     # Create and verify the DAG from the node list
     program_dag = DirectedAcyclicGraph(nodes, root)
 
-    scale = 10**2
+    scale = 10**4
     # Create the program with so budget
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=scale, decimals=3, quality_interval=QUALITY_INTERVAL,
                                     time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
@@ -119,7 +114,7 @@ if __name__ == "__main__":
     node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=true_subtree, budget=0, scale=scale, decimals=3,
                                                    quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
                                                    full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="true")
-    node_3.true_subprogram = node_outer_1.true_subprogram
+    node_7.true_subprogram = node_outer_1.true_subprogram
 
     # Initialize the pointers of the nodes to the program it is in
     utils.initialize_node_pointers_current_program(node_outer_1.true_subprogram)
@@ -130,7 +125,7 @@ if __name__ == "__main__":
     node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, child_programs=None, program_dag=false_subtree, budget=0, scale=scale, decimals=3,
                                                     quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
                                                     full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="false")
-    node_3.false_subprogram = node_outer_1.false_subprogram
+    node_7.false_subprogram = node_outer_1.false_subprogram
 
     # Define a hashmap to pull contract subprograms during recursive optimization
     program_outer.subprogram_map = {
@@ -143,12 +138,12 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------
     # Run Simulations
     # ----------------------------------------------------------------------------------------
-    SIMULATIONS = 1
+    SIMULATIONS = 20
     for _ in tqdm(range(0, SIMULATIONS), desc='Progress Bar', position=0, leave=True):
         # Use a Dirichlet distribution to generate random ppvs
         # growth_factors = utils.uniform_growth_factor_generator(dag=program_dag, lower_bound=.05, upper_bound=10)
         growth_factors = utils.dirichlet_growth_factor_generator(dag=program_dag, alpha=.9, lower_bound=.05, upper_bound=10)
-        growth_factors = [6, .2, .2, 1]
+        # growth_factors = [6, 6, .2, .2, .2, .2, .2, .2, 1]
         # sum_growth_factors = math.e** sum(growth_factors)
         # Get the meta nodes
         try:
@@ -184,4 +179,4 @@ if __name__ == "__main__":
         # Outputs embeded list of expected utilities and allocations
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, test_phis=[10, 5, 4, 3, 2, 1, .8, .6, .5, .1, 0], verbose=True)
         # Save the EU and Time data to an external files
-        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/small-conditional/data/eu-data.txt", time_file_path="src/tests/small-conditional/data/time-data.txt", node_indicies=node_indicies_list)
+        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-conditional/data/eu-data.txt", time_file_path="src/tests/large-conditional/data/time-data.txt", node_indicies=node_indicies_list)
