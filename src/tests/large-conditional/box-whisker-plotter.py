@@ -13,9 +13,10 @@ BUDGET = 10
 # EU_FILE = 'src/tests/large-func/data/eu-data-truncated-c-min.txt'
 EU_FILE = 'src/tests/large-conditional/data/eu-data.txt'
 EUs = pickle.load(open(EU_FILE, 'rb'))
-SIMULATIONS = len(EUs)
+SIMULATIONS = len(EUs[0])
+print(SIMULATIONS)
 
-SAVE_FILENAME = 'src/tests/large-func/plots/{}-simulations{}.png'.format(PLOT_TYPE, SIMULATIONS)
+SAVE_FILENAME = 'src/tests/large-conditional/plots/{}-simulations{}.png'.format(PLOT_TYPE, SIMULATIONS)
 
 METHODS = [r'\textsc{Equal}', r'\textsc{Pa}($5.0$)', r'\textsc{Pa}($4.0$)', r'\textsc{Pa}($3.0$)', r'\textsc{Pa}($2.0$)', r'\textsc{Pa}($1.0$)', r'\textsc{Pa}($0.8$)', r'\textsc{Pa}($0.6$)', r'\textsc{Pa}($0.5$)', r'\textsc{Pa}($0.1$)', r'\textsc{Pa}($0.0$)', r'\textsc{Rhc}']
 # MAKE IT SO THAT THE TODO PARENTS HAVE A HUGE DIFFEREENCE ON CHILDREN

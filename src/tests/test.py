@@ -13,12 +13,10 @@ from classes.node import Node  # noqa
 
 
 class Test:
-    def __init__(self, contract_program, node_indicies_list, plot_type=None, plot_nodes=None):
+    def __init__(self, contract_program, node_indicies_list):
         self.contract_program = contract_program
         self.node_indicies_list = node_indicies_list
-        self.plot_type = plot_type
         self.num_plot_methods = 0
-        self.plot_nodes = plot_nodes
 
     def monitor_eu_on_rhc(self, initial_allocation, outer_program, verbose=False):
         # Setup the initial time allocations

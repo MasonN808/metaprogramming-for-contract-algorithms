@@ -10,12 +10,12 @@ plt.rcParams['text.usetex'] = True
 PLOT_TYPE = 'box-whisker'
 BUDGET = 10
 
-EU_FILE = 'src/tests/med-func/data/eu-data-mean.txt'
+# EU_FILE = 'src/tests/large-func/data/eu-data-truncated-c-min.txt'
+EU_FILE = 'src/tests/small-for/data/eu-data.txt'
 EUs = pickle.load(open(EU_FILE, 'rb'))
-SIMULATIONS = len(EUs[0])
-print(SIMULATIONS)
+SIMULATIONS = len(EUs)
 
-SAVE_FILENAME = 'src/tests/med-func/plots/{}-simulations{}.png'.format(PLOT_TYPE, SIMULATIONS)
+SAVE_FILENAME = 'src/tests/small-for/plots/{}-simulations{}.png'.format(PLOT_TYPE, SIMULATIONS)
 
 METHODS = [r'\textsc{Equal}', r'\textsc{Pa}($5.0$)', r'\textsc{Pa}($4.0$)', r'\textsc{Pa}($3.0$)', r'\textsc{Pa}($2.0$)', r'\textsc{Pa}($1.0$)', r'\textsc{Pa}($0.8$)', r'\textsc{Pa}($0.6$)', r'\textsc{Pa}($0.5$)', r'\textsc{Pa}($0.1$)', r'\textsc{Pa}($0.0$)', r'\textsc{Rhc}']
 # MAKE IT SO THAT THE TODO PARENTS HAVE A HUGE DIFFEREENCE ON CHILDREN
@@ -38,9 +38,9 @@ def plot():
                 if mean > np.mean(best_PA_EUs):
                     best_PA_EUs = EUs[0]
             case r'\textsc{Equal}':
-                # print("Equal")
-                # print('Mean', sum(EUs[11]) / len(EUs[11]))
-                # print('S.D.', np.std(EUs[11]))
+                print("Equal")
+                print('Mean', sum(EUs[11]) / len(EUs[11]))
+                print('S.D.', np.std(EUs[11]))
                 ordered_EUs.append(EUs[11])
             case r'\textsc{Pa}($5.0$)':
                 ordered_EUs.append(EUs[1])
@@ -83,9 +83,9 @@ def plot():
                 if mean > np.mean(best_PA_EUs):
                     best_PA_EUs = EUs[8]
             case r'\textsc{Pa}($0.1$)':
-                # print("PA(.1)")
-                # print('Mean', sum(EUs[9]) / len(EUs[9]))
-                # print('S.D.', np.std(EUs[9]))
+                print("PA(.1)")
+                print('Mean', sum(EUs[9]) / len(EUs[9]))
+                print('S.D.', np.std(EUs[9]))
                 ordered_EUs.append(EUs[9])
                 mean = np.mean(EUs[9])
                 if mean > np.mean(best_PA_EUs):
@@ -96,14 +96,15 @@ def plot():
                 if mean > np.mean(best_PA_EUs):
                     best_PA_EUs = EUs[10]
             case r'\textsc{Rhc}':
-                print('RHC Mean', sum(EUs[12]) / len(EUs[12]))
-                print('RHC S.D.', np.std(EUs[12]))
+                print('Rhc')
+                print('Mean', sum(EUs[12]) / len(EUs[12]))
+                print('S.D.', np.std(EUs[12]))
                 ordered_EUs.append(EUs[12])
             case _:
                 print("Invalid method")
                 exit()
-    print("BEST-PA Mean", np.mean(best_PA_EUs))
-    print("BEST-PA S.D.", np.std(best_PA_EUs))
+    print("BEST PA Mean", np.mean(best_PA_EUs))
+    print("BEST PA SD", np.std(best_PA_EUs))
 
     figure = plt.figure(figsize=(10, 5))
 

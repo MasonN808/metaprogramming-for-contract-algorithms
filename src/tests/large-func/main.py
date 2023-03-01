@@ -70,8 +70,10 @@ if __name__ == "__main__":
     SIMULATIONS = 150
     for _ in tqdm(range(0, SIMULATIONS), desc='Progress Bar', position=0, leave=True):
         # Use a Dirichlet distribution to generate random ppvs
-        growth_factors = utils.uniform_growth_factor_generator(dag=program_dag, lower_bound=.05, upper_bound=10)
-        sum_growth_factors = math.e** (-sum(growth_factors))
+        growth_factors = utils.dirichlet_growth_factor_generator(dag=program_dag, alpha=.9, lower_bound=.05, upper_bound=10)
+        # growth_factors = utils.uniform_growth_factor_generator(dag=program_dag, lower_bound=.05, upper_bound=10)
+        # sum_growth_factors = math.e** (-sum(growth_factors))
+        sum_growth_factors = 1
         # Get the meta nodes
         try:
             meta_conditional_index = utils.find_conditional_indices(program_dag, include_meta=True)[-1]
@@ -90,7 +92,7 @@ if __name__ == "__main__":
                 # Append the growth rate value to the node object
                 node.c = generated_c
 
-        SCALE=10**2
+        SCALE=10**3
         # Create the program with some budget
         program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=program_dag, child_programs=None, budget=BUDGET, scale=SCALE, decimals=3, quality_interval=QUALITY_INTERVAL,
                                         time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
@@ -102,12 +104,11 @@ if __name__ == "__main__":
         # Get all the node_ids that aren't fors or conditionals
         node_indicies_list = utils.find_non_meta_indicies(program_dag)
 
-        # TODO: Get rid of None params later
-        test = Test(program_outer, node_indicies_list=node_indicies_list, plot_type=None, plot_nodes=None)
+        test = Test(program_outer, node_indicies_list=node_indicies_list)
         test.contract_program = program_outer
 
         # Outputs embeded list of expected utilities and allocations
         eu_time = test.find_utility_and_allocations(initial_allocation="uniform", outer_program=program_outer, test_phis=[10, 5, 4, 3, 2, 1, .8, .6, .5, .1, 0], verbose=True)
-        print(growth_factors)
+
         # Save the EU and Time data to an external files
-        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-func/data/eu-data-transformed.txt", time_file_path="src/tests/large-func/data/time-data-transformed.txt", node_indicies=node_indicies_list)
+        test.save_eu_time_data(eu_time_list=eu_time, eu_file_path="src/tests/large-func/data/eu-data-mean.txt", time_file_path="src/tests/large-func/data/time-data-mean.txt", node_indicies=node_indicies_list)

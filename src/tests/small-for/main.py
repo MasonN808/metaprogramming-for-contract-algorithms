@@ -32,69 +32,36 @@ if __name__ == "__main__":
     POSSIBLE_QUALITIES = np.arange(0, 1 + QUALITY_INTERVAL, QUALITY_INTERVAL)
 
     # ----------------------------------------------------------------------------------------
-    # Create a DAG manually for the second-order metareasoning problem (conditional subtree)
-    # Left (True subtree)
+    # Create a DAG manually for the second-order metareasoning problem (for subtree)
     # ----------------------------------------------------------------------------------------
-    # Leaf node
-    node_inner_true_2 = Node(7, [], [], expression_type="conditional", program_id=1)
-    node_inner_true_1 = Node(3, [node_inner_true_2], [], expression_type="contract", program_id=1)
-
     # Root Node
-    node_inner_true_root = Node(1, [node_inner_true_1], [], expression_type="contract", program_id=1, is_conditional_root=True)
-
-    # Create a list of the nodes in breadth-first order for the true branch
-    nodes_inner_true = [node_inner_true_root, node_inner_true_1, node_inner_true_2]
-
-    # ----------------------------------------------------------------------------------------
-    # Create a DAG manually for the second-order metareasoning problem (conditional subtree)
-    # Right (False subtree)
-    # ----------------------------------------------------------------------------------------
-    # Leaf node
-    node_inner_false_4 = Node(7, [], [], expression_type="conditional", program_id=2)
-    node_inner_false_3 = Node(6, [node_inner_false_4], [], expression_type="contract", program_id=2)
-    node_inner_false_2 = Node(5, [node_inner_false_3], [], expression_type="contract", program_id=2)
-    node_inner_false_1 = Node(4, [node_inner_false_3], [], expression_type="contract", program_id=2)
-    # Root node
-    node_inner_false_root = Node(2, [node_inner_false_1, node_inner_false_2], [], expression_type="contract", program_id=2, is_conditional_root=True)
+    node_inner_1 = Node(4, [], [], expression_type="for", program_id=1)
+    node_inner_2 = Node(3, [node_inner_1], [], expression_type="contract", program_id=1)
+    node_inner_3 = Node(2, [node_inner_2], [], expression_type="contract", program_id=1)
+    node_inner_4 = Node(1, [node_inner_3], [], expression_type="contract", program_id=1)
+    node_inner_4.is_last_for_loop = True
 
     # Create a list of the nodes in breadth-first order for the false branch
-    nodes_inner_false = [node_inner_false_root, node_inner_false_1, node_inner_false_2, node_inner_false_3, node_inner_false_4]
-
-    # ----------------------------------------------------------------------------------------
-    # Create a DAG manually for the first-order metareasoning problem
-    # ----------------------------------------------------------------------------------------
-    # conditional nodes
-    node_outer_1 = Node(7, [], [], expression_type="conditional", program_id=0, in_child_contract_program=False)
-
-    # Root node
-    root_outer = Node(0, [node_outer_1], [], expression_type="contract", program_id=0)
-
-    nodes_outer = [root_outer, node_outer_1]
-    # Create and verify the DAG from the node list
-    dag_outer = DirectedAcyclicGraph(nodes_outer, root_outer)
-
+    nodes_inner = [node_inner_4, node_inner_3, node_inner_2, node_inner_1]
 
     # ----------------------------------------------------------------------------------------
     # Create the expanded or full DAG
     # ----------------------------------------------------------------------------------------
-    # Conditional node
-    node_7 = Node(7, [], [], expression_type="conditional", in_child_contract_program=False)
+    # for node
+    node_4 = Node(4, [], [], expression_type="for", in_child_contract_program=False)
 
-    # false node
-    node_6 = Node(6, [node_7], [], expression_type="contract", in_child_contract_program=False)
-    node_5 = Node(5, [node_6], [], expression_type="contract", in_child_contract_program=False)
-    node_4 = Node(4, [node_6], [], expression_type="contract", in_child_contract_program=False)
-    node_2 = Node(2, [node_4, node_5], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
-
-    # true Node
-    node_3 = Node(3, [node_7], [], expression_type="contract", in_child_contract_program=False)
-    node_1 = Node(1, [node_3], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
+    # for nodes
+    node_3 = Node(3, [node_4], [], expression_type="contract", in_child_contract_program=False)
+    node_2 = Node(2, [node_3], [], expression_type="contract", in_child_contract_program=False)
+    node_1 = Node(1, [node_2], [], expression_type="contract", in_child_contract_program=False)
+ 
+    node_1 = Node(1, [node_1], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
 
     # Root node
     root = Node(0, [node_1, node_2], [], expression_type="contract", in_child_contract_program=False)
 
     # Nodes
-    nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7]
+    nodes = [root, node_1, node_2, node_3, node_4]
     # Create and verify the DAG from the node list
     program_dag = DirectedAcyclicGraph(nodes, root)
 
@@ -130,15 +97,14 @@ if __name__ == "__main__":
     # Define a hashmap to pull contract subprograms during recursive optimization
     program_outer.subprogram_map = {
         # Here they key is "{node id} [optional]-0{false branch} {or} 1 {true branch}"
-        "7-1": node_outer_1.true_subprogram,
-        "7-0": node_outer_1.false_subprogram
+        "4": node_outer_1.true_subprogram
     }
 
 
     # ----------------------------------------------------------------------------------------
     # Run Simulations
     # ----------------------------------------------------------------------------------------
-    SIMULATIONS = 1
+    SIMULATIONS = 20
     for _ in tqdm(range(0, SIMULATIONS), desc='Progress Bar', position=0, leave=True):
         # Use a Dirichlet distribution to generate random ppvs
         # growth_factors = utils.uniform_growth_factor_generator(dag=program_dag, lower_bound=.05, upper_bound=10)
