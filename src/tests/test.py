@@ -1,10 +1,6 @@
-import copy
 import os
 import pickle
 import sys
-from time import sleep
-from progress.bar import ChargingBar
-from timeit import default_timer as timer
 
 
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
@@ -86,11 +82,11 @@ class Test:
 
     def save_eu_time_data(self, eu_time_list, eu_file_path, time_file_path, node_indicies, clear_file=False):
         # Check if data files exist
-        if not os.path.isfile(eu_file_path) or clear_file == True:
+        if not os.path.isfile(eu_file_path) or clear_file is True:
             with open(eu_file_path, 'wb') as file_eus:
                 pickle.dump([[] for i in range(0, self.num_plot_methods)], file_eus)
 
-        if not os.path.isfile(time_file_path) or clear_file == True:
+        if not os.path.isfile(time_file_path) or clear_file is True:
             with open(time_file_path, 'wb') as file_times:
                 pickle.dump([[[] for j in range(0, self.num_plot_methods)] for i in range(0, len(node_indicies))], file_times)
 
@@ -156,25 +152,6 @@ class Test:
                     for _, subprogram in self.contract_program.subprogram_map.items():
                         self.contract_program.change_time_allocations(self.contract_program.full_dag.nodes, subprogram.program_dag.nodes)
                 self.contract_program.change_time_allocations(self.contract_program.full_dag.nodes, self.contract_program.program_dag.nodes)
-
-
-    @staticmethod
-    def find_inner_programs(outer_program):
-        inner_programs = []
-
-        for outer_node in outer_program.program_dag.nodes:
-
-            if not outer_node.in_child_contract_program:
-
-                if Node.is_for_node(outer_node):
-                    # Append its subprograms to the list
-                    inner_programs.extend([outer_node.for_subprogram])
-
-                elif Node.is_conditional_node(outer_node):
-                    # Append its subprograms to the list
-                    inner_programs.extend([outer_node.true_subprogram, outer_node.false_subprogram])
-
-        return inner_programs
 
     @staticmethod
     def find_node_id_of_conditional(outer_program):

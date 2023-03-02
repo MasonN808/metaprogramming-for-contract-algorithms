@@ -118,11 +118,6 @@ def find_leaves_in_dag(program_dag):
     return leaves
 
 
-def initialize_node_pointers_current_program(contract_program):
-    for node in contract_program.program_dag.nodes:
-        node.current_program = contract_program
-
-
 def argsort(seq):
     # http://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
     return sorted(range(len(seq)), key=seq.__getitem__)
@@ -198,10 +193,11 @@ def dirichlet_growth_factor_generator(dag, alpha=1, lower_bound=0, upper_bound=1
     growth_factors = (np.random.dirichlet(np.repeat(alpha, len(dag.nodes)), size=1).squeeze() * (upper_bound - lower_bound) + lower_bound).tolist()
     return growth_factors
 
+
 def uniform_growth_factor_generator(dag, lower_bound=0, upper_bound=10):
     # Apply the Dirichlet distribution to pull ranodm values for the growth factors
     # Then turn the numpy array into a list
-    growth_factors = (np.random.uniform(lower_bound,upper_bound,len(dag.nodes))).tolist()
+    growth_factors = (np.random.uniform(lower_bound, upper_bound, len(dag.nodes))).tolist()
     return growth_factors
 
 

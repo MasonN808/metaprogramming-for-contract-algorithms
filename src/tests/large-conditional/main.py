@@ -1,8 +1,5 @@
-import copy
-import math
 import sys
 import numpy as np
-from os.path import exists  # noqa
 from tqdm import tqdm
 
 # TODO: Try and fix this absolute path
@@ -64,7 +61,7 @@ if __name__ == "__main__":
     # Create a DAG manually for the first-order metareasoning problem
     # ----------------------------------------------------------------------------------------
     # conditional nodes
-    node_outer_1 = Node(7, [], [], expression_type="conditional", program_id=0, in_child_contract_program=False)
+    node_outer_1 = Node(7, [], [], expression_type="conditional", program_id=0)
 
     # Root node
     root_outer = Node(0, [node_outer_1], [], expression_type="contract", program_id=0)
@@ -73,25 +70,24 @@ if __name__ == "__main__":
     # Create and verify the DAG from the node list
     dag_outer = DirectedAcyclicGraph(nodes_outer, root_outer)
 
-
     # ----------------------------------------------------------------------------------------
     # Create the expanded or full DAG
     # ----------------------------------------------------------------------------------------
     # Conditional node
-    node_7 = Node(7, [], [], expression_type="conditional", in_child_contract_program=False)
+    node_7 = Node(7, [], [], expression_type="conditional")
 
     # false node
-    node_6 = Node(6, [node_7], [], expression_type="contract", in_child_contract_program=False)
-    node_5 = Node(5, [node_6], [], expression_type="contract", in_child_contract_program=False)
-    node_4 = Node(4, [node_6], [], expression_type="contract", in_child_contract_program=False)
-    node_2 = Node(2, [node_4, node_5], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
+    node_6 = Node(6, [node_7], [], expression_type="contract")
+    node_5 = Node(5, [node_6], [], expression_type="contract")
+    node_4 = Node(4, [node_6], [], expression_type="contract")
+    node_2 = Node(2, [node_4, node_5], [], expression_type="contract", is_conditional_root=True)
 
     # true Node
-    node_3 = Node(3, [node_7], [], expression_type="contract", in_child_contract_program=False)
-    node_1 = Node(1, [node_3], [], expression_type="contract", in_child_contract_program=False, is_conditional_root=True)
+    node_3 = Node(3, [node_7], [], expression_type="contract")
+    node_1 = Node(1, [node_3], [], expression_type="contract", is_conditional_root=True)
 
     # Root node
-    root = Node(0, [node_1, node_2], [], expression_type="contract", in_child_contract_program=False)
+    root = Node(0, [node_1, node_2], [], expression_type="contract")
 
     # Nodes
     nodes = [root, node_1, node_2, node_3, node_4, node_5, node_6, node_7]
@@ -101,7 +97,7 @@ if __name__ == "__main__":
     scale = 10**4
     # Create the program with so budget
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=scale, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
+                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
                                     possible_qualities=POSSIBLE_QUALITIES)
 
     # ----------------------------------------------------------------------------------------
@@ -112,18 +108,15 @@ if __name__ == "__main__":
     true_subtree = DirectedAcyclicGraph(nodes_inner_true, root=node_inner_true_root)
     # Convert to a contract program
     node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=true_subtree, budget=0, scale=scale, decimals=3,
-                                                   quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
+                                                   quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE,
                                                    full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="true")
     node_7.true_subprogram = node_outer_1.true_subprogram
-
-    # Initialize the pointers of the nodes to the program it is in
-    utils.initialize_node_pointers_current_program(node_outer_1.true_subprogram)
 
     # Add the right subtree
     false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
     # Convert to a contract program
     node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, child_programs=None, program_dag=false_subtree, budget=0, scale=scale, decimals=3,
-                                                    quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
+                                                    quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE,
                                                     full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="false")
     node_7.false_subprogram = node_outer_1.false_subprogram
 
@@ -133,7 +126,6 @@ if __name__ == "__main__":
         "7-1": node_outer_1.true_subprogram,
         "7-0": node_outer_1.false_subprogram
     }
-
 
     # ----------------------------------------------------------------------------------------
     # Run Simulations
@@ -149,7 +141,7 @@ if __name__ == "__main__":
         try:
             meta_conditional_index = utils.find_conditional_indices(program_dag, include_meta=True)[-1]
             meta_for_index = utils.find_for_indices(program_dag, include_meta=True)[-1]
-        except:
+        except IndexError:
             meta_conditional_index = -1
             meta_for_index = -1
 
@@ -165,9 +157,6 @@ if __name__ == "__main__":
 
         # Append the growth factors to the subprograms
         program_outer.append_growth_factors_to_subprograms()
-
-        # Initialize the pointers of the nodes to the program it is in
-        utils.initialize_node_pointers_current_program(program_outer)
 
         # Get all the node_ids that aren't fors or conditionals
         node_indicies_list = utils.find_non_meta_indicies(program_dag)

@@ -1,7 +1,6 @@
 import math
 import sys
 from typing import List
-import json
 import numpy as np
 import scipy.stats as st
 
@@ -184,7 +183,7 @@ class PerformanceProfile:
         depth += 1
         if node.parents:
             # Check if all the parents are conditional roots
-            #TODO: make this more general
+            # TODO: make this more general
             if self.are_conditional_roots(node.parents):
                 conditional_node = self.find_conditional_node(self.full_dag)
                 parent_quality = self.query_probability_and_quality_from_conditional_expression(conditional_node)[1]

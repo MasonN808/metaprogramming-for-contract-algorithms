@@ -14,7 +14,7 @@ class Node:
         Used directly for contract conditionals
     """
 
-    def __init__(self, id, parents, children, expression_type, program_id=0, in_false=None, in_true=None, in_child_contract_program=False, is_conditional_root=False, time=None):
+    def __init__(self, id, parents, children, expression_type, program_id=0, in_false=None, in_true=None, is_conditional_root=False, time=None):
         # id of the node in the tree
         self.id = id
         self.parents = parents
@@ -24,14 +24,10 @@ class Node:
         self.quality_sd = .03
         self.program_id = program_id
 
-        # pointer to the contract program that it's in (This should be initialized after creating the contract program
-        self.current_program = None
-
         # true subtree for the conditional expression
         self.true_subprogram = None
         # false subtree for the conditional expression
         self.false_subprogram = None
-        self.in_child_contract_program = in_child_contract_program
         self.in_true = in_true
         self.in_false = in_false
 
@@ -83,7 +79,7 @@ class Node:
                     return True
             return False
         elif family_type == "children":
-            for child in node.parents:
+            for child in node.children:
                 if child.expression_type == "conditional":
                     return True
             return False

@@ -1,4 +1,3 @@
-import copy
 import sys
 import numpy as np
 from os.path import exists  # noqa
@@ -34,14 +33,14 @@ if __name__ == "__main__":
     # Create a DAG manually for the first-order metareasoning problem
     # ----------------------------------------------------------------------------------------
     # Leaf node
-    node_4 = Node(4, [], [], expression_type="contract", in_child_contract_program=False)
-    node_3 = Node(3, [], [], expression_type="contract", in_child_contract_program=False)
+    node_4 = Node(4, [], [], expression_type="contract")
+    node_3 = Node(3, [], [], expression_type="contract")
     # Leaf node
-    node_2 = Node(2, [node_3], [], expression_type="contract", in_child_contract_program=False)
+    node_2 = Node(2, [node_3], [], expression_type="contract")
     # For Node
-    node_1 = Node(1, [node_4], [], expression_type="contract", in_child_contract_program=False)
+    node_1 = Node(1, [node_4], [], expression_type="contract")
     # Root node
-    root = Node(0, [node_1, node_2], [], expression_type="contract", in_child_contract_program=False)
+    root = Node(0, [node_1, node_2], [], expression_type="contract")
 
     # Nodes
     nodes = [root, node_1, node_2, node_3, node_4]
@@ -60,7 +59,7 @@ if __name__ == "__main__":
         try:
             meta_conditional_index = utils.find_conditional_indices(program_dag, include_meta=True)[-1]
             meta_for_index = utils.find_for_indices(program_dag, include_meta=True)[-1]
-        except:
+        except IndexError:
             meta_conditional_index = -1
             meta_for_index = -1
 
@@ -76,11 +75,8 @@ if __name__ == "__main__":
         SCALE = 10**3
         # Create the program with some budget
         program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=program_dag, child_programs=None, budget=BUDGET, scale=SCALE, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                        time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
+                                        time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
                                         possible_qualities=POSSIBLE_QUALITIES)
-
-        # Initialize the pointers of the nodes to the program it is in
-        utils.initialize_node_pointers_current_program(program_outer)
 
         # Get all the node_ids that aren't fors or conditionals
         node_indicies_list = utils.find_non_meta_indicies(program_dag)

@@ -1,4 +1,3 @@
-import copy
 import sys
 import numpy as np
 from tqdm import tqdm
@@ -9,7 +8,6 @@ sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-alg
 from classes.directed_acyclic_graph import DirectedAcyclicGraph  # noqa
 from classes.node import Node  # noqa
 from classes.contract_program import ContractProgram  # noqa
-from classes.generator import Generator  # noqa
 from classes import utils  # noqa
 from tests.test import Test  # noqa
 np.seterr(all='raise')
@@ -108,7 +106,7 @@ if __name__ == "__main__":
     node_outer_4 = Node(14, [], [], expression_type="contract", program_id=0)
 
     # For Node
-    node_outer_3 = Node(13, [node_outer_4], [], expression_type="for", in_child_contract_program=False)
+    node_outer_3 = Node(13, [node_outer_4], [], expression_type="for")
 
     for node in [node_inner_2, node_inner_3, node_inner_4, node_inner_5]:
         node.subprogram_parent_node = node_outer_3
@@ -116,18 +114,10 @@ if __name__ == "__main__":
     # Intermeditate node from for to conditional
     node_outer_2 = Node(8, [node_outer_3], [], expression_type="contract", program_id=0)
 
-    # Append the children
-
     # Conditional Node
-    node_outer_1 = Node(7, [node_outer_2], [], expression_type="conditional", in_child_contract_program=False)
+    node_outer_1 = Node(7, [node_outer_2], [], expression_type="conditional")
     # Root node
     root_outer = Node(0, [node_outer_1], [], expression_type="contract", program_id=0)
-
-    # Append the children
-    node_outer_4.children = [node_outer_3]
-    node_outer_3.children = [node_outer_2]
-    node_outer_2.children = [node_outer_1]
-    node_outer_1.children = [root_outer]
 
     # ----------------------------------------------------------------------------------------
     # Create a program_dag with expanded subtrees for quality mapping generation
@@ -173,22 +163,6 @@ if __name__ == "__main__":
     # Root node
     root = Node(0, [node_1, node_2], [], expression_type="contract", program_id=0)
 
-    # Add the children
-    node_1.children = [root]
-    node_2.children = [root]
-    node_3.children = [node_1]
-    node_4.children = [node_1]
-    node_5.children = [node_3, node_4]
-    node_6.children = [node_2]
-    node_7.children = [node_5, node_6]
-    node_8.children = [node_7]
-    node_9.children = [node_8]
-    node_10.children = [node_9]
-    node_11.children = [node_10]
-    node_12.children = [node_11]
-    node_13.children = [node_12]
-    node_14.children = [node_13]
-
     # For a list of nodes for the DAG creation
     nodes = ([root, node_1, node_2, node_3, node_4, node_5, node_6, node_7, node_8, node_9, node_10, node_11, node_12, node_13, node_14])
     program_dag = DirectedAcyclicGraph(nodes, root=nodes[0])
@@ -203,7 +177,7 @@ if __name__ == "__main__":
     scale = 10**20
     # Create the program with some budget
     program_outer = ContractProgram(program_id=0, parent_program=None, program_dag=dag_outer, child_programs=None, budget=BUDGET, scale=scale, decimals=3, quality_interval=QUALITY_INTERVAL,
-                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=False, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
+                                    time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE,
                                     possible_qualities=POSSIBLE_QUALITIES)
 
     # ----------------------------------------------------------------------------------------
@@ -214,7 +188,7 @@ if __name__ == "__main__":
     for_subtree.number_of_loops = NUMBER_OF_LOOPS
     # Convert to a contract program
     node_outer_3.for_subprogram = ContractProgram(program_id=3, parent_program=program_outer, child_programs=None, program_dag=for_subtree, budget=0, scale=scale, decimals=3,
-                                                  quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True, full_dag=program_dag,
+                                                  quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, full_dag=program_dag,
                                                   expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, number_of_loops=NUMBER_OF_LOOPS, subprogram_expression_type="for")
     node_13.for_subprogram = node_outer_3.for_subprogram
 
@@ -223,21 +197,17 @@ if __name__ == "__main__":
     true_subtree = DirectedAcyclicGraph(nodes_inner_true, root=node_inner_true_root)
     # Convert to a contract program
     node_outer_1.true_subprogram = ContractProgram(program_id=1, parent_program=program_outer, child_programs=None, program_dag=true_subtree, budget=0, scale=scale, decimals=3,
-                                                   quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
+                                                   quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE,
                                                    full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="true")
     node_7.true_subprogram = node_outer_1.true_subprogram
-
-    # Initialize the pointers of the nodes to the program it is in
-    utils.initialize_node_pointers_current_program(node_outer_1.true_subprogram)
 
     # Add the right subtree
     false_subtree = DirectedAcyclicGraph(nodes_inner_false, root=node_inner_false_root)
     # Convert to a contract program
     node_outer_1.false_subprogram = ContractProgram(program_id=2, parent_program=program_outer, child_programs=None, program_dag=false_subtree, budget=0, scale=scale, decimals=3,
-                                                    quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE, in_child_contract_program=True,
+                                                    quality_interval=QUALITY_INTERVAL, time_interval=TIME_INTERVAL, time_step_size=TIME_STEP_SIZE,
                                                     full_dag=program_dag, expected_utility_type=EXPECTED_UTILITY_TYPE, possible_qualities=POSSIBLE_QUALITIES, subprogram_expression_type="false")
     node_7.false_subprogram = node_outer_1.false_subprogram
-
 
     # Define a hashmap to pull contract subprograms during recursive optimization
     program_outer.subprogram_map = {
@@ -262,7 +232,7 @@ if __name__ == "__main__":
         try:
             meta_conditional_index = utils.find_conditional_indices(program_dag, include_meta=True)[-1]
             meta_for_index = utils.find_for_indices(program_dag, include_meta=True)[-1]
-        except:
+        except IndexError:
             meta_conditional_index = -1
             meta_for_index = -1
 
@@ -286,15 +256,6 @@ if __name__ == "__main__":
         c_node_id = 8
 
         times_on_c = [[] for c in range(0, len(c_list))]
-
-        # Initialize the pointers of the nodes to the program it is in
-        utils.initialize_node_pointers_current_program(program_outer)
-
-        # Initialize the pointers of the nodes to the program it is in
-        utils.initialize_node_pointers_current_program(node_outer_1.false_subprogram)
-
-        # Initialize the pointers of the nodes to the program it is in
-        utils.initialize_node_pointers_current_program(node_outer_3.for_subprogram)
 
         program_outer.child_programs = [node_outer_1.true_subprogram, node_outer_1.false_subprogram, node_outer_3.for_subprogram]
 
