@@ -108,9 +108,6 @@ if __name__ == "__main__":
     # For Node
     node_outer_3 = Node(13, [node_outer_4], [], expression_type="for")
 
-    for node in [node_inner_2, node_inner_3, node_inner_4, node_inner_5]:
-        node.subprogram_parent_node = node_outer_3
-
     # Intermeditate node from for to conditional
     node_outer_2 = Node(8, [node_outer_3], [], expression_type="contract", program_id=0)
 

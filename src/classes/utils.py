@@ -1,14 +1,9 @@
 import sys
-from typing import List
 
 import numpy as np
 sys.path.append("/Users/masonnakamura/Local-Git/metaprogramming-for-contract-algorithms/src")
 
 from classes.node import Node  # noqa
-
-
-def print_allocations(allocations):
-    print([i.time for i in allocations])
 
 
 def find_node(node_id, dag) -> Node:
@@ -17,55 +12,6 @@ def find_node(node_id, dag) -> Node:
         if node.id == node_id:
             return node
     raise IndexError("Node not found with given id -> {}".format(node_id))
-
-
-def child_of_conditional(node) -> bool:
-    for parent in node.parents:
-        if parent.expression_type == "conditional":
-            return True
-    return False
-
-
-def child_of_for(node) -> bool:
-    for parent in node.parents:
-        if parent.expression_type == "for":
-            return True
-    return False
-
-
-def find_children_fors(node) -> List[Node]:
-    """
-    Finds the children of the node that are for-loops
-
-    :param: node: Node object
-    :return list of nodes that are for-loop nodes
-    """
-    for_nodes = []
-    for parent in node.parents:
-        if parent.expression_type == "for":
-            for_nodes.append(parent)
-    return for_nodes
-
-
-def parent_of_conditional(node) -> bool:
-    for child in node.children:
-        if child.expression_type == "conditional":
-            return True
-    return False
-
-
-def find_neighbor_branch(node) -> Node:
-    """
-    Finds the neighbor branch of the child node of a conditional node
-    Assumption: the input node is the child of a conditional node
-
-    :param node: Node object
-    :return: Node object
-    """
-    conditional_node = node.parents[0]
-    for child in conditional_node.children:
-        if child != node:
-            return
 
 
 @staticmethod
@@ -98,14 +44,6 @@ def flatten(arr):
     return flattened_list
 
 
-def remove_nones_time_allocations(allocations):
-    return [time_allocation for time_allocation in allocations if time_allocation.time is not None]
-
-
-def remove_nones_times(allocations):
-    return [time for time in allocations if time is not None]
-
-
 def remove_nones_list(list):
     return [element for element in list if element is not None]
 
@@ -116,75 +54,6 @@ def find_leaves_in_dag(program_dag):
         if not node.parents:
             leaves.append(node)
     return leaves
-
-
-def argsort(seq):
-    # http://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
-    return sorted(range(len(seq)), key=seq.__getitem__)
-
-
-def flatten_list(nested_list):
-    # https://stackabuse.com/python-how-to-flatten-list-of-lists/
-    flat_list = []
-    # Iterate through the outer list
-    for element in nested_list:
-        if type(element) is list:
-            # If the element is of type list, iterate through the sublist
-            for item in element:
-                flat_list.append(item)
-        else:
-            flat_list.append(element)
-    return flat_list
-    # return reduce(lambda a,b:a+b, nested_list)
-
-
-def dirichlet_ppv(iterations, dag, alpha=1, constant=10):
-    # Create Dirichlet initial ppv
-    accumulated_ppv = []
-    number_conditionals_and_fors = number_of_fors_conditionals(dag)
-    number_conditionals = number_conditionals_and_fors[0]
-    number_fors = number_conditionals_and_fors[1]
-    conditional_indices = find_conditional_indices(dag)
-    for_indices = find_for_indices(dag)
-
-    for _ in range(0, iterations):
-        # Remove one of the branches and the conditional node before applying the Dirichlet distribution
-        velocities_array = np.random.dirichlet(np.repeat(alpha, len(dag.nodes) - number_conditionals - number_fors), size=1).squeeze() * constant
-        # Turn the numpy array into a list
-        velocities_list = velocities_array.tolist()
-
-        if number_conditionals > 0:
-            # Create the sublist for conditional
-            accumlated_velocities = []
-            for index in range(0, len(conditional_indices) + 1):
-                if index == len(conditional_indices):
-                    accumlated_velocities.append("conditional")
-                else:
-                    accumlated_velocities.append(velocities_list[conditional_indices[index]])
-            # Place the sublist in the list
-            velocities_list[conditional_indices[0]] = accumlated_velocities
-            # Remove the duplicates in outer list
-            for _ in range(0, len(conditional_indices) - 1):
-                velocities_list.pop(conditional_indices[0] + 1)
-
-        if number_fors > 0:
-            # Create the sublist for the For
-            accumlated_velocities = []
-            for index in range(0, len(for_indices) + 1):
-                if index == len(for_indices):
-                    accumlated_velocities.append("for")
-                else:
-                    accumlated_velocities.append(velocities_list[for_indices[index] - len(conditional_indices) + 1])
-            # Place the sublist in the list
-            velocities_list[for_indices[0] - len(conditional_indices)] = accumlated_velocities
-
-            # Remove the duplicates in outer list
-            for i in range(0, len(for_indices) - 1):
-                velocities_list.pop(for_indices[0] - len(conditional_indices) + 1)
-
-        accumulated_ppv.append(velocities_list)
-
-    return accumulated_ppv
 
 
 def dirichlet_growth_factor_generator(dag, alpha=1, lower_bound=0, upper_bound=10):
@@ -339,11 +208,6 @@ def find_non_meta_indicies(dag):
         if node.expression_type == "contract":
             indices.append(node.id)
     return indices
-
-
-def safe_arange(start, stop, step):
-    # For arange without the bad floating point accumulation
-    return step * np.arange(start / step, stop / step)
 
 
 def find_node_in_full_dag(node, full_dag):

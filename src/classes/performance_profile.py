@@ -281,23 +281,6 @@ class PerformanceProfile:
         return string_number[::-1].find('.')
 
     @staticmethod
-    def find_node(node_id, dag) -> Node:
-        """
-        Finds the node in the node list given the id
-
-        :param: node_id: The id of the node
-        :return Node object
-        """
-        # print([i.id for i in dag.nodes])
-        # print(node_id)
-        nodes = dag.nodes
-        for node in nodes:
-            if node.id == node_id:
-                return node
-        print([node.id for node in dag.nodes])
-        raise IndexError("Node not found with given id --> {}".format(node_id))
-
-    @staticmethod
     def find_conditional_node(dag) -> Node:
         nodes = dag.nodes
         for node in nodes:

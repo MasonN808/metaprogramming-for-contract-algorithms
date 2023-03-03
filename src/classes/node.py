@@ -31,15 +31,10 @@ class Node:
         self.in_true = in_true
         self.in_false = in_false
 
-        self.subprogram_parent_node = None
-
         # subtree for the for loop
-        self.for_dag = None
         self.for_subprogram = None
         self.in_for = None
         self.is_last_for_loop = None
-        self.num_loops = 0
-        self.first_loop = None
 
         # Used for the subtree that doesn't have access to parents
         self.parent_qualities = []
@@ -50,15 +45,6 @@ class Node:
         # Used in checking for connectedness in the DAG
         self.traversed_connectedness = False
         self.traversed = False
-
-    def local_joint_probability_distribution(self):
-        """
-        Queries the conditional performance profiles to create a joint probability distribution of the subtree.
-        This will be used later in the expected utility function in conjunction with the utility function
-        :return:
-        """
-        if self.time is None:
-            raise ValueError("Node has no time allocation")
 
     @staticmethod
     def is_conditional_node(node, family_type=None) -> bool:
