@@ -101,7 +101,7 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         x_axis = subset_methods
 
         colors = iter(plt.cm.coolwarm(np.linspace(1, 0, 10)))
-        color = ['slategray'] + [next(colors) for _ in range(10)] + ['seagreen']
+        color = [next(colors) for _ in range(10)] + ['seagreen']
 
         i = 0
         for patch in boxplot['boxes']:
@@ -269,16 +269,15 @@ def plot(plot_type, node_indicies, subset_methods, file_eus, file_times, file_c_
         figure = plt.figure(figsize=(10, 5))
 
         # Make Uniform gray
-        plt.plot(c_list, times[0], c="slategray", label=subset_methods[0])
+        # plt.plot(c_list, times[0], c="slategray", label=subset_methods[0])
 
         # Make the PA methods a single heatmap color
         colors = iter(plt.cm.coolwarm(np.linspace(1, 0, 10)))
-        for index, method_str in list(enumerate(subset_methods))[1:11]:
-            print(index)
+        for index, method_str in list(enumerate(subset_methods))[0:10]:
             plt.plot(c_list, times[index], c=next(colors), linestyle='dashed', label=method_str)
 
         # Make RHC green
-        plt.plot(c_list, times[11], c="seagreen", marker="o", label=subset_methods[11], zorder=100)
+        plt.plot(c_list, times[10], c="seagreen", marker="o", label=subset_methods[10], zorder=100)
 
         plt.legend(loc='upper right', ncol=3, labelspacing=0.8, fontsize=13)
 
@@ -346,7 +345,7 @@ if __name__ == "__main__":
     file_eus = open('src/tests/robotics_domain/data/eu_data.txt', 'rb')
     file_times = open('src/tests/robotics_domain/data/time_data.txt', 'rb')
     file_c_times = open('src/tests/robotics_domain/data/time_on_c_data_node8.txt', 'rb')
-    subset_methods = [r'\textsc{Equal}', r'\textsc{Pa}($5.0$)', r'\textsc{Pa}($4.0$)', r'\textsc{Pa}($3.0$)', r'\textsc{Pa}($2.0$)', r'\textsc{Pa}($1.0$)', r'\textsc{Pa}($0.8$)', r'\textsc{Pa}($0.6$)', r'\textsc{Pa}($0.5$)', r'\textsc{Pa}($0.1$)', r'\textsc{Pa}($0.0$)', r'\textsc{Rhc}']
+    subset_methods = [r'\textsc{Pa}($5.0$)', r'\textsc{Pa}($4.0$)', r'\textsc{Pa}($3.0$)', r'\textsc{Pa}($2.0$)', r'\textsc{Pa}($1.0$)', r'\textsc{Pa}($0.8$)', r'\textsc{Pa}($0.6$)', r'\textsc{Pa}($0.5$)', r'\textsc{Pa}($0.1$)', r'\textsc{Pa}($0.0$)', r'\textsc{Rhc}']
     # subset_methods = ['PA (ß=1)', 'PA (ß=.5)', 'PA (ß=.1)', 'PA (ß=0)', r'\textsc{Equal}', r'\textsc{Rhc}']
     # print_eu_data(file_eus=file_eus, subset_methods=subset_methods)
 

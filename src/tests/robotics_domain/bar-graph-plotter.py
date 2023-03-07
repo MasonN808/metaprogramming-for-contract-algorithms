@@ -11,19 +11,24 @@ SIMULATIONS = 150
 TECHNIQUE_INDEX = 12
 BUDGET =  10
 
+# Purple - E455FF
+# Green - 00E94F
+# Red - FF151B
+# Orange – FFB42A
+# Blue - 00CCE9
 NODES = {
-    1: {'index': 1, 'label': r'$v_1$', 'color': 'seagreen'},
-    2: {'index': 2, 'label': r'$v_2$', 'color': 'steelblue'},
-    3: {'index': 3, 'label': r'$v_3$', 'color': 'seagreen'},
-    4: {'index': 4, 'label': r'$v_4$', 'color': 'seagreen'},
-    5: {'index': 5, 'label': r'$v_5$', 'color': 'seagreen'},
-    6: {'index': 6, 'label': r'$v_6$', 'color': 'steelblue'},
-    7: {'index': 8, 'label': r'$v_7$', 'color': 'indianred'},
-    8: {'index': 9, 'label': r'$v_8$', 'color': 'indianred'},
-    9: {'index': 10, 'label': r'$v_9$', 'color': 'orchid'},
-    10: {'index': 11, 'label': r'$v_{10}$', 'color': 'orchid'},
-    11: {'index': 12, 'label': r'$v_{11}$', 'color': 'orchid'},
-    12: {'index': 14, 'label': r'$v_{12}$', 'color': 'indianred'},
+    1: {'index': 1, 'label': r'$v_1$', 'color': '#00E94F'},
+    2: {'index': 2, 'label': r'$v_2$', 'color': '#FF151B'},
+    3: {'index': 3, 'label': r'$v_3$', 'color': '#00E94F'},
+    4: {'index': 4, 'label': r'$v_4$', 'color': '#00E94F'},
+    5: {'index': 5, 'label': r'$v_5$', 'color': '#00E94F'},
+    6: {'index': 6, 'label': r'$v_6$', 'color': '#FF151B'},
+    7: {'index': 8, 'label': r'$v_7$', 'color': '#FFB42A'},
+    8: {'index': 9, 'label': r'$v_8$', 'color': '#E455FF'},
+    9: {'index': 10, 'label': r'$v_9$', 'color': '#E455FF'},
+    10: {'index': 11, 'label': r'$v_{10}$', 'color': '#E455FF'},
+    11: {'index': 12, 'label': r'$v_{11}$', 'color': '#E455FF'},
+    12: {'index': 14, 'label': r'$v_{12}$', 'color': '#00CCE9'},
 }
 NUM_NODES = 12
 NODE_ORDERING = [12, 11, 10, 9, 8, 7, 5, 4, 3, 1, 6, 2]
@@ -46,7 +51,7 @@ def plot():
     for i in range(len(average_time_allocations)):
         average_time_allocations[i] = BUDGET * (average_time_allocations[i] / total_time_allocations)
 
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(10, 5))
 
     axis = plt.gca()
     plt.setp(axis.get_xticklabels(), fontsize=14)
